@@ -58,7 +58,6 @@ int g_AutoRotate = 0;
 int g_RotateTime = 0;
 char tool_descr[100][1024];
 int tools_max = 0;
-int tool_sel = 0;
 int tool_last = 0;
 int material_sel = 0;
 int material_max = 8;
@@ -80,6 +79,7 @@ typedef struct{
 	double step;
 	double max;
 	char unit[16];
+	int show;
 } PARA;
 
 enum {
@@ -95,6 +95,7 @@ enum {
 	P_V_HELPLINES,
 	P_V_HELPDIA,
 	P_V_NCDEBUG,
+	P_TOOL_SELECT,
 	P_TOOL_NUM,
 	P_TOOL_DIAMETER,
 	P_TOOL_SPEED_MAX,
@@ -115,26 +116,27 @@ enum {
 };
 
 PARA PARAMETER[] = {
-	{"Zoom",	"View",		"-zo",	T_FLOAT,	0,	1.0,	0.0,	"",	0.1,	0.1,	20.0,		"x"},
-	{"Helplines",	"View", 	"-hl",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
-	{"ShowTool",	"View", 	"-st",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
-	{"NC-Debug",	"View", 	"-nd",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
-	{"Number",	"Tool",		"-tn",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	18.0,		"#"},
-	{"Diameter",	"Tool",		"-td",	T_DOUBLE,	0,	1.0,	1.0,	"",	0.01,	0.01,	18.0,		"mm"},
-	{"CalcSpeed",	"Tool",		"-cs",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm"},
-	{"Speed",	"Tool",		"-ts",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm"},
-	{"Wings",	"Tool",		"-tw",	T_INT,		2,	0.0,	0.0,	"",	1.0,	1.0,	10.0,		"#"},
-	{"LaserDiameter","Tool",		"-lw",	T_DOUBLE,	0,	0.0,	0.4,	"",	0.01,	0.01,	10.0,		"mm"},
-	{"Table",	"Tool",		"-tt",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		""},
-	{"MaxFeedRate",	"Milling",	"-fm",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min"},
-	{"FeedRate",	"Milling",	"-fr",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min"},
-	{"PlungeRate",	"Milling",	"-pr",	T_INT	,	100,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min"},
-	{"Depth",	"Milling",	"-md",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm"},
-	{"Z-Step",	"Milling",	"-msp",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm"},
-	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	4.0,	"",	1.0,	1.0,	80.0,		"mm"},
-	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
-	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
-	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		""},
+	{"Zoom",	"View",		"-zo",	T_FLOAT,	0,	1.0,	0.0,	"",	0.1,	0.1,	20.0,		"x", 1},
+	{"Helplines",	"View", 	"-hl",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"ShowTool",	"View", 	"-st",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"NC-Debug",	"View", 	"-nd",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"Select",	"Tool",		"-tn",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0},
+	{"Number",	"Tool",		"-tn",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	18.0,		"#", 1},
+	{"Diameter",	"Tool",		"-td",	T_DOUBLE,	0,	1.0,	1.0,	"",	0.01,	0.01,	18.0,		"mm", 1},
+	{"CalcSpeed",	"Tool",		"-cs",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1},
+	{"Speed",	"Tool",		"-ts",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1},
+	{"Wings",	"Tool",		"-tw",	T_INT,		2,	0.0,	0.0,	"",	1.0,	1.0,	10.0,		"#", 1},
+	{"LaserDiameter","Tool",	"-lw",	T_DOUBLE,	0,	0.0,	0.4,	"",	0.01,	0.01,	10.0,		"mm", 1},
+	{"Table",	"Tool",		"-tt",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 1},
+	{"MaxFeedRate",	"Milling",	"-fm",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
+	{"FeedRate",	"Milling",	"-fr",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
+	{"PlungeRate",	"Milling",	"-pr",	T_INT	,	100,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
+	{"Depth",	"Milling",	"-md",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1},
+	{"Z-Step",	"Milling",	"-msp",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1},
+	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	4.0,	"",	1.0,	1.0,	80.0,		"mm", 1},
+	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 1},
 };
 
 void read_setup (void) {
@@ -1730,16 +1732,14 @@ void mainloop (void) {
 	}
 
 	/* get diameter from tooltable by number */
-	if (tools_max > 0) {
-		PARAMETER[P_TOOL_NUM].vint = tool_sel + 1;
+	if (PARAMETER[P_TOOL_SELECT].vint != 0) {
+		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
+		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
 		TwDefine("Parameter/'Tool|Number' readonly=true");
 		TwDefine("Parameter/'Tool|Diameter' readonly=true");
 	} else {
 		TwDefine("Parameter/'Tool|Number' readonly=false");
 		TwDefine("Parameter/'Tool|Diameter' readonly=false");
-	}
-	if (tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint] != 0.0) {
-		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
 	}
 	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[material_sel] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
 	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
@@ -2214,6 +2214,11 @@ int main (int argc, char *argv[]) {
 		}
 		tooltbl_diameters[0] = 1;
 		n = 0;
+		sprintf(tmp_str, "FREE");
+		toolEV[n].Value = n;
+		toolEV[n].Label = (const char *)malloc(strlen(tmp_str) + 1);
+		strcpy((char *)toolEV[n].Label, tmp_str);
+		n++;
 		while ((read = getline(&line, &len, tt_fp)) != -1) {
 			if (strncmp(line, "T", 1) == 0) {
 				char line2[2048];
@@ -2226,7 +2231,7 @@ int main (int argc, char *argv[]) {
 					if (strstr(line2, ";") > 0) {
 						strcpy(tool_descr[tooln], strstr(line2, ";") + 1);
 					}
-					sprintf(tmp_str, "#%i D%0.2fmm (%s) \n", tooln, tooltbl_diameters[tooln], tool_descr[tooln]);
+					sprintf(tmp_str, "#%i D%0.2fmm (%s)", tooln, tooltbl_diameters[tooln], tool_descr[tooln]);
 					toolEV[n].Value = n;
 					toolEV[n].Label = (const char *)malloc(strlen(tmp_str) + 1);
 					strcpy((char *)toolEV[n].Label, tmp_str);
@@ -2236,7 +2241,6 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		fclose(tt_fp);
-		tool_sel = PARAMETER[P_TOOL_NUM].vint - 1;
 	}
 
 	/* set bottom-left to 0,0 */
@@ -2326,7 +2330,7 @@ int main (int argc, char *argv[]) {
 		TwAddButton(bar, "Reload Setup", ReloadSetup, NULL, " label='Reload Setup' ");
 
 		TwType tools = TwDefineEnum("toolType", toolEV, tools_max);
-		TwAddVarRW(bar, "Tool-Select", tools, &tool_sel, "group=Tool label=Select");
+		TwAddVarRW(bar, "Tool-Select", tools, &PARAMETER[P_TOOL_SELECT].vint, "group=Tool label=Select");
 
 		TwType material = TwDefineEnum("materialType", materialEV, material_max);
 		TwAddVarRW(bar, "Material-Select", material, &material_sel, "group=Material label=Select");
@@ -2340,7 +2344,8 @@ int main (int argc, char *argv[]) {
 			} else {
 				sprintf(opt_str, "label='%s' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
 			}
-			if (PARAMETER[n].type == T_FLOAT) {
+			if (PARAMETER[n].show == 0) {
+			} else if (PARAMETER[n].type == T_FLOAT) {
 				TwAddVarRW(bar, name_str, TW_TYPE_FLOAT, &PARAMETER[n].vfloat, opt_str);
 			} else if (PARAMETER[n].type == T_DOUBLE) {
 				TwAddVarRW(bar, name_str, TW_TYPE_DOUBLE, &PARAMETER[n].vdouble, opt_str);
