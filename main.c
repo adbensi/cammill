@@ -367,8 +367,9 @@ void object2poly (int object_num, double depth, double depth2) {
 	GLUtesselator *tobj;
 	GLdouble rect2[MAX_LINES][3];
 
-	glColor4f(1.0, 1.0, 1.0, 1.0);
+	glColor4f(0.0, 0.5, 0.2, 1.0);
 
+//	glColor4f(1.0, 1.0, 1.0, 1.0);
 //	texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
 
 	glEnable(GL_TEXTURE_2D);
