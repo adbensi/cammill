@@ -4,11 +4,11 @@ all: c-dxf2gcode
 
 c-dxf2gcode: main.c dxf.c dxf.h
 	(cd ./AntTweakBar/src ; make)
-#	gcc -o c-dxf2gcode main.c dxf.c -lGL -lglut -lGLU -I./ -Wall -O3 -I./AntTweakBar/include/ -L./AntTweakBar/lib/ ./AntTweakBar/lib/libAntTweakBar.a
-	clang -o c-dxf2gcode main.c dxf.c -lGL -lglut -lGLU -I./ -Wall -O3 -I./AntTweakBar/include/ -L./AntTweakBar/lib/ ./AntTweakBar/lib/libAntTweakBar.a
+#	gcc -o c-dxf2gcode main.c dxf.c -lGL -lglut -lGLU -lX11 -I./ -Wall -O3 -I./AntTweakBar/include/ -L./AntTweakBar/lib/ ./AntTweakBar/lib/libAntTweakBar.a
+	clang -o c-dxf2gcode main.c dxf.c -lGL -lglut -lGLU -lX11 -I./ -Wall -O3 -I./AntTweakBar/include/ -L./AntTweakBar/lib/ ./AntTweakBar/lib/libAntTweakBar.a
 
 gprof:
-	gcc -pg -o c-dxf2gcode main.c dxf.c -lGL -lglut -lGLU -I./ -Wall -O3 -I./AntTweakBar/include/ -L./AntTweakBar/lib/ ./AntTweakBar/lib/libAntTweakBar.a
+	gcc -pg -o c-dxf2gcode main.c dxf.c -lGL -lglut -lGLU -lX11 -I./ -Wall -O3 -I./AntTweakBar/include/ -L./AntTweakBar/lib/ ./AntTweakBar/lib/libAntTweakBar.a
 	echo "./c-dxf2gcode"
 	echo "gprof c-dxf2gcode gmon.out"
 
