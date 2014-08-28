@@ -17,6 +17,11 @@
 #include <dxf.h>
 //#include <font.h>
 
+void texture_init (void);
+
+GLuint texture_load (char *filename);
+
+
 #define FUZZY 0.01
 
 #ifndef CALLBACK
@@ -59,8 +64,8 @@ int g_RotateTime = 0;
 char tool_descr[100][1024];
 int tools_max = 0;
 int tool_last = 0;
-int material_sel = 0;
 int material_max = 8;
+char *material_texture[100];
 int material_vc[100];
 float material_fz[100][3];
 TwEnumVal toolEV[100];
@@ -112,6 +117,7 @@ enum {
 	P_M_OVERCUT,
 	P_M_LASERMODE,
 	P_MFILE,
+	P_MAT_SELECT,
 	P_LAST
 };
 
@@ -137,6 +143,7 @@ PARA PARAMETER[] = {
 	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
 	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
 	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 1},
+	{"Select",	"Material",	"-ms",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0},
 };
 
 void read_setup (void) {
@@ -360,7 +367,19 @@ void object2poly (int object_num, double depth, double depth2) {
 	GLUtesselator *tobj;
 	GLdouble rect2[MAX_LINES][3];
 
-	glColor4f(1.0, 0.0, 0.0, 0.5);
+	glColor4f(1.0, 1.0, 1.0, 1.0);
+
+//	texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_GEN_S);
+	glEnable(GL_TEXTURE_GEN_T);
+	glTexGend(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+	glTexGend(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glScalef(0.002, 0.002, 0.002);
+	glTranslatef(0.0, 0.0, 0.0);
 
 	tobj = gluNewTess();
 	gluTessCallback(tobj, GLU_TESS_VERTEX, (GLvoid (CALLBACK*) ()) &glVertex3dv);
@@ -428,6 +447,12 @@ void object2poly (int object_num, double depth, double depth2) {
 	gluTessCallback(tobj, GLU_TESS_END, (GLvoid (CALLBACK*) ()) &endCallback);
 	gluTessCallback(tobj, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &errorCallback);
 	gluTessCallback(tobj, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineCallback);
+
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
+	glDisable(GL_TEXTURE_2D);
+
+	glMatrixMode(GL_MODELVIEW);
 }
 
 int object_line_last (int object_num) {
@@ -1730,7 +1755,6 @@ void mainloop (void) {
 	if (scale > (4.0 / size_y)) {
 		scale = (4.0 / size_y);
 	}
-
 	/* get diameter from tooltable by number */
 	if (PARAMETER[P_TOOL_SELECT].vint != 0) {
 		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
@@ -1741,13 +1765,13 @@ void mainloop (void) {
 		TwDefine("Parameter/'Tool|Number' readonly=false");
 		TwDefine("Parameter/'Tool|Diameter' readonly=false");
 	}
-	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[material_sel] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
+	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[PARAMETER[P_MAT_SELECT].vint] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
 	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][0] * (float)PARAMETER[P_TOOL_W].vint);
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][0] * (float)PARAMETER[P_TOOL_W].vint);
 	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 8.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][1] * (float)PARAMETER[P_TOOL_W].vint);
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][1] * (float)PARAMETER[P_TOOL_W].vint);
 	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 12.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][2] * (float)PARAMETER[P_TOOL_W].vint);
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][2] * (float)PARAMETER[P_TOOL_W].vint);
 	}
 	if (shapeEV[layer_sel].Label != NULL) {
 		strcpy(mill_layer, shapeEV[layer_sel].Label);
@@ -2135,6 +2159,7 @@ int main (int argc, char *argv[]) {
 	material_fz[0][0] = 0.04;
 	material_fz[0][1] = 0.05;
 	material_fz[0][2] = 0.10;
+	material_texture[0] = "metall.bmp";
 
 	materialEV[1].Value = 1;
 	materialEV[1].Label = "Aluminium(Kurzspanend)";
@@ -2142,6 +2167,7 @@ int main (int argc, char *argv[]) {
 	material_fz[1][0] = 0.04;
 	material_fz[1][1] = 0.05;
 	material_fz[1][2] = 0.10;
+	material_texture[1] = "metall.bmp";
 
 	materialEV[2].Value = 2;
 	materialEV[2].Label = "NE-Metalle(Messing,Bronze,Kupfer,Zink,Rotguß)";
@@ -2149,6 +2175,7 @@ int main (int argc, char *argv[]) {
 	material_fz[2][0] = 0.04;
 	material_fz[2][1] = 0.05;
 	material_fz[2][2] = 0.10;
+	material_texture[2] = "metall.bmp";
 
 	materialEV[3].Value = 3;
 	materialEV[3].Label = "VA-Stahl";
@@ -2156,6 +2183,7 @@ int main (int argc, char *argv[]) {
 	material_fz[3][0] = 0.05;
 	material_fz[3][1] = 0.06;
 	material_fz[3][2] = 0.07;
+	material_texture[3] = "metall.bmp";
 
 	materialEV[4].Value = 4;
 	materialEV[4].Label = "Thermoplaste";
@@ -2163,6 +2191,7 @@ int main (int argc, char *argv[]) {
 	material_fz[4][0] = 0.0;
 	material_fz[4][1] = 0.0;
 	material_fz[4][2] = 0.0;
+	material_texture[4] = "plast.bmp";
 
 	materialEV[5].Value = 5;
 	materialEV[5].Label = "Duroplaste(mit Füllstoffen)";
@@ -2170,6 +2199,7 @@ int main (int argc, char *argv[]) {
 	material_fz[5][0] = 0.04;
 	material_fz[5][1] = 0.08;
 	material_fz[5][2] = 0.10;
+	material_texture[5] = "plast.bmp";
 
 	materialEV[6].Value = 6;
 	materialEV[6].Label = "GFK";
@@ -2177,6 +2207,7 @@ int main (int argc, char *argv[]) {
 	material_fz[6][0] = 0.04;
 	material_fz[6][1] = 0.08;
 	material_fz[6][2] = 0.10;
+	material_texture[6] = "gfk.bmp";
 
 	materialEV[7].Value = 7;
 	materialEV[7].Label = "CFK";
@@ -2184,6 +2215,7 @@ int main (int argc, char *argv[]) {
 	material_fz[7][0] = 0.04;
 	material_fz[7][1] = 0.08;
 	material_fz[7][2] = 0.10;
+	material_texture[7] = "cfk.bmp";
 
 	materialEV[8].Value = 8;
 	materialEV[8].Label = "Holz";
@@ -2191,6 +2223,7 @@ int main (int argc, char *argv[]) {
 	material_fz[8][0] = 0.04;
 	material_fz[8][1] = 0.08;
 	material_fz[8][2] = 0.10;
+	material_texture[8] = "holz.bmp";
 
 	material_max = 9;
 
@@ -2302,6 +2335,8 @@ int main (int argc, char *argv[]) {
 		glutDisplayFunc(mainloop);
 		atexit(onExit);
 
+		texture_init();
+
 		TwBar *bar;
 		float axis[] = { -0.7f, 0.0f, 0.0f }; // initial model rotation
 		float angle = 0.8f;
@@ -2333,7 +2368,7 @@ int main (int argc, char *argv[]) {
 		TwAddVarRW(bar, "Tool-Select", tools, &PARAMETER[P_TOOL_SELECT].vint, "group=Tool label=Select");
 
 		TwType material = TwDefineEnum("materialType", materialEV, material_max);
-		TwAddVarRW(bar, "Material-Select", material, &material_sel, "group=Material label=Select");
+		TwAddVarRW(bar, "Material-Select", material, &PARAMETER[P_MAT_SELECT].vint, "group=Material label=Select");
 
 		for (n = 0; n < P_LAST; n++) {
 			char name_str[1024];

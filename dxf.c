@@ -26,6 +26,14 @@ int line_last = 0;
 
 void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt) {
 //	printf("## ADD_LINE: %f,%f -> %f,%f (%s / %f)\n", x1, y1, x2, y2, layer, opt);
+
+	if (x1 > 10000.0 || y1 > 10000.0 || x2 > 10000.0 || y2 > 10000.0) {
+
+		printf("###### LINE TO BIG; %f %f -> %f %f ######\n", x1, y1, x2, y2);
+
+		return;
+	}
+
 	if (line_n < MAX_LINES - 1) {
 		myLINES[line_n].used = 1;
 		myLINES[line_n].type = type;

@@ -7,14 +7,14 @@ LIBS = -L./AntTweakBar/lib/ -lGL -lglut -lGLU -lX11 -lm -lpthread -lstdc++ -lXex
 
 all: c-dxf2gcode
 
-c-dxf2gcode: main.c dxf.c dxf.h
+c-dxf2gcode: main.c dxf.c dxf.h texture.c
 	mkdir -p AntTweakBar/lib
 	(cd ./AntTweakBar/src ; make)
-#	gcc -Wall -O3 -o c-dxf2gcode main.c dxf.c ${LIBS} ${INCLUDES}
-	clang -Wall -O3 -o c-dxf2gcode main.c dxf.c ${LIBS} ${INCLUDES}
+#	gcc -Wall -O3 -o c-dxf2gcode main.c dxf.c texture.c ${LIBS} ${INCLUDES}
+	clang -Wall -O3 -o c-dxf2gcode main.c dxf.c texture.c ${LIBS} ${INCLUDES}
 
 gprof:
-	gcc -pg -Wall -O3 -o c-dxf2gcode main.c dxf.c ${LIBS} ${INCLUDES}
+	gcc -pg -Wall -O3 -o c-dxf2gcode main.c dxf.c texture.c ${LIBS} ${INCLUDES}
 	echo "./c-dxf2gcode"
 	echo "gprof c-dxf2gcode gmon.out"
 
