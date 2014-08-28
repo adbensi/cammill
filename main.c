@@ -131,7 +131,7 @@ PARA PARAMETER[] = {
 	{"PlungeRate",	"Milling",	"-pr",	T_INT	,	100,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min"},
 	{"Depth",	"Milling",	"-md",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm"},
 	{"Z-Step",	"Milling",	"-msp",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm"},
-	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	0.0,	"",	1.0,	1.0,	80.0,		"mm"},
+	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	4.0,	"",	1.0,	1.0,	80.0,		"mm"},
 	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
 	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		""},
 	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		""},
