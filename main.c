@@ -1506,109 +1506,26 @@ void TW_CALL GetAutoRotateCB (void *value, void *clientData) {
 void onExit (void) {
 }
 
-void mainloop (void) {
+void init_objects (void) {
 	int num2 = 0;
-	int num4 = 0;
 	int num4b = 0;
 	int num5b = 0;
 	int object_num = 0;
-	size_x = (max_x - min_x);
-	size_y = (max_y - min_y);
-	float scale = (4.0 / size_x);
-	if (scale > (4.0 / size_y)) {
-		scale = (4.0 / size_y);
-	}
-
-
-	/* get diameter from tooltable by number */
-	if (tools_max > 0) {
-		PARAMETER[P_TOOL_NUM].vint = tool_sel + 1;
-		TwDefine("Parameter/'Tool|Number' readonly=true");
-		TwDefine("Parameter/'Tool|Diameter' readonly=true");
-	} else {
-		TwDefine("Parameter/'Tool|Number' readonly=false");
-		TwDefine("Parameter/'Tool|Diameter' readonly=false");
-	}
-
-	if (tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint] != 0.0) {
-		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
-	}
-
-	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[material_sel] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
-	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][0] * (float)PARAMETER[P_TOOL_W].vint);
-	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 8.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][1] * (float)PARAMETER[P_TOOL_W].vint);
-	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 12.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][2] * (float)PARAMETER[P_TOOL_W].vint);
-	}
-
-
-	if (shapeEV[layer_sel].Label != NULL) {
-		strcpy(mill_layer, shapeEV[layer_sel].Label);
-	}
-
-	if (batchmode == 0) {
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearDepth(1.0);
-		glEnable(GL_DEPTH_TEST);
-		glDisable(GL_CULL_FACE);
-		glEnable(GL_NORMALIZE);
-		glDepthFunc(GL_LEQUAL);
-		glDepthMask(GL_TRUE);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-//		glEnable(GL_POLYGON_SMOOTH);
-//		glEnable(GL_POINT_SMOOTH);
-//		glEnable(GL_LINE_SMOOTH);
-
-		glPushMatrix();
-		glTranslatef(0.5f, -0.3f, 0.0f);
-
-		float mat[4*4]; // rotation matrix
-		if (g_AutoRotate) {
-			float axis[3] = { 0, 1, 0 };
-			float angle = (float)(GetTimeMs()-g_RotateTime)/1000.0f;
-			float quat[4];
-			SetQuaternionFromAxisAngle(axis, angle, quat);
-			MultiplyQuaternions(g_RotateStart, quat, g_Rotation);
-		}
-		ConvertQuaternionToMatrix(g_Rotation, mat);
-		glMultMatrixf(mat);
-		glScalef(PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat);
-		glScalef(scale, scale, scale);
-		glTranslatef(-size_x / 2.0, -size_y / 2.0, 0.0);
-
-		glTranslatef(translate_x, translate_y, 0.0);
-	} else {
-		PARAMETER[P_V_HELPLINES].vint = 0;
-		save_gcode = 1;
-	}
-
-	/* init gcode */
-	if (save_gcode == 1) {
-		if (strcmp(PARAMETER[P_MFILE].vstr, "-") == 0) {
-			fd_out = stdout;
-		} else {
-			fd_out = fopen(PARAMETER[P_MFILE].vstr, "w");
-		}
-		if (fd_out == NULL) {
-			fprintf(stderr, "Can not open file: %s\n", PARAMETER[P_MFILE].vstr);
-			exit(0);
-		}
-	}
-
-//printf("########### \n");
 
 	/* init objects */
 	for (object_num = 0; object_num < MAX_OBJECTS; object_num++) {
+		object_selections[object_num] = 1;
+		object_force[object_num] = 0;
+		object_offset[object_num] = 0;
+		object_overcut[object_num] = 0;
+		object_pocket[object_num] = 0;
+		object_laser[object_num] = 0;
 		myOBJECTS[object_num].visited = 0;
-		for (num4 = 0; num4 < line_last; num4++) {
-			myOBJECTS[object_num].line[num4] = 0;
+		for (num2 = 0; num2 < line_last; num2++) {
+			myOBJECTS[object_num].line[num2] = 0;
 		}
 	}
+
 	/* first find objects on open lines */
 	object_num = 0;
 	for (num2 = 1; num2 < line_last; num2++) {
@@ -1640,17 +1557,6 @@ void mainloop (void) {
 	}
 	object_last = object_num;
 
-	if (save_gcode == 1) {
-		tool_last = -1;
-		ShowSetup_gCode(fd_out);
-		fprintf(fd_out, "\n");
-		fprintf(fd_out, "G21 (Metric)\n");
-		fprintf(fd_out, "G40 (No Offsets)\n");
-		fprintf(fd_out, "G90 (Absolute-Mode)\n");
-		fprintf(fd_out, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
-		fprintf(fd_out, "\n");
-	}
-
 	/* check if object inside or outside */
 	for (num5b = 0; num5b < object_last; num5b++) {
 		int flag = 0;
@@ -1680,12 +1586,236 @@ void mainloop (void) {
 			myOBJECTS[num5b].inside = 0;
 		}
 	}
+}
+
+void draw_helplines (void) {
+	char tmp_str[128];
+	/* Scale-Arrow's */
+	float gridXYZ = 10.0;
+	float gridXYZmin = 1.0;
+	float lenY = size_y;
+	float lenX = size_x;
+	float lenZ = PARAMETER[P_M_DEPTH].vdouble * -1;
+	float offXYZ = 10.0;
+	float arrow_d = 1.0;
+	float arrow_l = 6.0;
+	GLUquadricObj *quadratic = gluNewQuadric();
+
+	int pos_n = 0;
+	glColor4f(1.0, 1.0, 1.0, 0.3);
+	for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZ) {
+		glBegin(GL_LINES);
+		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble);
+		glEnd();
+	}
+	for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZ) {
+		glBegin(GL_LINES);
+		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble);
+		glEnd();
+	}
+
+	glColor4f(1.0, 1.0, 1.0, 0.2);
+	for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZmin) {
+		glBegin(GL_LINES);
+		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble);
+		glEnd();
+	}
+	for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZmin) {
+		glBegin(GL_LINES);
+		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble);
+		glEnd();
+	}
+
+	glColor4f(1.0, 0.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(-offXYZ, 0.0, 0.0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, lenY, 0.0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(0.0, lenY, 0.0);
+	glVertex3f(-offXYZ, lenY, 0.0);
+	glEnd();
+	glPushMatrix();
+	glTranslatef(0.0 - offXYZ, -0.0, 0.0);
+	glPushMatrix();
+	glTranslatef(arrow_d * 2.0 + 1.0, lenY / 2.0, 0.0);
+	glRotatef(90.0, 0.0, 0.0, 1.0);
+	glScalef(0.01, 0.01, 0.01);
+	sprintf(tmp_str, "%0.2fmm", lenY);
+	output_text(tmp_str);
+	glPopMatrix();
+	glRotatef(-90.0, 1.0, 0.0, 0.0);
+	gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
+	glTranslatef(0.0, 0.0, arrow_l);
+	gluCylinder(quadratic, arrow_d, arrow_d, lenY - arrow_l * 2.0 ,32, 1);
+	glTranslatef(0.0, 0.0, lenY - arrow_l * 2.0);
+	gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
+	glPopMatrix();
+
+	glColor4f(0.0, 1.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, -offXYZ, 0.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(lenX, 0.0, 0.0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(lenX, -offXYZ, 0.0);
+	glVertex3f(lenX, 0.0, 0.0);
+	glEnd();
+	glPushMatrix();
+	glTranslatef(lenX, -offXYZ, 0.0);
+	glPushMatrix();
+	glTranslatef(-lenX / 2.0, -arrow_d * 2.0 - 1.0, 0.0);
+	glScalef(0.01, 0.01, 0.01);
+	sprintf(tmp_str, "%0.2fmm", lenX);
+	output_text(tmp_str);
+	glPopMatrix();
+	glRotatef(-90.0, 0.0, 1.0, 0.0);
+	gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
+	glTranslatef(0.0, 0.0, arrow_l);
+	gluCylinder(quadratic, arrow_d, arrow_d, lenX - arrow_l * 2.0 ,32, 1);
+	glTranslatef(0.0, 0.0, lenX - arrow_l * 2.0);
+	gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
+	glPopMatrix();
+
+	glColor4f(0.0, 0.0, 1.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(-offXYZ, -offXYZ, 0.0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 0.0, -lenZ);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, -lenZ);
+	glVertex3f(-offXYZ, -offXYZ, -lenZ);
+	glEnd();
+	glPushMatrix();
+	glTranslatef(-offXYZ, -offXYZ, -lenZ);
+	glPushMatrix();
+	glTranslatef(arrow_d * 2.0 - 1.0, -arrow_d * 2.0 - 1.0, lenZ / 2.0);
+	glRotatef(90.0, 0.0, 1.0, 0.0);
+	glScalef(0.01, 0.01, 0.01);
+	sprintf(tmp_str, "%0.2fmm", lenZ);
+	output_text(tmp_str);
+	glPopMatrix();
+	glRotatef(-90.0, 0.0, 0.0, 1.0);
+	gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
+	glTranslatef(0.0, 0.0, arrow_l);
+	gluCylinder(quadratic, arrow_d, arrow_d, lenZ - arrow_l * 2.0 ,32, 1);
+	glTranslatef(0.0, 0.0, lenZ - arrow_l * 2.0);
+	gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
+	glPopMatrix();
+}
+
+void mainloop (void) {
+	int object_num = 0;
+	size_x = (max_x - min_x);
+	size_y = (max_y - min_y);
+	float scale = (4.0 / size_x);
+	if (scale > (4.0 / size_y)) {
+		scale = (4.0 / size_y);
+	}
+
+	/* get diameter from tooltable by number */
+	if (tools_max > 0) {
+		PARAMETER[P_TOOL_NUM].vint = tool_sel + 1;
+		TwDefine("Parameter/'Tool|Number' readonly=true");
+		TwDefine("Parameter/'Tool|Diameter' readonly=true");
+	} else {
+		TwDefine("Parameter/'Tool|Number' readonly=false");
+		TwDefine("Parameter/'Tool|Diameter' readonly=false");
+	}
+	if (tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint] != 0.0) {
+		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
+	}
+	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[material_sel] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
+	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][0] * (float)PARAMETER[P_TOOL_W].vint);
+	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 8.0) {
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][1] * (float)PARAMETER[P_TOOL_W].vint);
+	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 12.0) {
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[material_sel][2] * (float)PARAMETER[P_TOOL_W].vint);
+	}
+	if (shapeEV[layer_sel].Label != NULL) {
+		strcpy(mill_layer, shapeEV[layer_sel].Label);
+	} else {
+		mill_layer[0] = 0;
+	}
+
+	if (batchmode == 0) {
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearDepth(1.0);
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
+		glEnable(GL_NORMALIZE);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glPushMatrix();
+		glTranslatef(0.5f, -0.3f, 0.0f);
+		float mat[4*4]; // rotation matrix
+		if (g_AutoRotate) {
+			float axis[3] = { 0, 1, 0 };
+			float angle = (float)(GetTimeMs()-g_RotateTime)/1000.0f;
+			float quat[4];
+			SetQuaternionFromAxisAngle(axis, angle, quat);
+			MultiplyQuaternions(g_RotateStart, quat, g_Rotation);
+		}
+		ConvertQuaternionToMatrix(g_Rotation, mat);
+		glMultMatrixf(mat);
+		glScalef(PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat);
+		glScalef(scale, scale, scale);
+		glTranslatef(-size_x / 2.0, -size_y / 2.0, 0.0);
+		glTranslatef(translate_x, translate_y, 0.0);
+	} else {
+		PARAMETER[P_V_HELPLINES].vint = 0;
+		save_gcode = 1;
+	}
+
+	/* init gcode */
+	if (save_gcode == 1) {
+		if (strcmp(PARAMETER[P_MFILE].vstr, "-") == 0) {
+			fd_out = stdout;
+		} else {
+			fd_out = fopen(PARAMETER[P_MFILE].vstr, "w");
+		}
+		if (fd_out == NULL) {
+			fprintf(stderr, "Can not open file: %s\n", PARAMETER[P_MFILE].vstr);
+			exit(0);
+		}
+		tool_last = -1;
+		ShowSetup_gCode(fd_out);
+		fprintf(fd_out, "\n");
+		fprintf(fd_out, "G21 (Metric)\n");
+		fprintf(fd_out, "G40 (No Offsets)\n");
+		fprintf(fd_out, "G90 (Absolute-Mode)\n");
+		fprintf(fd_out, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
+		fprintf(fd_out, "\n");
+	}
 
 	/* 'shortest' path / first inside than outside objects */ 
 	double last_x = 0.0;
 	double last_y = 0.0;
 	double next_x = 0.0;
 	double next_y = 0.0;
+	for (object_num = 0; object_num < MAX_OBJECTS; object_num++) {
+		myOBJECTS[object_num].visited = 0;
+	}
 
 	/* inside and open objects */
 	for (object_num = 0; object_num < object_last; object_num++) {
@@ -1811,148 +1941,9 @@ void mainloop (void) {
 		onExit();
 		exit(0);
 	} else {
-		char tmp_str[128];
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
-			/* Scale-Arrow's */
-			float gridXYZ = 10.0;
-			float gridXYZmin = 1.0;
-			float lenY = size_y;
-			float lenX = size_x;
-			float lenZ = PARAMETER[P_M_DEPTH].vdouble * -1;
-			float offXYZ = 10.0;
-			float arrow_d = 1.0;
-			float arrow_l = 6.0;
-			GLUquadricObj *quadratic = gluNewQuadric();
-
-			int pos_n = 0;
-			glColor4f(1.0, 1.0, 1.0, 0.3);
-			for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZ) {
-				glBegin(GL_LINES);
-				glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble);
-				glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble);
-				glEnd();
-			}
-			for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZ) {
-				glBegin(GL_LINES);
-				glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble);
-				glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble);
-				glEnd();
-			}
-
-			glColor4f(1.0, 1.0, 1.0, 0.2);
-			for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZmin) {
-				glBegin(GL_LINES);
-				glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble);
-				glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble);
-				glEnd();
-			}
-			for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZmin) {
-				glBegin(GL_LINES);
-				glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble);
-				glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble);
-				glEnd();
-			}
-
-			glColor4f(1.0, 0.0, 0.0, 1.0);
-			glBegin(GL_LINES);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(-offXYZ, 0.0, 0.0);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(0.0, lenY, 0.0);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(0.0, lenY, 0.0);
-			glVertex3f(-offXYZ, lenY, 0.0);
-			glEnd();
-			glPushMatrix();
-			glTranslatef(0.0 - offXYZ, -0.0, 0.0);
-			glPushMatrix();
-			glTranslatef(arrow_d * 2.0 + 1.0, lenY / 2.0, 0.0);
-			glRotatef(90.0, 0.0, 0.0, 1.0);
-			glScalef(0.01, 0.01, 0.01);
-			sprintf(tmp_str, "%0.2fmm", lenY);
-			output_text(tmp_str);
-			glPopMatrix();
-			glRotatef(-90.0, 1.0, 0.0, 0.0);
-			gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
-			glTranslatef(0.0, 0.0, arrow_l);
-			gluCylinder(quadratic, arrow_d, arrow_d, lenY - arrow_l * 2.0 ,32, 1);
-			glTranslatef(0.0, 0.0, lenY - arrow_l * 2.0);
-			gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
-			glPopMatrix();
-
-			glColor4f(0.0, 1.0, 0.0, 1.0);
-			glBegin(GL_LINES);
-			glVertex3f(0.0, -offXYZ, 0.0);
-			glVertex3f(0.0, 0.0, 0.0);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(lenX, 0.0, 0.0);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(lenX, -offXYZ, 0.0);
-			glVertex3f(lenX, 0.0, 0.0);
-			glEnd();
-			glPushMatrix();
-			glTranslatef(lenX, -offXYZ, 0.0);
-			glPushMatrix();
-			glTranslatef(-lenX / 2.0, -arrow_d * 2.0 - 1.0, 0.0);
-			glScalef(0.01, 0.01, 0.01);
-			sprintf(tmp_str, "%0.2fmm", lenX);
-			output_text(tmp_str);
-			glPopMatrix();
-			glRotatef(-90.0, 0.0, 1.0, 0.0);
-			gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
-			glTranslatef(0.0, 0.0, arrow_l);
-			gluCylinder(quadratic, arrow_d, arrow_d, lenX - arrow_l * 2.0 ,32, 1);
-			glTranslatef(0.0, 0.0, lenX - arrow_l * 2.0);
-			gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
-			glPopMatrix();
-
-			glColor4f(0.0, 0.0, 1.0, 1.0);
-			glBegin(GL_LINES);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(-offXYZ, -offXYZ, 0.0);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(0.0, 0.0, -lenZ);
-			glEnd();
-			glBegin(GL_LINES);
-			glVertex3f(0.0, 0.0, -lenZ);
-			glVertex3f(-offXYZ, -offXYZ, -lenZ);
-			glEnd();
-			glPushMatrix();
-			glTranslatef(-offXYZ, -offXYZ, -lenZ);
-			glPushMatrix();
-			glTranslatef(arrow_d * 2.0 - 1.0, -arrow_d * 2.0 - 1.0, lenZ / 2.0);
-			glRotatef(90.0, 0.0, 1.0, 0.0);
-			glScalef(0.01, 0.01, 0.01);
-			sprintf(tmp_str, "%0.2fmm", lenZ);
-			output_text(tmp_str);
-			glPopMatrix();
-			glRotatef(-90.0, 0.0, 0.0, 1.0);
-			gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
-			glTranslatef(0.0, 0.0, arrow_l);
-			gluCylinder(quadratic, arrow_d, arrow_d, lenZ - arrow_l * 2.0 ,32, 1);
-			glTranslatef(0.0, 0.0, lenZ - arrow_l * 2.0);
-			gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
-			glPopMatrix();
+			draw_helplines();
 		}
-
-		if (PARAMETER[P_V_HELPLINES].vint == 110) {
-			glColor4f(1.0, 0.0, 1.0, 0.3);
-			glBegin(GL_QUADS);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(0.0, size_y, 0.0);
-			glVertex3f(size_x, size_y, 0.0);
-			glVertex3f(size_x, 0.0, 0.0);
-			glEnd();
-		}
-
 		glPopMatrix();
 		TwDraw();
 		glutSwapBuffers();
@@ -2093,6 +2084,7 @@ int main (int argc, char *argv[]) {
 
 	/* import DXF */
 	dxf_read(dxf_file);
+	init_objects();
 
 	/* check size */
 	min_x = 99999.0;
@@ -2294,51 +2286,6 @@ int main (int argc, char *argv[]) {
 			}
 		}
 	}
-
-	/* init objects */
-	int object_num = 0;
-	for (object_num = 0; object_num < MAX_OBJECTS; object_num++) {
-		object_selections[object_num] = 1;
-		object_force[object_num] = 0;
-		object_offset[object_num] = 0;
-		object_overcut[object_num] = 0;
-		object_pocket[object_num] = 0;
-		object_laser[object_num] = 0;
-		myOBJECTS[object_num].visited = 0;
-		for (num2 = 0; num2 < line_last; num2++) {
-			myOBJECTS[object_num].line[num2] = 0;
-		}
-	}
-	/* first find objects on open lines */
-	object_num = 0;
-	for (num2 = 1; num2 < line_last; num2++) {
-		if (myLINES[num2].used == 1) {
-			int ends = line_open_check(num2);
-			if (ends == 1) {
-				line_invert(num2);
-			}
-			if (ends > 0) {
-				find_next_line(object_num, num2, num2, 1, 0);
-				myOBJECTS[object_num].closed = 0;
-				object_num++;
-			}
-		}
-	}
-	/* find objects and check if open or close */
-	for (num2 = 1; num2 < line_last; num2++) {
-		if (myLINES[num2].used == 1) {
-			int ret = find_next_line(object_num, num2, num2, 1, 0);
-			if (ret == 1) {
-				myOBJECTS[object_num].closed = 1;
-				object_num++;
-			} else if (ret == 0) {
-				myOBJECTS[object_num].closed = 0;
-				object_num++;
-			}
-		}
-	}
-	object_last = object_num;
-
 
 	if (batchmode == 0) {
 		/* init opengl */
