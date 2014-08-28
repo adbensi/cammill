@@ -1,0 +1,9 @@
+c-dxf2gcode
+*.a
+*.so
+*.o
+*.bak
+*.user
+*.ncb
+*.aps
+*.sdf
