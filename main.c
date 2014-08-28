@@ -342,7 +342,7 @@ void CALLBACK vertexCallback(GLvoid *vertex) {
 void CALLBACK combineCallback(GLdouble coords[3], GLdouble *vertex_data[4], GLfloat weight[4], GLdouble **dataOut ) {
 	GLdouble *vertex;
 	int i;
-	vertex = (GLdouble *) malloc(6 * sizeof(GLdouble));
+	vertex = (GLdouble *)malloc(6 * sizeof(GLdouble));
 	vertex[0] = coords[0];
 	vertex[1] = coords[1];
 	vertex[2] = coords[2];
@@ -2268,7 +2268,7 @@ int main (int argc, char *argv[]) {
 		shapeEV[num2].Label = NULL;
 	}
 	shapeEV[0].Value = 0;
-	shapeEV[0].Label = malloc(6);
+	shapeEV[0].Label = (const char *)malloc(6);
 	strcpy((char *)shapeEV[0].Label, "ALL");
 	int num1 = 0;
 	int labeln = 1;
@@ -2282,7 +2282,7 @@ int main (int argc, char *argv[]) {
 			}
 			if (flag == 0 && labeln < 100) {
 				shapeEV[labeln].Value = labeln;
-				shapeEV[labeln].Label = malloc(strlen(myLINES[num1].layer) + 1);
+				shapeEV[labeln].Label = (const char *)malloc(strlen(myLINES[num1].layer) + 1);
 				strcpy((char *)shapeEV[labeln].Label, myLINES[num1].layer);
 				if (strcmp(mill_layer, myLINES[num1].layer) == 0) {
 					layer_sel = labeln;
