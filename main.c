@@ -28,7 +28,7 @@ GLuint texture_load (char *filename);
 #define CALLBACK
 #endif
 
-int winw = 1200;
+int winw = 1600;
 int winh = 1200;
 float size_x = 0.0;
 float size_y = 0.0;
@@ -43,6 +43,7 @@ int layer_selections[100];
 int layer_force[100];
 double layer_depth[100];
 TwEnumVal shapeEV[100];
+TwEnumVal AxisEV[100];
 int object_selections[MAX_OBJECTS];
 int object_offset[MAX_OBJECTS];
 int object_force[MAX_OBJECTS];
@@ -106,7 +107,6 @@ enum {
 	P_TOOL_SPEED_MAX,
 	P_TOOL_SPEED,
 	P_TOOL_W,
-	P_TOOL_LASERDIA,
 	P_TOOL_TABLE,
 	P_M_FEEDRATE_MAX,
 	P_M_FEEDRATE,
@@ -116,8 +116,15 @@ enum {
 	P_CUT_SAVE,
 	P_M_OVERCUT,
 	P_M_LASERMODE,
+	P_M_ROTARYMODE,
+	P_M_KNIFEMODE,
+	P_H_LASERDIA,
+	P_H_ROTARYAXIS,
+	P_H_KNIFEAXIS,
+	P_H_KNIFEMAXANGLE,
 	P_MFILE,
 	P_MAT_SELECT,
+	P_MAT_DIAMETER,
 	P_LAST
 };
 
@@ -132,7 +139,6 @@ PARA PARAMETER[] = {
 	{"CalcSpeed",	"Tool",		"-cs",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1},
 	{"Speed",	"Tool",		"-ts",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1},
 	{"Wings",	"Tool",		"-tw",	T_INT,		2,	0.0,	0.0,	"",	1.0,	1.0,	10.0,		"#", 1},
-	{"LaserDiameter","Tool",	"-lw",	T_DOUBLE,	0,	0.0,	0.4,	"",	0.01,	0.01,	10.0,		"mm", 1},
 	{"Table",	"Tool",		"-tt",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 1},
 	{"MaxFeedRate",	"Milling",	"-fm",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
 	{"FeedRate",	"Milling",	"-fr",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
@@ -142,8 +148,15 @@ PARA PARAMETER[] = {
 	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	4.0,	"",	1.0,	1.0,	80.0,		"mm", 1},
 	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
 	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"Rotary-Mode",	"Milling",	"-rm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"Tangencial-Mode","Milling",	"-tm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
+	{"Laser-Diameter","Machine",	"-lw",	T_DOUBLE,	0,	0.0,	0.4,	"",	0.01,	0.01,	10.0,		"mm", 1},
+	{"Rotary-Axis",	"Machine",	"-ra",	T_INT	,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0},
+	{"Tangencial-Axis","Machine",	"-ta",	T_INT	,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0},
+	{"Tangencial-MaxAngle","Machine", "-tm",T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1},
 	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 1},
 	{"Select",	"Material",	"-ms",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0},
+	{"Rotary/Diameter","Material",	"-md",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.01,	0.01,	100.0,		"mm", 1},
 };
 
 void read_setup (void) {
@@ -361,13 +374,17 @@ void CALLBACK combineCallback(GLdouble coords[3], GLdouble *vertex_data[4], GLfl
 	*dataOut = vertex;
 }
 
-void object2poly (int object_num, double depth, double depth2) {
+void object2poly (int object_num, double depth, double depth2, int invert) {
 	int num = 0;
 	int nverts = 0;
 	GLUtesselator *tobj;
 	GLdouble rect2[MAX_LINES][3];
 
-	glColor4f(0.0, 0.5, 0.2, 1.0);
+	if (invert == 0) {
+		glColor4f(0.0, 0.5, 0.2, 0.5);
+	} else {
+		glColor4f(0.0, 0.2, 0.5, 0.5);
+	}
 
 //	glColor4f(1.0, 1.0, 1.0, 1.0);
 //	texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
@@ -389,7 +406,11 @@ void object2poly (int object_num, double depth, double depth2) {
 	gluTessCallback(tobj, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &errorCallback);
 	glShadeModel(GL_FLAT);
 	gluTessBeginPolygon(tobj, NULL);
-	gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+	if (invert == 0) {
+		gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+	} else {
+		gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+	}
 	gluTessNormal(tobj, 0, 0, 1);
 
 	gluTessBeginContour(tobj);
@@ -448,11 +469,9 @@ void object2poly (int object_num, double depth, double depth2) {
 	gluTessCallback(tobj, GLU_TESS_END, (GLvoid (CALLBACK*) ()) &endCallback);
 	gluTessCallback(tobj, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &errorCallback);
 	gluTessCallback(tobj, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineCallback);
-
 	glDisable(GL_TEXTURE_GEN_S);
 	glDisable(GL_TEXTURE_GEN_T);
 	glDisable(GL_TEXTURE_2D);
-
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -544,6 +563,13 @@ double line_angle (int lnum) {
 	return alpha;
 }
 
+double line_angle2 (int lnum) {
+	double dx = myLINES[lnum].x2 - myLINES[lnum].x1;
+	double dy = myLINES[lnum].y2 - myLINES[lnum].y1;
+	double alpha = toDeg(atan2(dx, dy));
+	return alpha;
+}
+
 void add_angle_offset (double *check_x, double *check_y, double radius, double alpha) {
 	double angle = toRad(alpha);
 	*check_x += radius * cos(angle);
@@ -564,8 +590,8 @@ void object_optimize_dir (int object_num) {
 			add_angle_offset(&check_x, &check_y, 0.001, alpha + 90);
 			pipret = point_in_object(object_num, -1, check_x, check_y);
 			if ((pipret == 0 && myOBJECTS[object_num].inside == 0) || (pipret == 1 && myOBJECTS[object_num].inside == 1)) {
-			} else {
 				redir_object(object_num);
+			} else {
 			}
 		}
 	}
@@ -619,51 +645,140 @@ void DrawArrow (float x1, float y1, float x2, float y2, float z, float w) {
 	glEnd();
 }
 
-void draw_line (float x1, float y1, float z1, float x2, float y2, float z2, float width) {
-	if (PARAMETER[P_V_HELPDIA].vint == 1) {
-		glColor4f(1.0, 1.0, 1.0, 1.0);
-		DrawLine(x1, y1, x2, y2, z1, width);
-		GLUquadricObj *quadric=gluNewQuadric();
-		gluQuadricNormals(quadric, GLU_SMOOTH);
-		gluQuadricOrientation(quadric,GLU_OUTSIDE);
-		glPushMatrix();
-		glTranslatef(x1, y1, z1);
-		gluDisk(quadric, 0.0, width / 2.0, 18, 1);
-		glPopMatrix();
-		glPushMatrix();
-		glTranslatef(x2, y2, z1);
-		gluDisk(quadric, 0.0, width / 2.0, 18, 1);
-		glPopMatrix();
-		gluDeleteQuadric(quadric);
-	}
-	glColor4f(0.0, 0.0, 1.0, 1.0);
+void draw_line_wrap_conn (float x1, float y1, float depth) {
+	float radius1 = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0) + depth;
+	float radius2 = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0);
+	float an = y1 / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
+	float rangle = toRad(an);
+	float ry = radius1 * cos(rangle);
+	float rz = radius1 * sin(rangle);
+	float ry2 = radius2 * cos(rangle);
+	float rz2 = radius2 * sin(rangle);
 	glBegin(GL_LINES);
-	glVertex3f(x1, y1, z1 + 0.02);
-	glVertex3f(x2, y2, z2 + 0.02);
+	glVertex3f(x1, ry, -rz);
+	glVertex3f(x1, ry2, -rz2);
 	glEnd();
-	DrawArrow(x1, y1, x2, y2, z1 + 0.02, width);
+}
+
+void draw_line_wrap (float x1, float y1, float x2, float y2, float depth) {
+	float radius = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0) + depth;
+	float dX = x2 - x1;
+	float dY = y2 - y1;
+	float dashes = dY;
+	if (dashes < -1.0) {
+		dashes *= -1;
+	}
+	float an = y1 / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
+	float rangle = toRad(an);
+	float ry = radius * cos(rangle);
+	float rz = radius * sin(rangle);
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(x1, ry, -rz);
+	if (dashes > 1.0) {
+		float dashX = dX / dashes;
+		float dashY = dY / dashes;
+		float q = 0.0;
+		while (q++ < dashes) {
+			x1 += dashX;
+			y1 += dashY;
+			an = y1 / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
+			rangle = toRad(an);
+			ry = radius * cos(rangle);
+			rz = radius * sin(rangle);
+			glVertex3f(x1, ry, -rz);
+		}
+	}
+	an = y2 / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
+	rangle = toRad(an);
+	ry = radius * cos(rangle);
+	rz = radius * sin(rangle);
+	glVertex3f(x2, ry, -rz);
+	glEnd();
+}
+
+void draw_oline (float x1, float y1, float x2, float y2, float depth) {
+	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+		draw_line_wrap(x1, y1, x2, y2, 0.0);
+		draw_line_wrap(x1, y1, x2, y2, depth);
+		draw_line_wrap_conn(x1, y1, depth);
+		draw_line_wrap_conn(x2, y2, depth);
+	} else {
+		glBegin(GL_LINES);
+		glVertex3f(x1, y1, 0.02);
+		glVertex3f(x2, y2, 0.02);
+	//	if (PARAMETER[P_V_HELPLINES].vint == 1) {
+			glBegin(GL_LINES);
+			glVertex3f(x1, y1, depth);
+			glVertex3f(x2, y2, depth);
+			glVertex3f(x1, y1, depth);
+			glVertex3f(x1, y1, 0.02);
+			glVertex3f(x2, y2, depth);
+			glVertex3f(x2, y2, 0.02);
+	//	}
+		glEnd();
+	}
 }
 
 void draw_line2 (float x1, float y1, float z1, float x2, float y2, float z2, float width) {
-	if (PARAMETER[P_V_HELPLINES].vint == 1) {
-		DrawLine(x1, y1, x2, y2, z1, width);
-		GLUquadricObj *quadric=gluNewQuadric();
-		gluQuadricNormals(quadric, GLU_SMOOTH);
-		gluQuadricOrientation(quadric,GLU_OUTSIDE);
-		glPushMatrix();
-		glTranslatef(x1, y1, z1);
-		gluDisk(quadric, 0.0, width / 2.0, 18, 1);
-		glPopMatrix();
-		glPushMatrix();
-		glTranslatef(x2, y2, z1);
-		gluDisk(quadric, 0.0, width / 2.0, 18, 1);
-		glPopMatrix();
-		gluDeleteQuadric(quadric);
+	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+		draw_line_wrap(x1, y1, x2, y2, 0.0);
+		draw_line_wrap(x1, y1, x2, y2, z1);
+		draw_line_wrap_conn(x1, y1, z1);
+		draw_line_wrap_conn(x2, y2, z1);
+	} else {
+		if (PARAMETER[P_V_HELPLINES].vint == 1) {
+			DrawLine(x1, y1, x2, y2, z1, width);
+			GLUquadricObj *quadric=gluNewQuadric();
+			gluQuadricNormals(quadric, GLU_SMOOTH);
+			gluQuadricOrientation(quadric,GLU_OUTSIDE);
+			glPushMatrix();
+			glTranslatef(x1, y1, z1);
+			gluDisk(quadric, 0.0, width / 2.0, 18, 1);
+			glPopMatrix();
+			glPushMatrix();
+			glTranslatef(x2, y2, z1);
+			gluDisk(quadric, 0.0, width / 2.0, 18, 1);
+			glPopMatrix();
+			gluDeleteQuadric(quadric);
+		}
+		glBegin(GL_LINES);
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x2, y2, z2);
+		glEnd();
 	}
-	glBegin(GL_LINES);
-	glVertex3f(x1, y1, z1);
-	glVertex3f(x2, y2, z2);
-	glEnd();
+}
+
+void draw_line (float x1, float y1, float z1, float x2, float y2, float z2, float width) {
+	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+		glColor4f(0.0, 0.0, 1.0, 1.0);
+		draw_line_wrap(x1, y1, x2, y2, 0.0);
+		draw_line_wrap(x1, y1, x2, y2, z1);
+		draw_line_wrap_conn(x1, y1, z1);
+		draw_line_wrap_conn(x2, y2, z1);
+	} else {
+		if (PARAMETER[P_V_HELPDIA].vint == 1) {
+			glColor4f(1.0, 1.0, 1.0, 1.0);
+			DrawLine(x1, y1, x2, y2, z1, width);
+			GLUquadricObj *quadric=gluNewQuadric();
+			gluQuadricNormals(quadric, GLU_SMOOTH);
+			gluQuadricOrientation(quadric,GLU_OUTSIDE);
+			glPushMatrix();
+			glTranslatef(x1, y1, z1);
+			gluDisk(quadric, 0.0, width / 2.0, 18, 1);
+			glPopMatrix();
+			glPushMatrix();
+			glTranslatef(x2, y2, z1);
+			gluDisk(quadric, 0.0, width / 2.0, 18, 1);
+			glPopMatrix();
+			gluDeleteQuadric(quadric);
+		}
+		glColor4f(0.0, 0.0, 1.0, 1.0);
+		glBegin(GL_LINES);
+		glVertex3f(x1, y1, z1 + 0.02);
+		glVertex3f(x2, y2, z2 + 0.02);
+		glEnd();
+		DrawArrow(x1, y1, x2, y2, z1 + 0.02, width);
+	}
 }
 
 void object_draw (FILE *fd_out, int object_num) {
@@ -690,6 +805,12 @@ void object_draw (FILE *fd_out, int object_num) {
 			}
 		}
 	}
+	if (object_force[object_num] == 1) {
+		mill_depth_real = object_depth[object_num];
+	} else {
+		object_depth[object_num] = mill_depth_real;
+	}
+
 	/* find last line in object */
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
@@ -815,10 +936,7 @@ void object_draw (FILE *fd_out, int object_num) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			int lnum = myOBJECTS[object_num].line[num];
 			glColor4f(1.0, 0.0, 0.0, 1.0);
-			glBegin(GL_LINES);
-			glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, 0.0);
-			glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.0);
-			glEnd();
+			draw_oline((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, mill_depth_real);
 			if (myOBJECTS[object_num].closed == 0) {
 				draw_line2((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, 0.01, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.01, (PARAMETER[P_TOOL_DIAMETER].vdouble));
 			}
@@ -849,16 +967,22 @@ void object_draw (FILE *fd_out, int object_num) {
 				}
 			}
 			if (num == 0) {
-				glColor4f(1.0, 1.0, 1.0, 1.0);
-				char tmp_str[1024];
-				sprintf(tmp_str, "%i", object_num);
-				draw_text(GLUT_BITMAP_HELVETICA_18, tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1);
+				if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+					glColor4f(1.0, 1.0, 1.0, 1.0);
+					char tmp_str[1024];
+					sprintf(tmp_str, "%i", object_num);
+					draw_text(GLUT_BITMAP_HELVETICA_18, tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1);
+				}
 			}
 		}
 	}
-	if (PARAMETER[P_V_HELPLINES].vint == 1) {
-		if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 0) {
-			object2poly(object_num, 0.0, mill_depth_real);
+	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+		if (PARAMETER[P_V_HELPLINES].vint == 1) {
+			if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 0) {
+				object2poly(object_num, 0.0, mill_depth_real, 0);
+			} else if (myOBJECTS[object_num].inside == 1 && mill_depth_real > PARAMETER[P_M_DEPTH].vdouble) {
+				object2poly(object_num, mill_depth_real - 0.001, mill_depth_real - 0.001, 1);
+			}
 		}
 	}
 }
@@ -875,7 +999,6 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	int num2 = 0;
 	int last = 0;
 	int last_lnum = 0;
-	int reverse = 0;
 	double first_x = 0.0;
 	double first_y = 0.0;
 	double last_x = 0.0;
@@ -935,12 +1058,11 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		object_laser[object_num] = lasermode;
 	}
 	if (lasermode == 1) {
-		tool_offset = PARAMETER[P_TOOL_LASERDIA].vdouble / 2.0;
+		tool_offset = PARAMETER[P_H_LASERDIA].vdouble / 2.0;
 		mill_depth_real = 0.0;
 	} else {
 		tool_offset = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
 	}
-
 
 	if (object_selections[object_num] == 0) {
 		return;
@@ -993,43 +1115,23 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 			if (myOBJECTS[object_num].closed == 1 && offset != 0) {
 				// line1 Offsets & Angle
 				double alpha1 = line_angle(lnum1);
-//				double len1 = line_len(lnum1);
 				double check1_x = myLINES[lnum1].x1;
 				double check1_y = myLINES[lnum1].y1;
-//				add_angle_offset(&check1_x, &check1_y, len1 / 2.0, alpha1);
-				if (reverse == 1) {
-					add_angle_offset(&check1_x, &check1_y, tool_offset, alpha1 + 90);
-				} else {
-					add_angle_offset(&check1_x, &check1_y, tool_offset, alpha1 - 90);
-				}
+				add_angle_offset(&check1_x, &check1_y, tool_offset, alpha1 + 90);
 				double check1b_x = myLINES[lnum1].x2;
 				double check1b_y = myLINES[lnum1].y2;
 				add_angle_offset(&check1b_x, &check1b_y, 0.0, alpha1);
-				if (reverse == 1) {
-					add_angle_offset(&check1b_x, &check1b_y, tool_offset, alpha1 + 90);
-				} else {
-					add_angle_offset(&check1b_x, &check1b_y, tool_offset, alpha1 - 90);
-				}
+				add_angle_offset(&check1b_x, &check1b_y, tool_offset, alpha1 + 90);
 
 				// line2 Offsets & Angle
 				double alpha2 = line_angle(lnum2);
-//				double len2 = line_len(lnum2);
 				double check2_x = myLINES[lnum2].x1;
 				double check2_y = myLINES[lnum2].y1;
 				add_angle_offset(&check2_x, &check2_y, 0.0, alpha2);
-				if (reverse == 1) {
-					add_angle_offset(&check2_x, &check2_y, tool_offset, alpha2 + 90);
-				} else {
-					add_angle_offset(&check2_x, &check2_y, tool_offset, alpha2 - 90);
-				}
+				add_angle_offset(&check2_x, &check2_y, tool_offset, alpha2 + 90);
 				double check2b_x = myLINES[lnum2].x2;
 				double check2b_y = myLINES[lnum2].y2;
-//				add_angle_offset(&check2b_x, &check2b_y, len2 / 2.0, alpha2 - 180);
-				if (reverse == 1) {
-					add_angle_offset(&check2b_x, &check2b_y, tool_offset, alpha2 + 90);
-				} else {
-					add_angle_offset(&check2b_x, &check2b_y, tool_offset, alpha2 - 90);
-				}
+				add_angle_offset(&check2b_x, &check2b_y, tool_offset, alpha2 + 90);
 				// Angle-Diff
 				alpha1 = alpha1 + 180.0;
 				alpha2 = alpha2 + 180.0;
@@ -1041,16 +1143,27 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 					alpha_diff -= 360.0;
 				}
 
+				alpha1 = line_angle2(lnum1);
+				alpha2 = line_angle2(lnum2);
+				alpha_diff = alpha2 - alpha1;
+				if (alpha_diff > 180.0) {
+					alpha_diff -= 360.0;
+				}
+				if (alpha_diff < -180.0) {
+					alpha_diff += 360.0;
+				}
+
 				if (alpha_diff == 0.0) {
-				} else if (alpha_diff <= 180.0) {
+				} else if (alpha_diff > 0.0) {
 					// Aussenkante
 					if (num != 0) {
 						draw_line((float)last_x, (float)last_y, 0.0, (float)check1b_x, (float)check1b_y, 0.0, (tool_offset * 2.0));
 					}
 					last_x = check1b_x;
 					last_y = check1b_y;
+/*
 					double an = 0;
-					for (an = alpha1 + 90.0; an < alpha1 + 90.0 + alpha_diff; an += 1.0) {
+					for (an = alpha1; an < alpha1 + alpha_diff; an += 1.0) {
 						double rangle = toRad(an);
 						double rx = tool_offset * cos(rangle);
 						double ry = tool_offset * sin(rangle);
@@ -1058,16 +1171,13 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 						last_x = myLINES[lnum1].x2 + rx;
 						last_y = myLINES[lnum1].y2 + ry;
 					}
+*/
 					draw_line((float)last_x, (float)last_y, 0.0, (float)check2_x, (float)check2_y, 0.0, (tool_offset * 2.0));
 					if (num == 0) {
 						first_x = check1b_x;
 						first_y = check1b_y;
 						if (save_gcode == 1) {
-							if (reverse == 1) {
-								fprintf(fd_out, "  G02 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-							} else {
-								fprintf(fd_out, "  G03 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-							}
+							fprintf(fd_out, "  G02 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 						}
 						last_x = check2_x;
 						last_y = check2_y;
@@ -1075,25 +1185,17 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 						if (save_gcode == 1) {
 							if (myLINES[lnum1].type == TYPE_ARC || myLINES[lnum1].type == TYPE_CIRCLE) {
 								if (myLINES[lnum1].opt < 0) {
-									fprintf(fd_out, "  G02 X%f Y%f R%f F%i (aa %s / %f)\n", check1b_x, check1b_y, (myLINES[lnum1].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
+									fprintf(fd_out, "  G02 X%f Y%f R%f F%i (aa %s / %f)\n", check1b_x, check1b_y, (myLINES[lnum1].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 								} else {
-									fprintf(fd_out, "  G03 X%f Y%f R%f F%i (bb %s / %f)\n", check1b_x, check1b_y, (myLINES[lnum1].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);//
+									fprintf(fd_out, "  G03 X%f Y%f R%f F%i (bb %s / %f)\n", check1b_x, check1b_y, (myLINES[lnum1].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);//
 								}
 								if (myLINES[lnum2].type == TYPE_ARC || myLINES[lnum2].type == TYPE_CIRCLE) {
 								} else {
-									if (reverse == 1) {
-										fprintf(fd_out, "  G02 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-									} else {
-										fprintf(fd_out, "  G03 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-									}
+									fprintf(fd_out, "  G02 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 								}
 							} else {
 								fprintf(fd_out, "  G01 X%f Y%f F%i (%s / %f)\n", check1b_x, check1b_y, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-								if (reverse == 1) {
-									fprintf(fd_out, "  G02 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-								} else {
-									fprintf(fd_out, "  G03 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
-								}
+								fprintf(fd_out, "  G02 X%f Y%f R%f F%i (%s / %f)\n", check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 							}
 						}
 						last_x = check2_x;
@@ -1140,7 +1242,6 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 								fprintf(fd_out, "  G01 X%f Y%f F%i (%s / %f - ecke ausfraesen)\n", enx, eny, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 								fprintf(fd_out, "  G01 X%f Y%f F%i (%s / %f)\n", px, py, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 							}
-
 						}
 					} else {
 						draw_line((float)last_x, (float)last_y, 0.0, (float)px, (float)py, 0.0, (tool_offset * 2.0));
@@ -1168,9 +1269,9 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 						if (save_gcode == 1) {
 							if (myLINES[lnum1].type == TYPE_ARC || myLINES[lnum1].type == TYPE_CIRCLE) {
 								if (myLINES[lnum1].opt < 0) {
-									fprintf(fd_out, "  G02 X%f Y%f R%f F%i (aa %s / %f)\n", px, py, (myLINES[lnum1].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
+									fprintf(fd_out, "  G02 X%f Y%f R%f F%i (aa %s / %f)\n", px, py, (myLINES[lnum1].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
 								} else {
-									fprintf(fd_out, "  G03 X%f Y%f R%f F%i (bb %s / %f)\n", px, py, (myLINES[lnum1].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);//
+									fprintf(fd_out, "  G03 X%f Y%f R%f F%i (bb %s / %f)\n", px, py, (myLINES[lnum1].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);//
 								}
 							} else {
 								fprintf(fd_out, "  G01 X%f Y%f F%i (%s / %f)\n", px, py, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum1].type], myLINES[lnum1].opt);
@@ -1191,16 +1292,56 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 					first_x = myLINES[lnum2].x1;
 					first_y = myLINES[lnum2].y1;
 				} else {
+					if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
+						double alpha1 = line_angle2(lnum1);
+						double alpha2 = line_angle2(lnum2);
+						double alpha_diff = alpha2 - alpha1;
+						if (alpha_diff > 180.0) {
+							alpha_diff -= 360.0;
+						}
+						if (alpha_diff < -180.0) {
+							alpha_diff += 360.0;
+						}
+						if (alpha_diff > PARAMETER[P_H_KNIFEMAXANGLE].vdouble || alpha_diff < -PARAMETER[P_H_KNIFEMAXANGLE].vdouble) {
+							draw_line((float)last_x, (float)last_y, 10.0, (float)last_x, (float)last_y, 0.0, (tool_offset * 2.0));
+						}
+					}
 					draw_line((float)last_x, (float)last_y, 0.0, (float)myLINES[lnum2].x2, (float)myLINES[lnum2].y2, 0.0, (tool_offset * 2.0));
 				}
 				if (save_gcode == 1) {
+					double alpha1 = line_angle2(lnum1);
+					double alpha2 = line_angle2(lnum2);
+					double alpha_diff = alpha2 - alpha1;
 					if (myLINES[lnum2].type == TYPE_ARC || myLINES[lnum2].type == TYPE_CIRCLE) {
-						if (myLINES[lnum2].opt < 0) {
-							fprintf(fd_out, "  G02 X%f Y%f R%f F%i (aa %s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt * -1, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);
+						if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
+							if (myLINES[lnum2].opt < 0) {
+								fprintf(fd_out, "  G02 X%f Y%f R%f (TAN: %f) F%i (aa %s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt * -1, alpha2, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);
+							} else {
+								fprintf(fd_out, "  G03 X%f Y%f R%f (TAN: %f) F%i (bb %s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt, alpha2, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);//
+							}
 						} else {
-							fprintf(fd_out, "  G03 X%f Y%f R%f F%i (bb %s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);//
+							if (myLINES[lnum2].opt < 0) {
+								fprintf(fd_out, "  G02 X%f Y%f R%f F%i (aa %s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt * -1, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);
+							} else {
+								fprintf(fd_out, "  G03 X%f Y%f R%f F%i (bb %s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);//
+							}
 						}
 					} else {
+						if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
+							if (alpha_diff > 180.0) {
+								alpha_diff -= 360.0;
+							}
+							if (alpha_diff < -180.0) {
+								alpha_diff += 360.0;
+							}
+							if (alpha_diff > PARAMETER[P_H_KNIFEMAXANGLE].vdouble || alpha_diff < -PARAMETER[P_H_KNIFEMAXANGLE].vdouble) {
+								fprintf(fd_out, "  G00 Z%f\n", 10.0);
+								fprintf(fd_out, "  (TAN: %f)\n", alpha2);
+								fprintf(fd_out, "  G01 Z%f\n", 0.0);
+							} else {
+								fprintf(fd_out, "  (TAN: %f)\n", alpha2);
+							}
+						}
 						fprintf(fd_out, "  G01 X%f Y%f F%i (%s / %f)\n", myLINES[lnum2].x2, myLINES[lnum2].y2, PARAMETER[P_M_FEEDRATE].vint, dxf_typename[myLINES[lnum2].type], myLINES[lnum2].opt);
 					}
 				}
@@ -1259,17 +1400,19 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 			fprintf(fd_out, "G00 X%f Y%f\n", first_x, first_y);
 		}
 	}
-	glColor3f(0.0, 1.0, 1.0);
-	glBegin(GL_LINES);
-	glVertex3f(*next_x, *next_y, PARAMETER[P_CUT_SAVE].vdouble);
-	glVertex3f(first_x, first_y, PARAMETER[P_CUT_SAVE].vdouble);
-	glEnd();
 
-	// move in
-	glBegin(GL_LINES);
-	glVertex3f(first_x, first_y, PARAMETER[P_CUT_SAVE].vdouble);
-	glVertex3f(first_x, first_y, mill_depth_real);
-	glEnd();
+	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+		glColor3f(0.0, 1.0, 1.0);
+		glBegin(GL_LINES);
+		glVertex3f(*next_x, *next_y, PARAMETER[P_CUT_SAVE].vdouble);
+		glVertex3f(first_x, first_y, PARAMETER[P_CUT_SAVE].vdouble);
+		glEnd();
+		// move in
+		glBegin(GL_LINES);
+		glVertex3f(first_x, first_y, PARAMETER[P_CUT_SAVE].vdouble);
+		glVertex3f(first_x, first_y, mill_depth_real);
+		glEnd();
+	}
 
 	// offset for each depth-step
 	for (depth = PARAMETER[P_M_Z_STEP].vdouble; depth > mill_depth_real; depth += PARAMETER[P_M_Z_STEP].vdouble) {
@@ -1278,9 +1421,11 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 			fprintf(fd_out, "O%04i call\n", object_num);
 			fprintf(fd_out, "\n");
 		}
-		glTranslatef(0.0, 0.0, depth);
-		glCallList(1);
-		glTranslatef(0.0, 0.0, -depth);
+		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+			glTranslatef(0.0, 0.0, depth);
+			glCallList(1);
+			glTranslatef(0.0, 0.0, -depth);
+		}
 		if (myOBJECTS[object_num].closed == 0) {
 			// back to start on open lines
 			if (save_gcode == 1) {
@@ -1299,9 +1444,13 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		fprintf(fd_out, "O%04i call\n", object_num);
 		fprintf(fd_out, "\n");
 	}
-	glTranslatef(0.0, 0.0, depth);
-	glCallList(1);
-	glTranslatef(0.0, 0.0, -depth);
+	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+		glTranslatef(0.0, 0.0, depth);
+		glCallList(1);
+		glTranslatef(0.0, 0.0, -depth);
+	} else {
+		glCallList(1);
+	}
 
 	// move out
 	if (save_gcode == 1) {
@@ -1313,10 +1462,13 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 			fprintf(fd_out, "\n");
 		}
 	}
-	glBegin(GL_LINES);
-	glVertex3f(last_x, last_y, mill_depth_real);
-	glVertex3f(last_x, last_y, PARAMETER[P_CUT_SAVE].vdouble);
-	glEnd();
+
+	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+		glBegin(GL_LINES);
+		glVertex3f(last_x, last_y, mill_depth_real);
+		glVertex3f(last_x, last_y, PARAMETER[P_CUT_SAVE].vdouble);
+		glEnd();
+	}
 
 	*next_x = last_x;
 	*next_y = last_y;
@@ -1618,6 +1770,61 @@ void init_objects (void) {
 
 void draw_helplines (void) {
 	char tmp_str[128];
+
+	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+		GLUquadricObj *quadratic = gluNewQuadric();
+		float radius = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0) + PARAMETER[P_M_DEPTH].vdouble;
+		float radius2 = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0);
+
+		glPushMatrix();
+		glTranslatef(0.0, -radius2 - 10.0, 0.0);
+		float lenX = size_x;
+		float offXYZ = 10.0;
+		float arrow_d = 1.0;
+		float arrow_l = 6.0;
+		glColor4f(0.0, 1.0, 0.0, 1.0);
+		glBegin(GL_LINES);
+		glVertex3f(0.0, -offXYZ, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(lenX, 0.0, 0.0);
+		glEnd();
+		glBegin(GL_LINES);
+		glVertex3f(lenX, -offXYZ, 0.0);
+		glVertex3f(lenX, 0.0, 0.0);
+		glEnd();
+		glPushMatrix();
+		glTranslatef(lenX, -offXYZ, 0.0);
+		glPushMatrix();
+		glTranslatef(-lenX / 2.0, -arrow_d * 2.0 - 11.0, 0.0);
+		glScalef(0.01, 0.01, 0.01);
+		sprintf(tmp_str, "%0.2fmm", lenX);
+		output_text(tmp_str);
+		glPopMatrix();
+		glRotatef(-90.0, 0.0, 1.0, 0.0);
+		gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
+		glTranslatef(0.0, 0.0, arrow_l);
+		gluCylinder(quadratic, arrow_d, arrow_d, lenX - arrow_l * 2.0 ,32, 1);
+		glTranslatef(0.0, 0.0, lenX - arrow_l * 2.0);
+		gluCylinder(quadratic, (arrow_d * 3), 0.0, arrow_l ,32, 1);
+		glPopMatrix();
+		glPopMatrix();
+
+		glColor4f(0.2, 0.2, 0.2, 0.5);
+		glPushMatrix();
+		glRotatef(90.0, 0.0, 1.0, 0.0);
+		gluCylinder(quadratic, radius, radius, size_x ,64, 1);
+		glTranslatef(0.0, 0.0, -size_x);
+		gluCylinder(quadratic, radius2, radius2, size_x ,64, 1);
+		glTranslatef(0.0, 0.0, size_x * 2);
+		gluCylinder(quadratic, radius2, radius2, size_x ,64, 1);
+		glPopMatrix();
+
+		return;
+	}
+
 	/* Scale-Arrow's */
 	float gridXYZ = 10.0;
 	float gridXYZmin = 1.0;
@@ -1633,28 +1840,28 @@ void draw_helplines (void) {
 	glColor4f(1.0, 1.0, 1.0, 0.3);
 	for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZ) {
 		glBegin(GL_LINES);
-		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble);
-		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
 		glEnd();
 	}
 	for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZ) {
 		glBegin(GL_LINES);
-		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble);
-		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble - 0.1);
 		glEnd();
 	}
 
 	glColor4f(1.0, 1.0, 1.0, 0.2);
 	for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZmin) {
 		glBegin(GL_LINES);
-		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble);
-		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
 		glEnd();
 	}
 	for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZmin) {
 		glBegin(GL_LINES);
-		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble);
-		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble - 0.1);
 		glEnd();
 	}
 
@@ -1766,6 +1973,22 @@ void mainloop (void) {
 		TwDefine("Parameter/'Tool|Number' readonly=false");
 		TwDefine("Parameter/'Tool|Diameter' readonly=false");
 	}
+	if (PARAMETER[P_M_LASERMODE].vint == 1) {
+		TwDefine("Parameter/'Machine|Laser-Diameter' readonly=false");
+	} else {
+		TwDefine("Parameter/'Machine|Laser-Diameter' readonly=true");
+	}
+	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+		TwDefine("Parameter/'Rotary-Axis' readonly=false");
+	} else {
+		TwDefine("Parameter/'Rotary-Axis' readonly=true");
+	}
+	if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
+		TwDefine("Parameter/'Tangencial-Axis' readonly=false");
+	} else {
+		TwDefine("Parameter/'Tangencial-Axis' readonly=true");
+	}
+
 	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[PARAMETER[P_MAT_SELECT].vint] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
 	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
 		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][0] * (float)PARAMETER[P_TOOL_W].vint);
@@ -1805,12 +2028,24 @@ void mainloop (void) {
 		glMultMatrixf(mat);
 		glScalef(PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat);
 		glScalef(scale, scale, scale);
-		glTranslatef(-size_x / 2.0, -size_y / 2.0, 0.0);
+
+		glTranslatef(-size_x / 2.0, 0.0, 0.0);
+		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+			glTranslatef(0.0, -size_y / 2.0, 0.0);
+		}
 		glTranslatef(translate_x, translate_y, 0.0);
+
+		if (PARAMETER[P_V_HELPLINES].vint == 1) {
+			if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+				draw_helplines();
+			}
+		}
+
 	} else {
 		PARAMETER[P_V_HELPLINES].vint = 0;
 		save_gcode = 1;
 	}
+
 
 	/* init gcode */
 	if (save_gcode == 1) {
@@ -1944,6 +2179,12 @@ void mainloop (void) {
 		}
 	}
 
+	if (PARAMETER[P_V_HELPLINES].vint == 1) {
+		if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+			draw_helplines();
+		}
+	}
+
 	/* draw text / opengl only */
 	int nnum = 0;
 	if (batchmode == 0) {
@@ -1966,9 +2207,6 @@ void mainloop (void) {
 		onExit();
 		exit(0);
 	} else {
-		if (PARAMETER[P_V_HELPLINES].vint == 1) {
-			draw_helplines();
-		}
 		glPopMatrix();
 		TwDraw();
 		glutSwapBuffers();
@@ -2153,6 +2391,13 @@ int main (int argc, char *argv[]) {
     Kunststoffe: 50 – 150 m/min
     Holz: Bis zu 3000 m/min
 */
+
+	AxisEV[0].Value = 0;
+	AxisEV[0].Label = "A";
+	AxisEV[1].Value = 1;
+	AxisEV[1].Label = "B";
+	AxisEV[2].Value = 2;
+	AxisEV[2].Label = "C";
 
 	materialEV[0].Value = 0;
 	materialEV[0].Label = "Aluminium(Langspanend)";
@@ -2368,9 +2613,6 @@ int main (int argc, char *argv[]) {
 		TwType tools = TwDefineEnum("toolType", toolEV, tools_max);
 		TwAddVarRW(bar, "Tool-Select", tools, &PARAMETER[P_TOOL_SELECT].vint, "group=Tool label=Select");
 
-		TwType material = TwDefineEnum("materialType", materialEV, material_max);
-		TwAddVarRW(bar, "Material-Select", material, &PARAMETER[P_MAT_SELECT].vint, "group=Material label=Select");
-
 		for (n = 0; n < P_LAST; n++) {
 			char name_str[1024];
 			char opt_str[1024];
@@ -2393,6 +2635,13 @@ int main (int argc, char *argv[]) {
 			} else if (PARAMETER[n].type == T_STRING) {
 			}
 		}
+
+		TwType axisnames = TwDefineEnum("AxisName", AxisEV, 3);
+		TwAddVarRW(bar, "Rotary-Axis", axisnames, &PARAMETER[P_H_ROTARYAXIS].vint, "group=Machine label=Rotary-Axis");
+		TwAddVarRW(bar, "Tangencial-Axis", axisnames, &PARAMETER[P_H_KNIFEAXIS].vint, "group=Machine label=Tangencial-Axis");
+
+		TwType material = TwDefineEnum("materialType", materialEV, material_max);
+		TwAddVarRW(bar, "Material-Select", material, &PARAMETER[P_MAT_SELECT].vint, "group=Material label=Select");
 
 		TwAddSeparator(bar, "Layers", "");
 		TwType layers = TwDefineEnum("ShapeType", shapeEV, labeln);
@@ -2453,7 +2702,7 @@ int main (int argc, char *argv[]) {
 				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_laser[num2], tmp_str2);
 
 				sprintf(tmp_str, "Object: #%i Depth", num2);
-				sprintf(tmp_str2, "label='Depth' group='Object: #%i'  min=-100.0 max=10.0 step=0.1", num2);
+				sprintf(tmp_str2, "label='Depth' group='Object: #%i'  min=-100.0 max=0.0 step=0.1", num2);
 				TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &object_depth[num2], tmp_str2);
 
 			        TwEnumVal offsetEV[3] = { {0, "Normal"}, {1, "Reverse"}, {2, "None"} };

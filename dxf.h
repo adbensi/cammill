@@ -21,7 +21,7 @@
 #define OPTION_MTEXT_TEXT	 1
 #define OPTION_LAYERNAME	 8
 
-#define PI 3.14159265
+#define PI 3.14159265358979323846264338327950288419716939937511
 #define toDeg(x) (x*180.0)/PI
 #define toRad(x) (PI/180.0) * x
 

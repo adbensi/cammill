@@ -3,5 +3,18 @@
 2D CAM-Tool for Linux
 
 
+################################################################
+OSX-Build:
 
+Dateien ersetzen:
+http://sourceforge.net/p/anttwea​kbar/code/ci/master/tree/src/Load​OGLCore.h#l334
+http://sourceforge.net/p/anttwea​kbar/code/ci/master/tree/src/TwOp​enGLCore.h
+
+mkdir AntTweakBar/lib
+cp AntTweakBar/src/Makefile.osx AntTweakBar/src/Makefile
+
+Change main.c
+#import <GL/glut.h>
+zu
+#import <GLUT/glut.h>
 
