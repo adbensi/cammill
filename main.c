@@ -8,16 +8,16 @@
 */
 
 #include <GL/gl.h>
+#include <GL/glu.h>
+
 #ifdef __APPLE__
-#include <OpenGL/glu.h>
 #include <GLUT/glut.h>
 #else
-#include <GL/glu.h>
 #include <GL/glut.h>
 #endif
+
 #include <gtk/gtk.h>
 #include <gtkgl/gtkglarea.h>
-
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -2570,7 +2570,6 @@ void on_changed (GtkWidget *widget, gpointer statusbar) {
 
 GtkTreeModel *create_and_fill_model (void) {
 	GtkTreeIter toplevel;
-	GtkTreeIter child;
 	GtkTreeIter value;
 	treestore = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING );
 
@@ -2637,17 +2636,49 @@ GtkTreeModel *create_and_fill_model (void) {
 		}
 	}
 
+
 	gtk_tree_store_append(treestore, &toplevel, NULL);
 	gtk_tree_store_set(treestore, &toplevel, 0, "Objects", -1);
 
-	gtk_tree_store_append(treestore, &child, &toplevel);
-	gtk_tree_store_set(treestore, &child, 0, "#1", -1);
+	int num2 = 0;
+	for (num2 = 0; num2 < MAX_OBJECTS; num2++) {
+		if (myOBJECTS[num2].line[0] != 0) {
+			char tmp_str[1024];
+			sprintf(tmp_str, "Object #%i", num2);
 
-	gtk_tree_store_append(treestore, &value, &child);
-	gtk_tree_store_set(treestore, &value, 0, "Width", 1, "100",-1);
+			GtkTreeIter childObject;
+			gtk_tree_store_append(treestore, &childObject, &toplevel);
+			gtk_tree_store_set(treestore, &childObject, 0, tmp_str, -1);
 
-	gtk_tree_store_append(treestore, &value, &child);
-	gtk_tree_store_set(treestore, &value, 0, "height", 1, "100", -1);
+			for (n = 0; n < O_P_LAST; n++) {
+				char name_str[1024];
+				sprintf(name_str, "%s", OBJECT_PARAMETER[n].name);
+				gtk_tree_store_append(treestore, &value, &childObject);
+				if (OBJECT_PARAMETER[n].type == T_FLOAT) {
+					sprintf(tmp_str, "%f", OBJECT_PARAMETER[n].vfloat);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else if (OBJECT_PARAMETER[n].type == T_DOUBLE) {
+					sprintf(tmp_str, "%f", OBJECT_PARAMETER[n].vdouble);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else if (OBJECT_PARAMETER[n].type == T_INT) {
+					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else if (OBJECT_PARAMETER[n].type == T_SELECT) {
+					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else if (OBJECT_PARAMETER[n].type == T_BOOL) {
+					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else if (OBJECT_PARAMETER[n].type == T_STRING) {
+					sprintf(tmp_str, "%s", OBJECT_PARAMETER[n].vstr);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else {
+					continue;
+				}
+			}
+		}
+	}
+
 	return GTK_TREE_MODEL(treestore);
 }
 
