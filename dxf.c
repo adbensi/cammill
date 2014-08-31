@@ -90,7 +90,13 @@ void dxf_read (char *file) {
 	ssize_t read;
 	int num = 0;
 	int onum = 0;
-
+	for (num = 0; num < line_last; num++) {
+		myLINES[num].used = 0.0;
+		myLINES[num].x1 = 0.0;
+		myLINES[num].y1 = 0.0;
+		myLINES[num].x2 = 0.0;
+		myLINES[num].y2 = 0.0;
+	}
 	strcpy(dxf_typename[TYPE_NONE], "None");
 	strcpy(dxf_typename[TYPE_LINE], "Line");
 	strcpy(dxf_typename[TYPE_ARC], "Arc");

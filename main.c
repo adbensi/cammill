@@ -16,11 +16,10 @@
 #include <GL/glut.h>
 #include <dxf.h>
 //#include <font.h>
+#include <setup.h>
 
 void texture_init (void);
-
 GLuint texture_load (char *filename);
-
 
 #define FUZZY 0.01
 
@@ -70,6 +69,7 @@ int g_RotateTime = 0;
 char tool_descr[100][1024];
 int tools_max = 0;
 int tool_last = 0;
+int LayerMax = 1;
 int material_max = 8;
 char *material_texture[100];
 int material_vc[100];
@@ -77,226 +77,10 @@ float material_fz[100][3];
 TwEnumVal toolEV[100];
 TwEnumVal materialEV[100];
 
-typedef struct{
-	char name[256];
-	char group[256];
-	char arg[128];
-	int type;
-	int vint;
-	float vfloat;
-	double vdouble;
-	char vstr[2048];
-	double min;
-	double step;
-	double max;
-	char unit[16];
-	int show;
-} PARA;
 
-enum {
-	T_INT,
-	T_BOOL,
-	T_FLOAT,
-	T_DOUBLE,
-	T_STRING
-};
-
-enum {
-	P_V_ZOOM,
-	P_V_HELPLINES,
-	P_V_HELPDIA,
-	P_V_NCDEBUG,
-	P_TOOL_SELECT,
-	P_TOOL_NUM,
-	P_TOOL_DIAMETER,
-	P_TOOL_SPEED_MAX,
-	P_TOOL_SPEED,
-	P_TOOL_W,
-	P_TOOL_TABLE,
-	P_M_FEEDRATE_MAX,
-	P_M_FEEDRATE,
-	P_M_PLUNGE_SPEED,
-	P_M_DEPTH,
-	P_M_Z_STEP,
-	P_CUT_SAVE,
-	P_M_OVERCUT,
-	P_M_LASERMODE,
-	P_M_ROTARYMODE,
-	P_M_KNIFEMODE,
-	P_H_LASERDIA,
-	P_H_ROTARYAXIS,
-	P_H_KNIFEAXIS,
-	P_H_KNIFEMAXANGLE,
-	P_MFILE,
-	P_MAT_SELECT,
-	P_MAT_DIAMETER,
-	P_POST_CMD,
-	P_LAST
-};
-
-PARA PARAMETER[] = {
-	{"Zoom",	"View",		"-zo",	T_FLOAT,	0,	1.0,	0.0,	"",	0.1,	0.1,	20.0,		"x", 1},
-	{"Helplines",	"View", 	"-hl",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"ShowTool",	"View", 	"-st",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"NC-Debug",	"View", 	"-nd",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"Select",	"Tool",		"-tn",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0},
-	{"Number",	"Tool",		"-tn",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	18.0,		"#", 1},
-	{"Diameter",	"Tool",		"-td",	T_DOUBLE,	0,	1.0,	1.0,	"",	0.01,	0.01,	18.0,		"mm", 1},
-	{"CalcSpeed",	"Tool",		"-cs",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1},
-	{"Speed",	"Tool",		"-ts",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1},
-	{"Wings",	"Tool",		"-tw",	T_INT,		2,	0.0,	0.0,	"",	1.0,	1.0,	10.0,		"#", 1},
-	{"Table",	"Tool",		"-tt",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0},
-	{"MaxFeedRate",	"Milling",	"-fm",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
-	{"FeedRate",	"Milling",	"-fr",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
-	{"PlungeRate",	"Milling",	"-pr",	T_INT	,	100,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1},
-	{"Depth",	"Milling",	"-md",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1},
-	{"Z-Step",	"Milling",	"-msp",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1},
-	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	4.0,	"",	1.0,	1.0,	80.0,		"mm", 1},
-	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"Rotary-Mode",	"Milling",	"-rm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"Tangencial-Mode","Milling",	"-tm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1},
-	{"Laser-Diameter","Machine",	"-lw",	T_DOUBLE,	0,	0.0,	0.4,	"",	0.01,	0.01,	10.0,		"mm", 1},
-	{"Rotary-Axis",	"Machine",	"-ra",	T_INT	,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0},
-	{"Tangencial-Axis","Machine",	"-ta",	T_INT	,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0},
-	{"Tangencial-MaxAngle","Machine", "-tm",T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1},
-	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0},
-	{"Select",	"Material",	"-ms",	T_INT,		1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0},
-	{"Rotary/Diameter","Material",	"-md",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.01,	0.01,	300.0,		"mm", 1},
-	{"Post-Command","Post"	,	"-pc",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0},
-};
-
-void read_setup (void) {
-	char cfgfile[2048];
-	char line2[2048];
-	FILE *cfg_fp;
-	int n = 0;
-	struct passwd *pw = getpwuid(getuid());
-	const char *homedir = pw->pw_dir;
-	sprintf(cfgfile, "%s/.c-dxf2gcode.cfg", homedir);
-	cfg_fp = fopen(cfgfile, "r");
-	if (cfg_fp == NULL) {
-		fprintf(stderr, "Can not read Setup: %s\n", cfgfile);
-	} else {
-		char *line = NULL;
-		size_t len = 0;
-		ssize_t read;
-		while ((read = getline(&line, &len, cfg_fp)) != -1) {
-			trimline(line2, 1024, line);
-			for (n = 0; n < P_LAST; n++) {
-				char name_str[1024];
-				sprintf(name_str, "%s|%s=", PARAMETER[n].group, PARAMETER[n].name);
-				if (strncmp(line2, name_str, strlen(name_str)) == 0) {
-					if (PARAMETER[n].type == T_FLOAT) {
-						PARAMETER[n].vfloat = atof(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_DOUBLE) {
-						PARAMETER[n].vdouble = atof(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_INT) {
-						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_BOOL) {
-						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_STRING) {
-						strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
-					}
-				}
-			}
-		}
-		fclose(cfg_fp);
-	}
-}
 
 void TW_CALL SaveSetup (void *clientData) {
-	char cfgfile[2048];
-	FILE *cfg_fp;
-	int n = 0;
-	struct passwd *pw = getpwuid(getuid());
-	const char *homedir = pw->pw_dir;
-	sprintf(cfgfile, "%s/.c-dxf2gcode.cfg", homedir);
-	cfg_fp = fopen(cfgfile, "w");
-	if (cfg_fp == NULL) {
-		fprintf(stderr, "Can not write Setup: %s\n", cfgfile);
-		return;
-	}
-	for (n = 0; n < P_LAST; n++) {
-		char name_str[1024];
-		sprintf(name_str, "%s|%s", PARAMETER[n].group, PARAMETER[n].name);
-		if (PARAMETER[n].type == T_FLOAT) {
-			fprintf(cfg_fp, "%s=%f\n", name_str, PARAMETER[n].vfloat);
-		} else if (PARAMETER[n].type == T_DOUBLE) {
-			fprintf(cfg_fp, "%s=%f\n", name_str, PARAMETER[n].vdouble);
-		} else if (PARAMETER[n].type == T_INT) {
-			fprintf(cfg_fp, "%s=%i\n", name_str, PARAMETER[n].vint);
-		} else if (PARAMETER[n].type == T_BOOL) {
-			fprintf(cfg_fp, "%s=%i\n", name_str, PARAMETER[n].vint);
-		} else if (PARAMETER[n].type == T_STRING) {
-			fprintf(cfg_fp, "%s=%s\n", name_str, PARAMETER[n].vstr);
-		}
-	}
-	fclose(cfg_fp);
-}
-
-void ShowSetup (void) {
-	int n = 0;
-	fprintf(stdout, "\n");
-	for (n = 0; n < P_LAST; n++) {
-		char name_str[1024];
-		sprintf(name_str, "%s-%s", PARAMETER[n].group, PARAMETER[n].name);
-		if (PARAMETER[n].type == T_FLOAT) {
-			fprintf(stdout, "%22s: %f\n", name_str, PARAMETER[n].vfloat);
-		} else if (PARAMETER[n].type == T_DOUBLE) {
-			fprintf(stdout, "%22s: %f\n", name_str, PARAMETER[n].vdouble);
-		} else if (PARAMETER[n].type == T_INT) {
-			fprintf(stdout, "%22s: %i\n", name_str, PARAMETER[n].vint);
-		} else if (PARAMETER[n].type == T_BOOL) {
-			fprintf(stdout, "%22s: %i\n", name_str, PARAMETER[n].vint);
-		} else if (PARAMETER[n].type == T_STRING) {
-			fprintf(stdout, "%22s: %s\n", name_str, PARAMETER[n].vstr);
-		}
-	}
-	fprintf(stdout, "\n");
-}
-
-void ShowSetup_gCode (FILE *out) {
-	int n = 0;
-	fprintf(out, "(GENERATED BY: c-dxf2gcode)\n");
-	for (n = 0; n < P_LAST; n++) {
-		char name_str[1024];
-		sprintf(name_str, "%s-%s", PARAMETER[n].group, PARAMETER[n].name);
-		if (PARAMETER[n].type == T_FLOAT) {
-			fprintf(out, "(%22s: %f)\n", name_str, PARAMETER[n].vfloat);
-		} else if (PARAMETER[n].type == T_DOUBLE) {
-			fprintf(out, "(%22s: %f)\n", name_str, PARAMETER[n].vdouble);
-		} else if (PARAMETER[n].type == T_INT) {
-			fprintf(out, "(%22s: %i)\n", name_str, PARAMETER[n].vint);
-		} else if (PARAMETER[n].type == T_BOOL) {
-			fprintf(out, "(%22s: %i)\n", name_str, PARAMETER[n].vint);
-		} else if (PARAMETER[n].type == T_STRING) {
-			fprintf(out, "(%22s: %s)\n", name_str, PARAMETER[n].vstr);
-		}
-	}
-	fprintf(out, "\n");
-}
-
-void ShowHelp (void) {
-	int n = 0;
-	fprintf(stdout, "\n");
-	fprintf(stdout, "c-dxf2gcode [OPTIONS] FILE\n");
-	for (n = 0; n < P_LAST; n++) {
-		char name_str[1024];
-		sprintf(name_str, "%s-%s", PARAMETER[n].group, PARAMETER[n].name);
-		if (PARAMETER[n].type == T_FLOAT) {
-			fprintf(stdout, "%5s FLOAT    %s\n", PARAMETER[n].arg, name_str);
-		} else if (PARAMETER[n].type == T_DOUBLE) {
-			fprintf(stdout, "%5s DOUBLE   %s\n", PARAMETER[n].arg, name_str);
-		} else if (PARAMETER[n].type == T_INT) {
-			fprintf(stdout, "%5s INT      %s\n", PARAMETER[n].arg, name_str);
-		} else if (PARAMETER[n].type == T_BOOL) {
-			fprintf(stdout, "%5s 0/1      %s\n", PARAMETER[n].arg, name_str);
-		} else if (PARAMETER[n].type == T_STRING) {
-			fprintf(stdout, "%5s STRING   %s\n", PARAMETER[n].arg, name_str);
-		}
-	}
-	fprintf(stdout, "\n");
+	SetupSave();
 }
 
 void line_invert (int num) {
@@ -2163,7 +1947,7 @@ void mainloop (void) {
 			exit(0);
 		}
 		tool_last = -1;
-		ShowSetup_gCode(fd_out);
+		SetupShowGcode(fd_out);
 		fprintf(fd_out, "\n");
 		fprintf(fd_out, "G21 (Metric)\n");
 		fprintf(fd_out, "G40 (No Offsets)\n");
@@ -2402,97 +2186,10 @@ void TW_CALL SaveGcode (void *clientData) {
 }
 
 void TW_CALL ReloadSetup (void *clientData) {
-	read_setup();
+	SetupLoad();
 }
 
-int main (int argc, char *argv[]) {
-	int num = 0;
-	int num2 = 0;
-	for (num = 0; num < line_last; num++) {
-		myLINES[num].used = 0.0;
-		myLINES[num].x1 = 0.0;
-		myLINES[num].y1 = 0.0;
-		myLINES[num].x2 = 0.0;
-		myLINES[num].y2 = 0.0;
-	}
-	mill_layer[0] = 0;
-	strcpy(PARAMETER[P_MFILE].vstr, "-");
-	read_setup();
-	if (argc < 2) {
-		ShowHelp();
-		exit(1);
-	}
-	for (num = 1; num < argc; num++) {
-		int flag = 0;
-		int n = 0;
-		for (n = 0; n < P_LAST; n++) {
-			if (strcmp(argv[num], PARAMETER[n].arg) == 0) {
-				num++;
-				flag = 1;
-				if (PARAMETER[n].type == T_FLOAT) {
-					PARAMETER[n].vfloat = atof(argv[num]);
-				} else if (PARAMETER[n].type == T_DOUBLE) {
-					PARAMETER[n].vdouble = atof(argv[num]);
-				} else if (PARAMETER[n].type == T_INT) {
-					PARAMETER[n].vint = atoi(argv[num]);
-				} else if (PARAMETER[n].type == T_BOOL) {
-					PARAMETER[n].vint = atoi(argv[num]);
-				} else if (PARAMETER[n].type == T_STRING) {
-					strcpy(PARAMETER[n].vstr, argv[num]);
-				}
-			}
-		}
-		if (flag == 1) {
-		} else if (strcmp(argv[num], "-h") == 0) {
-			ShowHelp();
-			exit(0);
-		} else if (num != argc - 1) {
-			fprintf(stderr, "### unknown argument: %s ###\n", argv[num]);
-			ShowHelp();
-			exit(1);
-		}
-	}
-	strcpy(dxf_file, argv[argc - 1]);
-
-	/* import DXF */
-	dxf_read(dxf_file);
-	init_objects();
-
-	/* check size */
-	min_x = 99999.0;
-	min_y = 99999.0;
-	max_x = 0.0;
-	max_y = 0.0;
-	for (num2 = 0; num2 < line_last; num2++) {
-		if (myLINES[num2].used == 1) {
-			if (max_x < myLINES[num2].x1) {
-				max_x = myLINES[num2].x1;
-			}
-			if (max_x < myLINES[num2].x2) {
-				max_x = myLINES[num2].x2;
-			}
-			if (max_y < myLINES[num2].y1) {
-				max_y = myLINES[num2].y1;
-			}
-			if (max_y < myLINES[num2].y2) {
-				max_y = myLINES[num2].y2;
-			}
-			if (min_x > myLINES[num2].x1) {
-				min_x = myLINES[num2].x1;
-			}
-			if (min_x > myLINES[num2].x2) {
-				min_x = myLINES[num2].x2;
-			}
-			if (min_y > myLINES[num2].y1) {
-				min_y = myLINES[num2].y1;
-			}
-			if (min_y > myLINES[num2].y2) {
-				min_y = myLINES[num2].y2;
-			}
-		}
-	}
-	ShowSetup();
-
+void MaterialLoadList (void) {
 /*
     Stahl: 40 – 120 m/min
     Aluminium: 100 – 500 m/min
@@ -2581,7 +2278,9 @@ int main (int argc, char *argv[]) {
 	material_texture[8] = "holz.bmp";
 
 	material_max = 9;
+}
 
+void ToolLoadTable (void) {
 	/* import Tool-Diameter from Tooltable */
 	int n = 0;
 	char tmp_str[1024];
@@ -2630,32 +2329,18 @@ int main (int argc, char *argv[]) {
 		}
 		fclose(tt_fp);
 	}
+}
 
-	/* set bottom-left to 0,0 */
-	for (num2 = 0; num2 < line_last; num2++) {
-		if (myLINES[num2].used == 1) {
-			myLINES[num2].x1 -= min_x;
-			myLINES[num2].y1 -= min_y;
-			myLINES[num2].x2 -= min_x;
-			myLINES[num2].y2 -= min_y;
-		}
-	}
-	for (num2 = 0; num2 < 100; num2++) {
-		if (myMTEXT[num2].used == 1) {
-			myMTEXT[num2].x -= min_x;
-			myMTEXT[num2].y -= min_y;
-		}
-	}
-
+void LayerLoadList (void) {
+	int num1 = 0;
+	int num2 = 0;
 	/* read Layer-Names */
-	for (num2 = 0; num2 < 100; num2++) {
-		shapeEV[num2].Label = NULL;
+	for (num1 = 0; num1 < 100; num1++) {
+		shapeEV[num1].Label = NULL;
 	}
 	shapeEV[0].Value = 0;
 	shapeEV[0].Label = (const char *)malloc(6);
 	strcpy((char *)shapeEV[0].Label, "ALL");
-	int num1 = 0;
-	int labeln = 1;
 	for (num1 = 0; num1 < MAX_LINES; num1++) {
 		if (myLINES[num1].layer[0] != 0) {
 			int flag = 0;
@@ -2664,167 +2349,264 @@ int main (int argc, char *argv[]) {
 					flag = 1;
 				}
 			}
-			if (flag == 0 && labeln < 100) {
-				shapeEV[labeln].Value = labeln;
-				shapeEV[labeln].Label = (const char *)malloc(strlen(myLINES[num1].layer) + 1);
-				strcpy((char *)shapeEV[labeln].Label, myLINES[num1].layer);
+			if (flag == 0 && LayerMax < 100) {
+				shapeEV[LayerMax].Value = LayerMax;
+				shapeEV[LayerMax].Label = (const char *)malloc(strlen(myLINES[num1].layer) + 1);
+				strcpy((char *)shapeEV[LayerMax].Label, myLINES[num1].layer);
 				if (strcmp(mill_layer, myLINES[num1].layer) == 0) {
-					layer_sel = labeln;
+					layer_sel = LayerMax;
 				}
-				layer_selections[labeln] = 1;
-				layer_force[labeln] = 0;
-				layer_depth[labeln] = 0.0;
-				labeln++;
+				layer_selections[LayerMax] = 1;
+				layer_force[LayerMax] = 0;
+				layer_depth[LayerMax] = 0.0;
+				LayerMax++;
 			}
 		}
 	}
+}
+
+void GuiBarInit (void) {
+	int n = 0;
+	int num2 = 0;
+	TwBar *bar;
+	TwInit(TW_OPENGL, NULL);
+	TwGLUTModifiersFunc(glutGetModifiers);
+
+	bar = TwNewBar("Parameter");
+	TwDefine("Parameter size='230 600' color='96 216 224' "); // change default tweak bar size and color
+
+	TwAddVarRW(bar, "ObjRotation", TW_TYPE_QUAT4F, &g_Rotation, "group=View label='Object rotation' opened=true help='Change the object orientation.' ");
+	TwAddVarCB(bar, "AutoRotate", TW_TYPE_BOOL32, SetAutoRotateCB, GetAutoRotateCB, NULL, "group=View label='Auto-rotate' key=space help='Toggle auto-rotate mode.' ");
+
+	TwAddSeparator(bar, "Save", "");
+	TwAddButton(bar, "Save G-Code", SaveGcode, NULL, " label='Save G-Code' ");
+	TwAddButton(bar, "Save Setup", SaveSetup, NULL, " label='Save Setup' ");
+	TwAddButton(bar, "Reload Setup", ReloadSetup, NULL, " label='Reload Setup' ");
+
+	TwType tools = TwDefineEnum("toolType", toolEV, tools_max);
+	TwAddVarRW(bar, "Tool-Select", tools, &PARAMETER[P_TOOL_SELECT].vint, "group=Tool label=Select");
+
+	for (n = 0; n < P_LAST; n++) {
+		char name_str[1024];
+		char opt_str[1024];
+		sprintf(name_str, "%s|%s", PARAMETER[n].group, PARAMETER[n].name);
+		if (PARAMETER[n].unit[0] != 0) {
+			sprintf(opt_str, "label='%s (%s)' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].unit, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
+		} else {
+			sprintf(opt_str, "label='%s' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
+		}
+		if (PARAMETER[n].show == 0) {
+		} else if (PARAMETER[n].type == T_FLOAT) {
+			TwAddVarRW(bar, name_str, TW_TYPE_FLOAT, &PARAMETER[n].vfloat, opt_str);
+		} else if (PARAMETER[n].type == T_DOUBLE) {
+			TwAddVarRW(bar, name_str, TW_TYPE_DOUBLE, &PARAMETER[n].vdouble, opt_str);
+		} else if (PARAMETER[n].type == T_INT) {
+			TwAddVarRW(bar, name_str, TW_TYPE_INT32, &PARAMETER[n].vint, opt_str);
+		} else if (PARAMETER[n].type == T_BOOL) {
+			sprintf(opt_str, "label='%s' group='%s'", PARAMETER[n].name, PARAMETER[n].group);
+			TwAddVarRW(bar, name_str, TW_TYPE_BOOL32, &PARAMETER[n].vint, opt_str);
+		} else if (PARAMETER[n].type == T_STRING) {
+		}
+	}
+
+	TwType axisnames = TwDefineEnum("AxisName", AxisEV, 3);
+	TwAddVarRW(bar, "Rotary-Axis", axisnames, &PARAMETER[P_H_ROTARYAXIS].vint, "group=Machine label=Rotary-Axis");
+	TwAddVarRW(bar, "Tangencial-Axis", axisnames, &PARAMETER[P_H_KNIFEAXIS].vint, "group=Machine label=Tangencial-Axis");
+
+	TwType material = TwDefineEnum("materialType", materialEV, material_max);
+	TwAddVarRW(bar, "Material-Select", material, &PARAMETER[P_MAT_SELECT].vint, "group=Material label=Select");
+
+	TwAddSeparator(bar, "Layers", "");
+	TwType layers = TwDefineEnum("ShapeType", shapeEV, LayerMax);
+	TwAddVarRW(bar, "Select", layers, &layer_sel, "group=Layer keyIncr='<' keyDecr='>' help='use only Layer X' ");
+	for (num2 = 1; num2 < 100; num2++) {
+		if (shapeEV[num2].Label != NULL) {
+			char tmp_str[1024];
+			char tmp_str2[1024];
+			sprintf(tmp_str, "Layer: %s Use", shapeEV[num2].Label);
+			sprintf(tmp_str2, "label='Use' group='Layer: %s'", shapeEV[num2].Label);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &layer_selections[num2], tmp_str2);
+
+			sprintf(tmp_str, "Layer: %s Overwrite", shapeEV[num2].Label);
+			sprintf(tmp_str2, "label='Overwrite' group='Layer: %s'", shapeEV[num2].Label);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &layer_force[num2], tmp_str2);
+
+			sprintf(tmp_str, "Layer: %s Depth", shapeEV[num2].Label);
+			sprintf(tmp_str2, "label='Depth' group='Layer: %s'  min=-100.0 max=10.0 step=0.1", shapeEV[num2].Label);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &layer_depth[num2], tmp_str2);
+
+			sprintf(tmp_str, "Parameter/'Layer: %s' opened=false", shapeEV[num2].Label);
+			TwDefine(tmp_str);
+		}
+	}
+
+	TwAddSeparator(bar, "Objects", "");
+	for (num2 = 0; num2 < MAX_OBJECTS; num2++) {
+		if (myOBJECTS[num2].line[0] != 0) {
+			char tmp_str[1024];
+			char tmp_str2[1024];
+
+			sprintf(tmp_str, "Object: #%i Closed", num2);
+			sprintf(tmp_str2, "label='Closed' group='Object: #%i' readonly='true'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &myOBJECTS[num2].closed, tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Inside", num2);
+			sprintf(tmp_str2, "label='Inside' group='Object: #%i' readonly='true'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &myOBJECTS[num2].inside, tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Use", num2);
+			sprintf(tmp_str2, "label='Use' group='Object: #%i'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_selections[num2], tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Overwrite", num2);
+			sprintf(tmp_str2, "label='Overwrite' group='Object: #%i'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_force[num2], tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Overcut", num2);
+			sprintf(tmp_str2, "label='Overcut' group='Object: #%i'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_overcut[num2], tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Pocket", num2);
+			sprintf(tmp_str2, "label='Pocket' group='Object: #%i'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_pocket[num2], tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Laser", num2);
+			sprintf(tmp_str2, "label='Laser' group='Object: #%i'", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_laser[num2], tmp_str2);
+
+			sprintf(tmp_str, "Object: #%i Depth", num2);
+			sprintf(tmp_str2, "label='Depth' group='Object: #%i'  min=-100.0 max=0.0 step=0.1", num2);
+			TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &object_depth[num2], tmp_str2);
+
+		        TwEnumVal offsetEV[3] = { {0, "Normal"}, {1, "Reverse"}, {2, "None"} };
+		        TwType offsetType = TwDefineEnum("offsetType", offsetEV, 3);
+			sprintf(tmp_str, "Object: #%i Offset", num2);
+			sprintf(tmp_str2, "label='Offset' group='Object: #%i'", num2);
+			TwAddVarRW(bar, tmp_str, offsetType, &object_offset[num2], tmp_str2);
+
+			sprintf(tmp_str, "Parameter/'Object: #%i' opened=false", num2);
+			TwDefine(tmp_str);
+		}
+	}
+}
+
+void DrawCheckSize (void) {
+	int num2 = 0;
+	/* check size */
+	min_x = 99999.0;
+	min_y = 99999.0;
+	max_x = 0.0;
+	max_y = 0.0;
+	for (num2 = 0; num2 < line_last; num2++) {
+		if (myLINES[num2].used == 1) {
+			if (max_x < myLINES[num2].x1) {
+				max_x = myLINES[num2].x1;
+			}
+			if (max_x < myLINES[num2].x2) {
+				max_x = myLINES[num2].x2;
+			}
+			if (max_y < myLINES[num2].y1) {
+				max_y = myLINES[num2].y1;
+			}
+			if (max_y < myLINES[num2].y2) {
+				max_y = myLINES[num2].y2;
+			}
+			if (min_x > myLINES[num2].x1) {
+				min_x = myLINES[num2].x1;
+			}
+			if (min_x > myLINES[num2].x2) {
+				min_x = myLINES[num2].x2;
+			}
+			if (min_y > myLINES[num2].y1) {
+				min_y = myLINES[num2].y1;
+			}
+			if (min_y > myLINES[num2].y2) {
+				min_y = myLINES[num2].y2;
+			}
+		}
+	}
+}
+
+void DrawSetZero (void) {
+	int num = 0;
+	/* set bottom-left to 0,0 */
+	for (num = 0; num < line_last; num++) {
+		if (myLINES[num].used == 1) {
+			myLINES[num].x1 -= min_x;
+			myLINES[num].y1 -= min_y;
+			myLINES[num].x2 -= min_x;
+			myLINES[num].y2 -= min_y;
+		}
+	}
+	for (num = 0; num < 100; num++) {
+		if (myMTEXT[num].used == 1) {
+			myMTEXT[num].x -= min_x;
+			myMTEXT[num].y -= min_y;
+		}
+	}
+}
+
+void GuiInit (int *argc, char **argv) {
+	glutInit(argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitWindowSize(winw, winh);
+	glutCreateWindow("c-dxf2gcode");
+	glutCreateMenu(NULL);
+	glutReshapeFunc(Reshape);
+	glutDisplayFunc(mainloop);
+	glutMouseFunc(OnMouseFunc);
+	glutMotionFunc(OnMouseMotion);
+	glutPassiveMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
+	glutKeyboardFunc((GLUTkeyboardfun)TwEventKeyboardGLUT);
+	glutSpecialFunc((GLUTspecialfun)TwEventSpecialGLUT);
+	atexit(onExit);
+	texture_init();
+}
+
+void ArgsRead (int argc, char **argv) {
+	int num = 0;
+	if (argc < 2) {
+		SetupShowHelp();
+		exit(1);
+	}
+	mill_layer[0] = 0;
+	strcpy(PARAMETER[P_MFILE].vstr, "-");
+	for (num = 1; num < argc; num++) {
+		if (SetupArgCheck(argv[num], argv[num + 1]) == 1) {
+			num++;
+		} else if (strcmp(argv[num], "-h") == 0) {
+			SetupShowHelp();
+			exit(0);
+		} else if (num != argc - 1) {
+			fprintf(stderr, "### unknown argument: %s ###\n", argv[num]);
+			SetupShowHelp();
+			exit(1);
+		}
+	}
+	strcpy(dxf_file, argv[argc - 1]);
+}
+
+int main (int argc, char *argv[]) {
+	SetupLoad();
+	ArgsRead(argc, argv);
+	SetupShow();
+
+	ToolLoadTable();
+	MaterialLoadList();
+
+	/* import DXF */
+	dxf_read(dxf_file);
+	init_objects();
+	DrawCheckSize();
+	DrawSetZero();
+	LayerLoadList();
 
 	if (batchmode == 0) {
-		/* init opengl */
-		glutInit(&argc, argv);
-		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-		glutInitWindowSize(winw,winh);
-		glutCreateWindow("c-dxf2gcode");
-		glutCreateMenu(NULL);
-		glutReshapeFunc(Reshape);
-		glutDisplayFunc(mainloop);
-		atexit(onExit);
+		GuiInit(&argc, argv);
+		GuiBarInit();
 
-		texture_init();
-
-		TwBar *bar;
 		float axis[] = { -0.7f, 0.0f, 0.0f }; // initial model rotation
 		float angle = 0.8f;
-		TwInit(TW_OPENGL, NULL);
-
-//		glutMouseFunc((GLUTmousebuttonfun)TwEventMouseButtonGLUT);
-//		glutMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
-
-		glutMouseFunc(OnMouseFunc);
-		glutMotionFunc(OnMouseMotion);
-
-		glutPassiveMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
-		glutKeyboardFunc((GLUTkeyboardfun)TwEventKeyboardGLUT);
-		glutSpecialFunc((GLUTspecialfun)TwEventSpecialGLUT);
-		TwGLUTModifiersFunc(glutGetModifiers);
-
-		bar = TwNewBar("Parameter");
-		TwDefine("Parameter size='230 600' color='96 216 224' "); // change default tweak bar size and color
-
-		TwAddVarRW(bar, "ObjRotation", TW_TYPE_QUAT4F, &g_Rotation, "group=View label='Object rotation' opened=true help='Change the object orientation.' ");
-		TwAddVarCB(bar, "AutoRotate", TW_TYPE_BOOL32, SetAutoRotateCB, GetAutoRotateCB, NULL, "group=View label='Auto-rotate' key=space help='Toggle auto-rotate mode.' ");
-
-		TwAddSeparator(bar, "Save", "");
-		TwAddButton(bar, "Save G-Code", SaveGcode, NULL, " label='Save G-Code' ");
-		TwAddButton(bar, "Save Setup", SaveSetup, NULL, " label='Save Setup' ");
-		TwAddButton(bar, "Reload Setup", ReloadSetup, NULL, " label='Reload Setup' ");
-
-		TwType tools = TwDefineEnum("toolType", toolEV, tools_max);
-		TwAddVarRW(bar, "Tool-Select", tools, &PARAMETER[P_TOOL_SELECT].vint, "group=Tool label=Select");
-
-		for (n = 0; n < P_LAST; n++) {
-			char name_str[1024];
-			char opt_str[1024];
-			sprintf(name_str, "%s|%s", PARAMETER[n].group, PARAMETER[n].name);
-			if (PARAMETER[n].unit[0] != 0) {
-				sprintf(opt_str, "label='%s (%s)' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].unit, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
-			} else {
-				sprintf(opt_str, "label='%s' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
-			}
-			if (PARAMETER[n].show == 0) {
-			} else if (PARAMETER[n].type == T_FLOAT) {
-				TwAddVarRW(bar, name_str, TW_TYPE_FLOAT, &PARAMETER[n].vfloat, opt_str);
-			} else if (PARAMETER[n].type == T_DOUBLE) {
-				TwAddVarRW(bar, name_str, TW_TYPE_DOUBLE, &PARAMETER[n].vdouble, opt_str);
-			} else if (PARAMETER[n].type == T_INT) {
-				TwAddVarRW(bar, name_str, TW_TYPE_INT32, &PARAMETER[n].vint, opt_str);
-			} else if (PARAMETER[n].type == T_BOOL) {
-				sprintf(opt_str, "label='%s' group='%s'", PARAMETER[n].name, PARAMETER[n].group);
-				TwAddVarRW(bar, name_str, TW_TYPE_BOOL32, &PARAMETER[n].vint, opt_str);
-			} else if (PARAMETER[n].type == T_STRING) {
-			}
-		}
-
-		TwType axisnames = TwDefineEnum("AxisName", AxisEV, 3);
-		TwAddVarRW(bar, "Rotary-Axis", axisnames, &PARAMETER[P_H_ROTARYAXIS].vint, "group=Machine label=Rotary-Axis");
-		TwAddVarRW(bar, "Tangencial-Axis", axisnames, &PARAMETER[P_H_KNIFEAXIS].vint, "group=Machine label=Tangencial-Axis");
-
-		TwType material = TwDefineEnum("materialType", materialEV, material_max);
-		TwAddVarRW(bar, "Material-Select", material, &PARAMETER[P_MAT_SELECT].vint, "group=Material label=Select");
-
-		TwAddSeparator(bar, "Layers", "");
-		TwType layers = TwDefineEnum("ShapeType", shapeEV, labeln);
-		TwAddVarRW(bar, "Select", layers, &layer_sel, "group=Layer keyIncr='<' keyDecr='>' help='use only Layer X' ");
-		for (num2 = 1; num2 < 100; num2++) {
-			if (shapeEV[num2].Label != NULL) {
-				char tmp_str[1024];
-				char tmp_str2[1024];
-				sprintf(tmp_str, "Layer: %s Use", shapeEV[num2].Label);
-				sprintf(tmp_str2, "label='Use' group='Layer: %s'", shapeEV[num2].Label);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &layer_selections[num2], tmp_str2);
-
-				sprintf(tmp_str, "Layer: %s Overwrite", shapeEV[num2].Label);
-				sprintf(tmp_str2, "label='Overwrite' group='Layer: %s'", shapeEV[num2].Label);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &layer_force[num2], tmp_str2);
-
-				sprintf(tmp_str, "Layer: %s Depth", shapeEV[num2].Label);
-				sprintf(tmp_str2, "label='Depth' group='Layer: %s'  min=-100.0 max=10.0 step=0.1", shapeEV[num2].Label);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &layer_depth[num2], tmp_str2);
-
-				sprintf(tmp_str, "Parameter/'Layer: %s' opened=false", shapeEV[num2].Label);
-				TwDefine(tmp_str);
-			}
-		}
-
-		TwAddSeparator(bar, "Objects", "");
-		for (num2 = 0; num2 < MAX_OBJECTS; num2++) {
-			if (myOBJECTS[num2].line[0] != 0) {
-				char tmp_str[1024];
-				char tmp_str2[1024];
-
-				sprintf(tmp_str, "Object: #%i Closed", num2);
-				sprintf(tmp_str2, "label='Closed' group='Object: #%i' readonly='true'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &myOBJECTS[num2].closed, tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Inside", num2);
-				sprintf(tmp_str2, "label='Inside' group='Object: #%i' readonly='true'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &myOBJECTS[num2].inside, tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Use", num2);
-				sprintf(tmp_str2, "label='Use' group='Object: #%i'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_selections[num2], tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Overwrite", num2);
-				sprintf(tmp_str2, "label='Overwrite' group='Object: #%i'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_force[num2], tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Overcut", num2);
-				sprintf(tmp_str2, "label='Overcut' group='Object: #%i'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_overcut[num2], tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Pocket", num2);
-				sprintf(tmp_str2, "label='Pocket' group='Object: #%i'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_pocket[num2], tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Laser", num2);
-				sprintf(tmp_str2, "label='Laser' group='Object: #%i'", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_laser[num2], tmp_str2);
-
-				sprintf(tmp_str, "Object: #%i Depth", num2);
-				sprintf(tmp_str2, "label='Depth' group='Object: #%i'  min=-100.0 max=0.0 step=0.1", num2);
-				TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &object_depth[num2], tmp_str2);
-
-			        TwEnumVal offsetEV[3] = { {0, "Normal"}, {1, "Reverse"}, {2, "None"} };
-			        TwType offsetType = TwDefineEnum("offsetType", offsetEV, 3);
-				sprintf(tmp_str, "Object: #%i Offset", num2);
-				sprintf(tmp_str2, "label='Offset' group='Object: #%i'", num2);
-				TwAddVarRW(bar, tmp_str, offsetType, &object_offset[num2], tmp_str2);
-
-				sprintf(tmp_str, "Parameter/'Object: #%i' opened=false", num2);
-				TwDefine(tmp_str);
-			}
-		}
-
 		g_RotateTime = GetTimeMs();
 		SetQuaternionFromAxisAngle(axis, angle, g_Rotation);
 		SetQuaternionFromAxisAngle(axis, angle, g_RotateStart);
