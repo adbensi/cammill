@@ -13,6 +13,8 @@ typedef struct{
 	double max;
 	char unit[16];
 	int show;
+	int l1;
+	int l2;
 } PARA;
 
 enum {
@@ -20,7 +22,8 @@ enum {
 	T_BOOL,
 	T_FLOAT,
 	T_DOUBLE,
-	T_STRING
+	T_STRING,
+	T_SELECT
 };
 
 enum {
@@ -28,6 +31,11 @@ enum {
 	P_V_HELPLINES,
 	P_V_HELPDIA,
 	P_V_NCDEBUG,
+	P_V_ROTX,
+	P_V_ROTY,
+	P_V_ROTZ,
+	P_V_TRANSX,
+	P_V_TRANSY,
 	P_TOOL_SELECT,
 	P_TOOL_NUM,
 	P_TOOL_DIAMETER,
@@ -56,7 +64,18 @@ enum {
 	P_LAST
 };
 
+enum {
+	O_P_USE,
+	O_P_OVERWRITE,
+	O_P_OVERCUT,
+	O_P_POCKET,
+	O_P_LASER,
+	O_P_DEPTH,
+	O_P_LAST
+};
+
 extern PARA PARAMETER[];
+extern PARA OBJECT_PARAMETER[];
 
 void SetupShow (void);
 void SetupShowGcode (FILE *out);

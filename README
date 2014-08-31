@@ -6,15 +6,21 @@
 ################################################################
 OSX-Build:
 
-Dateien ersetzen:
-http://sourceforge.net/p/anttwea​kbar/code/ci/master/tree/src/Load​OGLCore.h#l334
-http://sourceforge.net/p/anttwea​kbar/code/ci/master/tree/src/TwOp​enGLCore.h
 
-mkdir AntTweakBar/lib
-cp AntTweakBar/src/Makefile.osx AntTweakBar/src/Makefile
-
-Change main.c
-#import <GL/glut.h>
-zu
-#import <GLUT/glut.h>
-
+warning: control reaches end of non-void function [-Wreturn-type]
+}
+^
+main.c:2372:6: warning: unused variable 'response' [-Wunused-variable]
+int response = gtk_dialog_run(GTK_DIALOG(dialog​));
+^
+main.c:2431:6: warning: unused variable 'state' [-Wunused-variable]
+int state = e->state;
+^
+main.c:2994:96: warning: cast to 'gpointer' (aka 'void *') from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+...gtk_signal_connect(GTK_OBJECT​(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged​), (gpointer)n);
+^
+/opt/local/include/gtk-2.0/gtk/g​tksignal.h:51:62: note: expanded from macro 'gtk_signal_connect'
+gtk_signal_connect_full ((object), (name), (func), NULL, (func_data), NULL, 0, 0)
+^
+main.c:2996:96: warning: cast to 'gpointer' (aka 'void *') from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+..

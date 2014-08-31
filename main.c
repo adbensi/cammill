@@ -2,10 +2,26 @@
 
  Copyright by Oliver Dippel <oliver@multixmedia.org>
 
+ MacOSX - Changes by McUles <http://fpv-community.de>
+	Yosemite (OSX 10.10)
+
 */
 
-#include <AntTweakBar.h>
+#include <GL/gl.h>
+#ifdef __APPLE__
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
+#else
+#include <GL/glu.h>
+#include <GL/glut.h>
+#endif
+#include <gtk/gtk.h>
+#include <gtkgl/gtkglarea.h>
 
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +29,6 @@
 #include <math.h>
 #include <sys/types.h>
 #include <pwd.h>
-#include <GL/glut.h>
 #include <dxf.h>
 //#include <font.h>
 #include <setup.h>
@@ -46,8 +61,6 @@ int layer_sel = 0;
 int layer_selections[100];
 int layer_force[100];
 double layer_depth[100];
-TwEnumVal shapeEV[100];
-TwEnumVal AxisEV[100];
 int object_selections[MAX_OBJECTS];
 int object_offset[MAX_OBJECTS];
 int object_force[MAX_OBJECTS];
@@ -59,13 +72,7 @@ FILE *fd_out = NULL;
 int object_last = 0;
 char dxf_file[2048];
 int batchmode = 0;
-int translate_x = 0;
-int translate_y = 0;
 int save_gcode = 0;
-float g_Rotation[] = {0.0f, 0.0f, 0.0f, 1.0f};
-float g_RotateStart[] = {0.0f, 0.0f, 0.0f, 1.0f};
-int g_AutoRotate = 0;
-int g_RotateTime = 0;
 char tool_descr[100][1024];
 int tools_max = 0;
 int tool_last = 0;
@@ -74,14 +81,28 @@ int material_max = 8;
 char *material_texture[100];
 int material_vc[100];
 float material_fz[100][3];
-TwEnumVal toolEV[100];
-TwEnumVal materialEV[100];
 
+char *rotary_axis[3] = {"A", "B", "C"};
 
+int last_mouse_x = 0;
+int last_mouse_y = 0;
+int last_mouse_button = -1;
+int last_mouse_state = 0;
 
-void TW_CALL SaveSetup (void *clientData) {
-	SetupSave();
-}
+void ParameterUpdate (void);
+void ParameterChanged (GtkWidget *widget, gpointer data);
+
+GtkTreeStore *treestore;
+GtkListStore *ListStore[P_LAST];
+GtkWidget *ParamValue[P_LAST];
+GtkWidget *glCanvas;
+int width = 800;
+int height = 600;
+int need_init = 1;
+
+GtkWidget *window;
+GtkWidget *dialog;
+
 
 void line_invert (int num) {
 	double tempx = myLINES[num].x2;
@@ -176,7 +197,7 @@ void point_rotate (float y, float depth, float *ny, float *nz) {
 void translateAxisX (double x, char *ret_str) {
 	if (PARAMETER[P_M_ROTARYMODE].vint == 1 && PARAMETER[P_H_ROTARYAXIS].vint == 1) {
 		double an = x / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
-		sprintf(ret_str, "%s%f", AxisEV[PARAMETER[P_H_ROTARYAXIS].vint].Label, an);
+		sprintf(ret_str, "%s%f", rotary_axis[PARAMETER[P_H_ROTARYAXIS].vint], an);
 	} else {
 		sprintf(ret_str, "X%f", x);
 	}
@@ -185,7 +206,7 @@ void translateAxisX (double x, char *ret_str) {
 void translateAxisY (double y, char *ret_str) {
 	if (PARAMETER[P_M_ROTARYMODE].vint == 1 && PARAMETER[P_H_ROTARYAXIS].vint == 0) {
 		double an = y / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
-		sprintf(ret_str, "%s%f", AxisEV[PARAMETER[P_H_ROTARYAXIS].vint].Label, an);
+		sprintf(ret_str, "%s%f", rotary_axis[PARAMETER[P_H_ROTARYAXIS].vint], an);
 	} else {
 		sprintf(ret_str, "Y%f", y);
 	}
@@ -314,7 +335,7 @@ int object_line_last (int object_num) {
 void draw_text (void *font, char *text, int x, int y) {
 	glRasterPos2i(x, y);
 	while (*text != '\0') {
-		glutBitmapCharacter(font, *text);
+//		glutBitmapCharacter(font, *text);
 		++text;
 	}
 }
@@ -774,13 +795,13 @@ void object_draw (FILE *fd_out, int object_num) {
 		lasermode = object_laser[object_num];
 	}
 	for (num2 = 1; num2 < 100; num2++) {
-		if (shapeEV[num2].Label != NULL && strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
-			if (layer_force[num2] == 0) {
-				layer_depth[num2] = mill_depth_real;
-			} else {
-				mill_depth_real = layer_depth[num2];
-			}
-		}
+//		if (strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
+//			if (layer_force[num2] == 0) {
+//				layer_depth[num2] = mill_depth_real;
+//			} else {
+//				mill_depth_real = layer_depth[num2];
+//			}
+//		}
 	}
 	if (object_force[object_num] == 1) {
 		mill_depth_real = object_depth[object_num];
@@ -1288,13 +1309,13 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		lasermode = 1;
 	}
 	for (num2 = 1; num2 < 100; num2++) {
-		if (shapeEV[num2].Label != NULL && strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
-			if (layer_force[num2] == 0) {
-				layer_depth[num2] = mill_depth_real;
-			} else {
-				mill_depth_real = layer_depth[num2];
-			}
-		}
+//		if (shapeEV[num2].Label != NULL && strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
+//			if (layer_force[num2] == 0) {
+//				layer_depth[num2] = mill_depth_real;
+//			} else {
+//				mill_depth_real = layer_depth[num2];
+//			}
+//		}
 	}
 	if (myOBJECTS[object_num].closed == 1) {
 		if (myOBJECTS[object_num].inside == 1) {
@@ -1548,28 +1569,6 @@ void MultiplyQuaternions (const float *q1, const float *q2, float *qout) {
 	qr[2] = q1[3]*q2[2] + q1[2]*q2[3] + q1[0]*q2[1] - q1[1]*q2[0];
 	qr[3]  = q1[3]*q2[3] - (q1[0]*q2[0] + q1[1]*q2[1] + q1[2]*q2[2]);
 	qout[0] = qr[0]; qout[1] = qr[1]; qout[2] = qr[2]; qout[3] = qr[3];
-}
-
-int GetTimeMs (void) {
-	return glutGet(GLUT_ELAPSED_TIME);
-}
-
-void TW_CALL SetAutoRotateCB (const void *value, void *clientData) {
-	g_AutoRotate = *(const int *)value;
-	if( g_AutoRotate!=0 ) {
-		g_RotateTime = GetTimeMs();
-		g_RotateStart[0] = g_Rotation[0];
-		g_RotateStart[1] = g_Rotation[1];
-		g_RotateStart[2] = g_Rotation[2];
-		g_RotateStart[3] = g_Rotation[3];
-		TwDefine("Parameter/ObjRotation readonly");
-	} else {
-		TwDefine("Parameter/ObjRotation readwrite");
-	}
-}
-
-void TW_CALL GetAutoRotateCB (void *value, void *clientData) {
-	*(int *)value = g_AutoRotate;
 }
 
 void onExit (void) {
@@ -1855,26 +1854,16 @@ void mainloop (void) {
 	if (PARAMETER[P_TOOL_SELECT].vint != 0) {
 		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
 		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
-		TwDefine("Parameter/'Tool|Number' readonly=true");
-		TwDefine("Parameter/'Tool|Diameter' readonly=true");
 	} else {
-		TwDefine("Parameter/'Tool|Number' readonly=false");
-		TwDefine("Parameter/'Tool|Diameter' readonly=false");
 	}
 	if (PARAMETER[P_M_LASERMODE].vint == 1) {
-		TwDefine("Parameter/'Machine|Laser-Diameter' readonly=false");
 	} else {
-		TwDefine("Parameter/'Machine|Laser-Diameter' readonly=true");
 	}
 	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
-		TwDefine("Parameter/'Rotary-Axis' readonly=false");
 	} else {
-		TwDefine("Parameter/'Rotary-Axis' readonly=true");
 	}
 	if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
-		TwDefine("Parameter/'Tangencial-Axis' readonly=false");
 	} else {
-		TwDefine("Parameter/'Tangencial-Axis' readonly=true");
 	}
 	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[PARAMETER[P_MAT_SELECT].vint] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
 	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
@@ -1883,11 +1872,6 @@ void mainloop (void) {
 		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][1] * (float)PARAMETER[P_TOOL_W].vint);
 	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 12.0) {
 		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][2] * (float)PARAMETER[P_TOOL_W].vint);
-	}
-	if (shapeEV[layer_sel].Label != NULL) {
-		strcpy(mill_layer, shapeEV[layer_sel].Label);
-	} else {
-		mill_layer[0] = 0;
 	}
 
 	if (batchmode == 0) {
@@ -1902,25 +1886,20 @@ void mainloop (void) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glPushMatrix();
-		glTranslatef(0.5f, -0.3f, 0.0f);
-		float mat[4*4]; // rotation matrix
-		if (g_AutoRotate) {
-			float axis[3] = { 0, 1, 0 };
-			float angle = (float)(GetTimeMs()-g_RotateTime)/1000.0f;
-			float quat[4];
-			SetQuaternionFromAxisAngle(axis, angle, quat);
-			MultiplyQuaternions(g_RotateStart, quat, g_Rotation);
-		}
-		ConvertQuaternionToMatrix(g_Rotation, mat);
-		glMultMatrixf(mat);
+
 		glScalef(PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat);
 		glScalef(scale, scale, scale);
+		glTranslatef(PARAMETER[P_V_TRANSX].vint, PARAMETER[P_V_TRANSY].vint, 0.0);
+
+		glRotatef(PARAMETER[P_V_ROTZ].vfloat, 0.0, 0.0, 1.0);
+		glRotatef(PARAMETER[P_V_ROTY].vfloat, 0.0, 1.0, 0.0);
+		glRotatef(PARAMETER[P_V_ROTX].vfloat, 1.0, 0.0, 0.0);
+
 
 		glTranslatef(-size_x / 2.0, 0.0, 0.0);
 		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 			glTranslatef(0.0, -size_y / 2.0, 0.0);
 		}
-		glTranslatef(translate_x, translate_y, 0.0);
 
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
 			if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
@@ -2101,93 +2080,10 @@ void mainloop (void) {
 		exit(0);
 	} else {
 		glPopMatrix();
-		TwDraw();
-		glutSwapBuffers();
-		glutPostRedisplay();
 	}
 	return;
 }
 
-void Reshape (int width, int height) {
-	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(40, (double)width/height, 1, 10);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(0,0,5, 0,0,0, 0,1,0);
-	glTranslatef(0, 0.6f, -1);
-	TwWindowSize(width, height);
-	char tmp_str[1024];
-	sprintf(tmp_str, "Parameter size='250 %i' position='0 0' color='96 216 224'", height - 30);
-	TwDefine(tmp_str);
-}
-
-int last_mouse_x = 0;
-int last_mouse_y = 0;
-int last_mouse_button = -1;
-int last_mouse_state = 0;
-void OnMouseFunc (int button, int state, int mouseX, int mouseY) {
-	if (!TwEventMouseButtonGLUT(button, state, mouseX, mouseY)) {
-		if (button == 3 && state == 0) {
-			PARAMETER[P_V_ZOOM].vfloat += 0.05;
-		} else if (button == 4 && state == 0) {
-			PARAMETER[P_V_ZOOM].vfloat -= 0.05;
-		} else if (button == 0) {
-			if (state == 0) {
-				last_mouse_x = mouseX - translate_x * 4;
-				last_mouse_y = mouseY - translate_y * -4;
-				last_mouse_button = button;
-				last_mouse_state = state;
-			} else {
-				last_mouse_button = button;
-				last_mouse_state = state;
-			}
-		} else if (button == 1) {
-			if (state == 0) {
-				last_mouse_x = mouseX - (int)(g_Rotation[1] * 180.0);
-				last_mouse_y = mouseY - (int)(g_Rotation[0] * 180.0);
-				last_mouse_button = button;
-				last_mouse_state = state;
-			} else {
-				last_mouse_button = button;
-				last_mouse_state = state;
-			}
-		} else if (button == 2) {
-			if (state == 0) {
-				last_mouse_x = mouseX - (int)(g_Rotation[2] * 180.0);;
-				last_mouse_y = mouseY;
-				last_mouse_button = button;
-				last_mouse_state = state;
-			} else {
-				last_mouse_button = button;
-				last_mouse_state = state;
-			}
-		}
-	}
-}
-
-void OnMouseMotion (int mouseX, int mouseY) {
-	if (!TwEventMouseMotionGLUT(mouseX, mouseY)) {
-		if (last_mouse_button == 0 && last_mouse_state == 0) {
-			translate_x = (mouseX - last_mouse_x) / 4;
-			translate_y = (mouseY - last_mouse_y) / -4;
-		} else if (last_mouse_button == 1 && last_mouse_state == 0) {
-			g_Rotation[1] = (float)(mouseX - last_mouse_x) / 180.0;
-			g_Rotation[0] = (float)(mouseY - last_mouse_y) / 180.0;
-		} else if (last_mouse_button == 2 && last_mouse_state == 0) {
-			g_Rotation[2] = (float)(mouseX - last_mouse_x) / 180.0;
-		}
-	}
-}
-
-void TW_CALL SaveGcode (void *clientData) { 
-	save_gcode = 1;
-}
-
-void TW_CALL ReloadSetup (void *clientData) {
-	SetupLoad();
-}
 
 void MaterialLoadList (void) {
 /*
@@ -2198,84 +2094,70 @@ void MaterialLoadList (void) {
     Holz: Bis zu 3000 m/min
 */
 
-	AxisEV[0].Value = 0;
-	AxisEV[0].Label = "A";
-	AxisEV[1].Value = 1;
-	AxisEV[1].Label = "B";
-	AxisEV[2].Value = 2;
-	AxisEV[2].Label = "C";
-
-	materialEV[0].Value = 0;
-	materialEV[0].Label = "Aluminium(Langspanend)";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Langspanend)", -1);
 	material_vc[0] = 200;
 	material_fz[0][0] = 0.04;
 	material_fz[0][1] = 0.05;
 	material_fz[0][2] = 0.10;
 	material_texture[0] = "metall.bmp";
 
-	materialEV[1].Value = 1;
-	materialEV[1].Label = "Aluminium(Kurzspanend)";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Kurzspanend)", -1);
 	material_vc[1] = 150;
 	material_fz[1][0] = 0.04;
 	material_fz[1][1] = 0.05;
 	material_fz[1][2] = 0.10;
 	material_texture[1] = "metall.bmp";
 
-	materialEV[2].Value = 2;
-	materialEV[2].Label = "NE-Metalle(Messing,Bronze,Kupfer,Zink,Rotguß)";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "NE-Metalle(Messing,Bronze,Kupfer,Zink,Rotguß)", -1);
 	material_vc[2] = 150;
 	material_fz[2][0] = 0.04;
 	material_fz[2][1] = 0.05;
 	material_fz[2][2] = 0.10;
 	material_texture[2] = "metall.bmp";
 
-	materialEV[3].Value = 3;
-	materialEV[3].Label = "VA-Stahl";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "VA-Stahl", -1);
 	material_vc[3] = 100;
 	material_fz[3][0] = 0.05;
 	material_fz[3][1] = 0.06;
 	material_fz[3][2] = 0.07;
 	material_texture[3] = "metall.bmp";
 
-	materialEV[4].Value = 4;
-	materialEV[4].Label = "Thermoplaste";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Thermoplaste", -1);
 	material_vc[4] = 100;
 	material_fz[4][0] = 0.0;
 	material_fz[4][1] = 0.0;
 	material_fz[4][2] = 0.0;
 	material_texture[4] = "plast.bmp";
 
-	materialEV[5].Value = 5;
-	materialEV[5].Label = "Duroplaste(mit Füllstoffen)";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Duroplaste(mit Füllstoffen)", -1);
 	material_vc[5] = 125;
 	material_fz[5][0] = 0.04;
 	material_fz[5][1] = 0.08;
 	material_fz[5][2] = 0.10;
 	material_texture[5] = "plast.bmp";
 
-	materialEV[6].Value = 6;
-	materialEV[6].Label = "GFK";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "GFK", -1);
 	material_vc[6] = 125;
 	material_fz[6][0] = 0.04;
 	material_fz[6][1] = 0.08;
 	material_fz[6][2] = 0.10;
 	material_texture[6] = "gfk.bmp";
 
-	materialEV[7].Value = 7;
-	materialEV[7].Label = "CFK";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "CFK", -1);
 	material_vc[7] = 125;
 	material_fz[7][0] = 0.04;
 	material_fz[7][1] = 0.08;
 	material_fz[7][2] = 0.10;
 	material_texture[7] = "cfk.bmp";
 
-	materialEV[8].Value = 8;
-	materialEV[8].Label = "Holz";
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Holz", -1);
 	material_vc[8] = 2000;
 	material_fz[8][0] = 0.04;
 	material_fz[8][1] = 0.08;
 	material_fz[8][2] = 0.10;
 	material_texture[8] = "holz.bmp";
+
+
 
 	material_max = 9;
 }
@@ -2285,10 +2167,6 @@ void ToolLoadTable (void) {
 	int n = 0;
 	char tmp_str[1024];
 	tools_max = 0;
-	for (n = 0; n < 100; n++) {
-		tooltbl_diameters[n] = 0.0;
-		toolEV[n].Label = NULL;
-	}
 	if (PARAMETER[P_TOOL_TABLE].vstr[0] != 0) {
 		FILE *tt_fp;
 		char *line = NULL;
@@ -2302,9 +2180,8 @@ void ToolLoadTable (void) {
 		tooltbl_diameters[0] = 1;
 		n = 0;
 		sprintf(tmp_str, "FREE");
-		toolEV[n].Value = n;
-		toolEV[n].Label = (const char *)malloc(strlen(tmp_str) + 1);
-		strcpy((char *)toolEV[n].Label, tmp_str);
+		gtk_list_store_insert_with_values(ListStore[P_TOOL_SELECT], NULL, -1, 0, NULL, 1, tmp_str, -1);
+
 		n++;
 		while ((read = getline(&line, &len, tt_fp)) != -1) {
 			if (strncmp(line, "T", 1) == 0) {
@@ -2319,9 +2196,7 @@ void ToolLoadTable (void) {
 						strcpy(tool_descr[tooln], strstr(line2, ";") + 1);
 					}
 					sprintf(tmp_str, "#%i D%0.2fmm (%s)", tooln, tooltbl_diameters[tooln], tool_descr[tooln]);
-					toolEV[n].Value = n;
-					toolEV[n].Label = (const char *)malloc(strlen(tmp_str) + 1);
-					strcpy((char *)toolEV[n].Label, tmp_str);
+					gtk_list_store_insert_with_values(ListStore[P_TOOL_SELECT], NULL, -1, 0, NULL, 1, tmp_str, -1);
 					n++;
 					tools_max++;
 				}
@@ -2332,162 +2207,6 @@ void ToolLoadTable (void) {
 }
 
 void LayerLoadList (void) {
-	int num1 = 0;
-	int num2 = 0;
-	/* read Layer-Names */
-	for (num1 = 0; num1 < 100; num1++) {
-		shapeEV[num1].Label = NULL;
-	}
-	shapeEV[0].Value = 0;
-	shapeEV[0].Label = (const char *)malloc(6);
-	strcpy((char *)shapeEV[0].Label, "ALL");
-	for (num1 = 0; num1 < MAX_LINES; num1++) {
-		if (myLINES[num1].layer[0] != 0) {
-			int flag = 0;
-			for (num2 = 0; num2 < 100; num2++) {
-				if (shapeEV[num2].Label != NULL && strcmp(myLINES[num1].layer, shapeEV[num2].Label) == 0) {
-					flag = 1;
-				}
-			}
-			if (flag == 0 && LayerMax < 100) {
-				shapeEV[LayerMax].Value = LayerMax;
-				shapeEV[LayerMax].Label = (const char *)malloc(strlen(myLINES[num1].layer) + 1);
-				strcpy((char *)shapeEV[LayerMax].Label, myLINES[num1].layer);
-				if (strcmp(mill_layer, myLINES[num1].layer) == 0) {
-					layer_sel = LayerMax;
-				}
-				layer_selections[LayerMax] = 1;
-				layer_force[LayerMax] = 0;
-				layer_depth[LayerMax] = 0.0;
-				LayerMax++;
-			}
-		}
-	}
-}
-
-void GuiBarInit (void) {
-	int n = 0;
-	int num2 = 0;
-	TwBar *bar;
-	TwInit(TW_OPENGL, NULL);
-	TwGLUTModifiersFunc(glutGetModifiers);
-
-	bar = TwNewBar("Parameter");
-	TwDefine("Parameter size='230 600' color='96 216 224' "); // change default tweak bar size and color
-
-	TwAddVarRW(bar, "ObjRotation", TW_TYPE_QUAT4F, &g_Rotation, "group=View label='Object rotation' opened=true help='Change the object orientation.' ");
-	TwAddVarCB(bar, "AutoRotate", TW_TYPE_BOOL32, SetAutoRotateCB, GetAutoRotateCB, NULL, "group=View label='Auto-rotate' key=space help='Toggle auto-rotate mode.' ");
-
-	TwAddSeparator(bar, "Save", "");
-	TwAddButton(bar, "Save G-Code", SaveGcode, NULL, " label='Save G-Code' ");
-	TwAddButton(bar, "Save Setup", SaveSetup, NULL, " label='Save Setup' ");
-	TwAddButton(bar, "Reload Setup", ReloadSetup, NULL, " label='Reload Setup' ");
-
-	TwType tools = TwDefineEnum("toolType", toolEV, tools_max);
-	TwAddVarRW(bar, "Tool-Select", tools, &PARAMETER[P_TOOL_SELECT].vint, "group=Tool label=Select");
-
-	for (n = 0; n < P_LAST; n++) {
-		char name_str[1024];
-		char opt_str[1024];
-		sprintf(name_str, "%s|%s", PARAMETER[n].group, PARAMETER[n].name);
-		if (PARAMETER[n].unit[0] != 0) {
-			sprintf(opt_str, "label='%s (%s)' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].unit, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
-		} else {
-			sprintf(opt_str, "label='%s' group='%s' min=%f step=%f max=%f", PARAMETER[n].name, PARAMETER[n].group, PARAMETER[n].min, PARAMETER[n].step, PARAMETER[n].max);
-		}
-		if (PARAMETER[n].show == 0) {
-		} else if (PARAMETER[n].type == T_FLOAT) {
-			TwAddVarRW(bar, name_str, TW_TYPE_FLOAT, &PARAMETER[n].vfloat, opt_str);
-		} else if (PARAMETER[n].type == T_DOUBLE) {
-			TwAddVarRW(bar, name_str, TW_TYPE_DOUBLE, &PARAMETER[n].vdouble, opt_str);
-		} else if (PARAMETER[n].type == T_INT) {
-			TwAddVarRW(bar, name_str, TW_TYPE_INT32, &PARAMETER[n].vint, opt_str);
-		} else if (PARAMETER[n].type == T_BOOL) {
-			sprintf(opt_str, "label='%s' group='%s'", PARAMETER[n].name, PARAMETER[n].group);
-			TwAddVarRW(bar, name_str, TW_TYPE_BOOL32, &PARAMETER[n].vint, opt_str);
-		} else if (PARAMETER[n].type == T_STRING) {
-		}
-	}
-
-	TwType axisnames = TwDefineEnum("AxisName", AxisEV, 3);
-	TwAddVarRW(bar, "Rotary-Axis", axisnames, &PARAMETER[P_H_ROTARYAXIS].vint, "group=Machine label=Rotary-Axis");
-	TwAddVarRW(bar, "Tangencial-Axis", axisnames, &PARAMETER[P_H_KNIFEAXIS].vint, "group=Machine label=Tangencial-Axis");
-
-	TwType material = TwDefineEnum("materialType", materialEV, material_max);
-	TwAddVarRW(bar, "Material-Select", material, &PARAMETER[P_MAT_SELECT].vint, "group=Material label=Select");
-
-	TwAddSeparator(bar, "Layers", "");
-	TwType layers = TwDefineEnum("ShapeType", shapeEV, LayerMax);
-	TwAddVarRW(bar, "Select", layers, &layer_sel, "group=Layer keyIncr='<' keyDecr='>' help='use only Layer X' ");
-	for (num2 = 1; num2 < 100; num2++) {
-		if (shapeEV[num2].Label != NULL) {
-			char tmp_str[1024];
-			char tmp_str2[1024];
-			sprintf(tmp_str, "Layer: %s Use", shapeEV[num2].Label);
-			sprintf(tmp_str2, "label='Use' group='Layer: %s'", shapeEV[num2].Label);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &layer_selections[num2], tmp_str2);
-
-			sprintf(tmp_str, "Layer: %s Overwrite", shapeEV[num2].Label);
-			sprintf(tmp_str2, "label='Overwrite' group='Layer: %s'", shapeEV[num2].Label);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &layer_force[num2], tmp_str2);
-
-			sprintf(tmp_str, "Layer: %s Depth", shapeEV[num2].Label);
-			sprintf(tmp_str2, "label='Depth' group='Layer: %s'  min=-100.0 max=10.0 step=0.1", shapeEV[num2].Label);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &layer_depth[num2], tmp_str2);
-
-			sprintf(tmp_str, "Parameter/'Layer: %s' opened=false", shapeEV[num2].Label);
-			TwDefine(tmp_str);
-		}
-	}
-
-	TwAddSeparator(bar, "Objects", "");
-	for (num2 = 0; num2 < MAX_OBJECTS; num2++) {
-		if (myOBJECTS[num2].line[0] != 0) {
-			char tmp_str[1024];
-			char tmp_str2[1024];
-
-			sprintf(tmp_str, "Object: #%i Closed", num2);
-			sprintf(tmp_str2, "label='Closed' group='Object: #%i' readonly='true'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &myOBJECTS[num2].closed, tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Inside", num2);
-			sprintf(tmp_str2, "label='Inside' group='Object: #%i' readonly='true'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &myOBJECTS[num2].inside, tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Use", num2);
-			sprintf(tmp_str2, "label='Use' group='Object: #%i'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_selections[num2], tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Overwrite", num2);
-			sprintf(tmp_str2, "label='Overwrite' group='Object: #%i'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_force[num2], tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Overcut", num2);
-			sprintf(tmp_str2, "label='Overcut' group='Object: #%i'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_overcut[num2], tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Pocket", num2);
-			sprintf(tmp_str2, "label='Pocket' group='Object: #%i'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_pocket[num2], tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Laser", num2);
-			sprintf(tmp_str2, "label='Laser' group='Object: #%i'", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_BOOL32, &object_laser[num2], tmp_str2);
-
-			sprintf(tmp_str, "Object: #%i Depth", num2);
-			sprintf(tmp_str2, "label='Depth' group='Object: #%i'  min=-100.0 max=0.0 step=0.1", num2);
-			TwAddVarRW(bar, tmp_str, TW_TYPE_DOUBLE, &object_depth[num2], tmp_str2);
-
-		        TwEnumVal offsetEV[3] = { {0, "Normal"}, {1, "Reverse"}, {2, "None"} };
-		        TwType offsetType = TwDefineEnum("offsetType", offsetEV, 3);
-			sprintf(tmp_str, "Object: #%i Offset", num2);
-			sprintf(tmp_str2, "label='Offset' group='Object: #%i'", num2);
-			TwAddVarRW(bar, tmp_str, offsetType, &object_offset[num2], tmp_str2);
-
-			sprintf(tmp_str, "Parameter/'Object: #%i' opened=false", num2);
-			TwDefine(tmp_str);
-		}
-	}
 }
 
 void DrawCheckSize (void) {
@@ -2546,23 +2265,6 @@ void DrawSetZero (void) {
 	}
 }
 
-void GuiInit (int *argc, char **argv) {
-	glutInit(argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowSize(winw, winh);
-	glutCreateWindow("c-dxf2gcode");
-	glutCreateMenu(NULL);
-	glutReshapeFunc(Reshape);
-	glutDisplayFunc(mainloop);
-	glutMouseFunc(OnMouseFunc);
-	glutMotionFunc(OnMouseMotion);
-	glutPassiveMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
-	glutKeyboardFunc((GLUTkeyboardfun)TwEventKeyboardGLUT);
-	glutSpecialFunc((GLUTspecialfun)TwEventSpecialGLUT);
-	atexit(onExit);
-	texture_init();
-}
-
 void ArgsRead (int argc, char **argv) {
 	int num = 0;
 	if (argc < 2) {
@@ -2586,35 +2288,758 @@ void ArgsRead (int argc, char **argv) {
 	strcpy(dxf_file, argv[argc - 1]);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void view_init_gl(void) {
+	gtk_gl_area_make_current(GTK_GL_AREA(glCanvas));
+	glViewport(0, 0, width, height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective((M_PI / 4) / M_PI * 180, (float)width / (float)height, 0.1, 1000.0);
+	gluLookAt(0, 0, 6,  0, 0, 0,  0, 1, 0);
+	glMatrixMode(GL_MODELVIEW);
+	glEnable(GL_NORMALIZE);
+}
+
+void view_draw (void) {
+	gtk_gl_area_make_current(GTK_GL_AREA(glCanvas));
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ParameterUpdate();
+	mainloop();
+	gtk_gl_area_swapbuffers(GTK_GL_AREA(glCanvas));
+}
+
+void handler_destroy (GtkWidget *widget, gpointer data) {
+	gtk_main_quit();
+}
+
+void handler_save_gcode (GtkWidget *widget, gpointer data) {
+	save_gcode = 1;
+}
+
+void handler_save_setup (GtkWidget *widget, gpointer data) {
+	SetupSave();
+}
+
+void handler_about (GtkWidget *widget, gpointer data) {
+	GtkWidget *dialog = gtk_dialog_new();
+	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+	gtk_window_set_title(GTK_WINDOW(dialog), "About");
+	gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_QUIT, 1);
+	GtkWidget *label = gtk_label_new("OpenCAM 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <fpv-community.de>");
+	gtk_widget_modify_font(label, pango_font_description_from_string("Tahoma 18"));
+	GtkWidget *image = gtk_image_new_from_file("logo.png");
+	GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+	gtk_box_pack_start(GTK_BOX(box), image, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+	gtk_widget_show_all(dialog);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_hide(dialog);
+}
+
+void handler_draw (GtkWidget *w, GdkEventExpose* e, void *v) {
+}
+
+void handler_button_press (GtkWidget *w, GdkEventButton* e, void *v) {
+//	printf("button_press x=%g y=%g b=%d state=%d\n", e->x, e->y, e->button, e->state);
+	int mouseX = e->x;
+	int mouseY = e->y;
+	int state = e->state;
+	int button = e->button;;
+
+	if (button == 4 && state == 0) {
+		PARAMETER[P_V_ZOOM].vfloat += 0.05;
+	} else if (button == 5 && state == 0) {
+		PARAMETER[P_V_ZOOM].vfloat -= 0.05;
+	} else if (button == 1) {
+		if (state == 0) {
+			last_mouse_x = mouseX - PARAMETER[P_V_TRANSX].vint * 2;
+			last_mouse_y = mouseY - PARAMETER[P_V_TRANSY].vint * -2;
+			last_mouse_button = button;
+			last_mouse_state = state;
+		} else {
+			last_mouse_button = button;
+			last_mouse_state = state;
+		}
+	} else if (button == 2) {
+		if (state == 0) {
+			last_mouse_x = mouseX - (int)(PARAMETER[P_V_ROTY].vfloat * 5.0);
+			last_mouse_y = mouseY - (int)(PARAMETER[P_V_ROTX].vfloat * 5.0);
+			last_mouse_button = button;
+			last_mouse_state = state;
+		} else {
+			last_mouse_button = button;
+			last_mouse_state = state;
+		}
+	} else if (button == 3) {
+		if (state == 0) {
+			last_mouse_x = mouseX - (int)(PARAMETER[P_V_ROTZ].vfloat * 5.0);;
+			last_mouse_y = mouseY - (int)(PARAMETER[P_V_ZOOM].vfloat * 100.0);
+			last_mouse_button = button;
+			last_mouse_state = state;
+		} else {
+			last_mouse_button = button;
+			last_mouse_state = state;
+		}
+	}
+}
+
+void handler_button_release(GtkWidget *w, GdkEventButton* e, void *v) {
+//	printf("button_release x=%g y=%g b=%d state=%d\n", e->x, e->y, e->button, e->state);
+}
+
+void handler_motion(GtkWidget *w, GdkEventMotion* e, void *v) {
+//	printf("button_motion x=%g y=%g state=%d\n", e->x, e->y, e->state);
+	int mouseX = e->x;
+	int mouseY = e->y;
+	if (last_mouse_button == 1 && last_mouse_state == 0) {
+		PARAMETER[P_V_TRANSX].vint = (mouseX - last_mouse_x) / 2;
+		PARAMETER[P_V_TRANSY].vint = (mouseY - last_mouse_y) / -2;
+	} else if (last_mouse_button == 2 && last_mouse_state == 0) {
+		PARAMETER[P_V_ROTY].vfloat = (float)(mouseX - last_mouse_x) / 5.0;
+		PARAMETER[P_V_ROTX].vfloat = (float)(mouseY - last_mouse_y) / 5.0;
+	} else if (last_mouse_button == 3 && last_mouse_state == 0) {
+		PARAMETER[P_V_ROTZ].vfloat = (float)(mouseX - last_mouse_x) / 5.0;
+		PARAMETER[P_V_ZOOM].vfloat = (float)(mouseY - last_mouse_y) / 100;
+	}
+}
+
+void handler_keypress(GtkWidget *w, GdkEventKey* e, void *v) {
+//	printf("key_press state=%d key=%s\n", e->state, e->string);
+}
+
+void handler_configure(GtkWidget *w, GdkEventConfigure* e, void *v) {
+//	printf("configure width=%d height=%d ratio=%g\n", e->width, e->height, e->width/(float)e->height);
+	width = e->width;
+	height = e->height;
+	need_init = 1;
+}
+
+int handler_periodic_action (gpointer d) {
+	while ( gtk_events_pending() ) {
+		gtk_main_iteration();
+	}
+	if (need_init == 1) {
+		need_init = 0;
+		view_init_gl();
+	}
+	view_draw();
+	return(1);
+}
+
+GtkWidget *create_gl() {
+	static GtkWidget * global_first = NULL;
+	static int attr[] = {GDK_GL_RGBA, GDK_GL_DOUBLEBUFFER, GDK_GL_DEPTH_SIZE, 16, GDK_GL_NONE};
+	GtkWidget *f;
+	if ( global_first ) {
+		f = gtk_gl_area_share_new(attr, GTK_GL_AREA(global_first));
+	} else {
+		f = global_first = gtk_gl_area_new(attr);
+	}
+	gtk_widget_set_events(GTK_WIDGET(f)
+		,GDK_BUTTON_MOTION_MASK 
+		|GDK_BUTTON_PRESS_MASK 
+		|GDK_BUTTON_RELEASE_MASK
+		|GDK_ENTER_NOTIFY_MASK
+		|GDK_KEY_PRESS_MASK
+		|GDK_KEY_RELEASE_MASK
+		|GDK_EXPOSURE_MASK
+	);
+	GTK_WIDGET_SET_FLAGS(GTK_WIDGET(f), GTK_CAN_FOCUS);
+	gtk_signal_connect( GTK_OBJECT(f), "enter-notify-event", GTK_SIGNAL_FUNC(gtk_widget_grab_focus), NULL);
+	return(f);
+}
+
+void ParameterChanged (GtkWidget *widget, gpointer data) {
+	int n = (int)data;
+//	printf("UPDATED(%i): %s\n", n, PARAMETER[n].name);
+	if (PARAMETER[n].type == T_FLOAT) {
+		PARAMETER[n].vfloat = gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(widget));
+	} else if (PARAMETER[n].type == T_DOUBLE) {
+		PARAMETER[n].vdouble = (double)gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(widget));
+	} else if (PARAMETER[n].type == T_INT) {
+		PARAMETER[n].vint = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+	} else if (PARAMETER[n].type == T_SELECT) {
+		PARAMETER[n].vint = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+	} else if (PARAMETER[n].type == T_BOOL) {
+		PARAMETER[n].vint = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+	} else if (PARAMETER[n].type == T_STRING) {
+		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
+	}
+}
+
+void ParameterUpdate (void) {
+	GtkTreeIter iter;
+	char path[1024];
+	char value2[1024];
+	int n = 0;
+	for (n = 0; n < P_LAST; n++) {
+		if (PARAMETER[n].type == T_FLOAT) {
+			if (PARAMETER[n].vfloat != gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(ParamValue[n]))) {
+				gtk_spin_button_set_value(GTK_SPIN_BUTTON(ParamValue[n]), PARAMETER[n].vfloat);
+			}
+		} else if (PARAMETER[n].type == T_DOUBLE) {
+			if (PARAMETER[n].vdouble != gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(ParamValue[n]))) {
+				gtk_spin_button_set_value(GTK_SPIN_BUTTON(ParamValue[n]), PARAMETER[n].vdouble);
+			}
+		} else if (PARAMETER[n].type == T_INT) {
+			if (PARAMETER[n].vint != gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ParamValue[n]))) {
+				gtk_spin_button_set_value(GTK_SPIN_BUTTON(ParamValue[n]), PARAMETER[n].vint);
+			}
+		} else if (PARAMETER[n].type == T_SELECT) {
+			if (PARAMETER[n].vint != gtk_combo_box_get_active(GTK_COMBO_BOX(ParamValue[n]))) {
+				gtk_combo_box_set_active(GTK_COMBO_BOX(ParamValue[n]), PARAMETER[n].vint);
+			}
+		} else if (PARAMETER[n].type == T_BOOL) {
+			if (PARAMETER[n].vint != gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ParamValue[n]))) {
+				gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ParamValue[n]), PARAMETER[n].vint);
+			}
+		} else if (PARAMETER[n].type == T_STRING) {
+			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), PARAMETER[n].vstr);
+		} else {
+			continue;
+		}
+	}
+	for (n = 0; n < P_LAST; n++) {
+		sprintf(path, "0:%i:%i", PARAMETER[n].l1, PARAMETER[n].l2);
+		if (PARAMETER[n].type == T_FLOAT) {
+			sprintf(value2, "%f", PARAMETER[n].vfloat);
+		} else if (PARAMETER[n].type == T_DOUBLE) {
+			sprintf(value2, "%f", PARAMETER[n].vdouble);
+		} else if (PARAMETER[n].type == T_INT) {
+			sprintf(value2, "%i", PARAMETER[n].vint);
+		} else if (PARAMETER[n].type == T_SELECT) {
+			sprintf(value2, "%i", PARAMETER[n].vint);
+		} else if (PARAMETER[n].type == T_BOOL) {
+			sprintf(value2, "%i", PARAMETER[n].vint);
+		} else if (PARAMETER[n].type == T_STRING) {
+			sprintf(value2, "%s", PARAMETER[n].vstr);
+		} else {
+			continue;
+		}
+		gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(treestore), &iter, path);
+		gtk_tree_store_set(GTK_TREE_STORE(treestore), &iter, 1, value2, -1);
+	}
+}
+
+
+void on_changed (GtkWidget *widget, gpointer statusbar) {
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	char *value;
+	if (gtk_tree_selection_get_selected(GTK_TREE_SELECTION(widget), &model, &iter)) {
+		gtk_tree_model_get(model, &iter, 0, &value, -1);
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar), gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar), value), value);
+		g_free(value);
+	}
+}
+
+
+GtkTreeModel *create_and_fill_model (void) {
+	GtkTreeIter toplevel;
+	GtkTreeIter child;
+	GtkTreeIter value;
+	treestore = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING );
+
+	gtk_tree_store_append(treestore, &toplevel, NULL);
+	gtk_tree_store_set(treestore, &toplevel, 0, "Parameter", -1);
+
+	GtkTreeIter childView;
+	gtk_tree_store_append(treestore, &childView, &toplevel);
+	gtk_tree_store_set(treestore, &childView, 0, "View", -1);
+
+	GtkTreeIter childTool;
+	gtk_tree_store_append(treestore, &childTool, &toplevel);
+	gtk_tree_store_set(treestore, &childTool, 0, "Tool", -1);
+
+	GtkTreeIter childMilling;
+	gtk_tree_store_append(treestore, &childMilling, &toplevel);
+	gtk_tree_store_set(treestore, &childMilling, 0, "Milling", -1);
+
+	GtkTreeIter childMachine;
+	gtk_tree_store_append(treestore, &childMachine, &toplevel);
+	gtk_tree_store_set(treestore, &childMachine, 0, "Machine", -1);
+
+	GtkTreeIter childMaterial;
+	gtk_tree_store_append(treestore, &childMaterial, &toplevel);
+	gtk_tree_store_set(treestore, &childMaterial, 0, "Material", -1);
+
+	int n = 0;
+	for (n = 0; n < P_LAST; n++) {
+		char name_str[1024];
+		char tmp_str[1024];
+		sprintf(name_str, "%s", PARAMETER[n].name);
+
+		if (strcmp(PARAMETER[n].group, "View") == 0) {
+			gtk_tree_store_append(treestore, &value, &childView);
+		} else if (strcmp(PARAMETER[n].group, "Tool") == 0) {
+			gtk_tree_store_append(treestore, &value, &childTool);
+		} else if (strcmp(PARAMETER[n].group, "Milling") == 0) {
+			gtk_tree_store_append(treestore, &value, &childMilling);
+		} else if (strcmp(PARAMETER[n].group, "Machine") == 0) {
+			gtk_tree_store_append(treestore, &value, &childMachine);
+		} else if (strcmp(PARAMETER[n].group, "Material") == 0) {
+			gtk_tree_store_append(treestore, &value, &childMaterial);
+		}
+		if (PARAMETER[n].type == T_FLOAT) {
+			sprintf(tmp_str, "%f", PARAMETER[n].vfloat);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else if (PARAMETER[n].type == T_DOUBLE) {
+			sprintf(tmp_str, "%f", PARAMETER[n].vdouble);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else if (PARAMETER[n].type == T_INT) {
+			sprintf(tmp_str, "%i", PARAMETER[n].vint);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else if (PARAMETER[n].type == T_SELECT) {
+			sprintf(tmp_str, "%i", PARAMETER[n].vint);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else if (PARAMETER[n].type == T_BOOL) {
+			sprintf(tmp_str, "%i", PARAMETER[n].vint);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else if (PARAMETER[n].type == T_STRING) {
+			sprintf(tmp_str, "%s", PARAMETER[n].vstr);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else {
+			continue;
+		}
+	}
+
+	gtk_tree_store_append(treestore, &toplevel, NULL);
+	gtk_tree_store_set(treestore, &toplevel, 0, "Objects", -1);
+
+	gtk_tree_store_append(treestore, &child, &toplevel);
+	gtk_tree_store_set(treestore, &child, 0, "#1", -1);
+
+	gtk_tree_store_append(treestore, &value, &child);
+	gtk_tree_store_set(treestore, &value, 0, "Width", 1, "100",-1);
+
+	gtk_tree_store_append(treestore, &value, &child);
+	gtk_tree_store_set(treestore, &value, 0, "height", 1, "100", -1);
+	return GTK_TREE_MODEL(treestore);
+}
+
+GtkWidget *create_view_and_model (void) {
+	GtkTreeViewColumn *col;
+	GtkCellRenderer *renderer;
+	GtkWidget *view;
+	GtkTreeModel *model;
+
+	view = gtk_tree_view_new();
+	renderer = gtk_cell_renderer_text_new();
+
+	col = gtk_tree_view_column_new();
+	gtk_tree_view_column_set_title(col, "Name");
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+	gtk_tree_view_column_pack_start(col, renderer, TRUE);
+	gtk_tree_view_column_add_attribute(col, renderer,  "text", 0);
+
+	col = gtk_tree_view_column_new();
+	gtk_tree_view_column_set_title(col, "Value");
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
+	gtk_tree_view_column_pack_start(col, renderer, TRUE);
+	gtk_tree_view_column_add_attribute(col, renderer,  "text", 1);
+
+	model = create_and_fill_model();
+
+	gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
+	g_object_unref(model); 
+
+	GtkWidget *scwin = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(scwin), view);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
+	return scwin;
+}
+
+
+
+
+
+
+
+
+GdkPixbuf *create_pixbuf(const gchar * filename) {
+	GdkPixbuf *pixbuf;
+	GError *error = NULL;
+	pixbuf = gdk_pixbuf_new_from_file(filename, &error);
+	if(!pixbuf) {
+		fprintf(stderr, "%s\n", error->message);
+		g_error_free(error);
+	}
+	return pixbuf;
+}
+
+
+
 int main (int argc, char *argv[]) {
 	SetupLoad();
 	ArgsRead(argc, argv);
 	SetupShow();
-
-	ToolLoadTable();
-	MaterialLoadList();
 
 	/* import DXF */
 	dxf_read(dxf_file);
 	init_objects();
 	DrawCheckSize();
 	DrawSetZero();
-	LayerLoadList();
+//	LayerLoadList();
 
-	if (batchmode == 0) {
-		GuiInit(&argc, argv);
-		GuiBarInit();
 
-		float axis[] = { -0.7f, 0.0f, 0.0f }; // initial model rotation
-		float angle = 0.8f;
-		g_RotateTime = GetTimeMs();
-		SetQuaternionFromAxisAngle(axis, angle, g_Rotation);
-		SetQuaternionFromAxisAngle(axis, angle, g_RotateStart);
+	GtkWidget *hbox;
+	GtkWidget *vbox;
+	gtk_init(&argc, &argv);
 
-		glutMainLoop();
-	} else {
-		mainloop();
+	glCanvas = create_gl();
+	gtk_widget_set_usize(GTK_WIDGET(glCanvas), 800, 600);
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "expose_event", GTK_SIGNAL_FUNC(handler_draw), NULL);  
+	gtk_signal_connect( GTK_OBJECT(glCanvas), "button_press_event", GTK_SIGNAL_FUNC(handler_button_press), NULL);  
+	gtk_signal_connect( GTK_OBJECT(glCanvas), "button_release_event", GTK_SIGNAL_FUNC(handler_button_release), NULL);  
+	gtk_signal_connect( GTK_OBJECT(glCanvas), "configure_event", GTK_SIGNAL_FUNC(handler_configure), NULL);  
+	gtk_signal_connect( GTK_OBJECT(glCanvas), "motion_notify_event", GTK_SIGNAL_FUNC(handler_motion), NULL);  
+	gtk_signal_connect( GTK_OBJECT(glCanvas), "key_press_event", GTK_SIGNAL_FUNC(handler_keypress), NULL);  
+
+	// top-menu
+	GtkWidget *MenuBar = gtk_menu_bar_new();
+	GtkWidget *MenuItem;
+	GtkWidget *FileMenu = gtk_menu_item_new_with_label("File");
+	GtkWidget *FileMenuList = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(FileMenu), FileMenuList);
+	gtk_menu_bar_append(GTK_MENU_BAR(MenuBar), FileMenu);
+
+		MenuItem = gtk_menu_item_new_with_label("Save G-Code");
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
+
+		MenuItem = gtk_menu_item_new_with_label("Save Setup");
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
+
+		MenuItem = gtk_menu_item_new_with_label("Quit");
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_destroy), NULL);
+
+
+	GtkWidget *HelpMenu = gtk_menu_item_new_with_label("Help");
+	GtkWidget *HelpMenuList = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(HelpMenu), HelpMenuList);
+	gtk_menu_bar_append(GTK_MENU_BAR(MenuBar), HelpMenu);
+
+		MenuItem = gtk_menu_item_new_with_label("About");
+		gtk_menu_append(GTK_MENU(HelpMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_about), NULL);
+
+
+
+	GtkWidget *ToolBar = gtk_toolbar_new();
+	gtk_toolbar_set_style(GTK_TOOLBAR(ToolBar), GTK_TOOLBAR_ICONS);
+
+	GtkToolItem *ToolItemSaveGcode = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
+	gtk_tool_item_set_tooltip_text(ToolItemSaveGcode, "Save G-Code");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveGcode, -1);
+	g_signal_connect(G_OBJECT(ToolItemSaveGcode), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
+
+	GtkToolItem *ToolItemSaveSetup = gtk_tool_button_new_from_stock(GTK_STOCK_NEW);
+	gtk_tool_item_set_tooltip_text(ToolItemSaveSetup, "Save Setup");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveSetup, -1);
+	g_signal_connect(G_OBJECT(ToolItemSaveSetup), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
+
+	GtkToolItem *ToolItemSep = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
+
+	GtkToolItem *ToolItemExit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+	gtk_tool_item_set_tooltip_text(ToolItemExit, "Quit");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemExit, -1);
+	g_signal_connect(G_OBJECT(ToolItemExit), "clicked", GTK_SIGNAL_FUNC(handler_destroy), NULL);
+
+
+	GtkWidget *NbBox = gtk_table_new(2, 2, FALSE);
+	GtkWidget *notebook = gtk_notebook_new();
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
+	gtk_table_attach_defaults(GTK_TABLE(NbBox), notebook, 0, 1, 0, 1);
+
+	int ViewNum = 0;
+	GtkWidget *ViewLabel = gtk_label_new("View");
+	GtkWidget *ViewBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), ViewBox, ViewLabel);
+
+	int ToolNum = 0;
+	GtkWidget *ToolLabel = gtk_label_new("Tool");
+	GtkWidget *ToolBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), ToolBox, ToolLabel);
+
+	int MillingNum = 0;
+	GtkWidget *MillingLabel = gtk_label_new("Milling");
+	GtkWidget *MillingBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MillingBox, MillingLabel);
+
+	int MachineNum = 0;
+	GtkWidget *MachineLabel = gtk_label_new("Machine");
+	GtkWidget *MachineBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MachineBox, MachineLabel);
+
+	int MaterialNum = 0;
+	GtkWidget *MaterialLabel = gtk_label_new("Material");
+	GtkWidget *MaterialBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MaterialBox, MaterialLabel);
+
+
+	int n = 0;
+	for (n = 0; n < P_LAST; n++) {
+		GtkWidget *Box = gtk_hbox_new(0, 0);
+		if (PARAMETER[n].type == T_FLOAT) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
+			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 3);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (PARAMETER[n].type == T_DOUBLE) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
+			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 3);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (PARAMETER[n].type == T_INT) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
+			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 3);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (PARAMETER[n].type == T_SELECT) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ListStore[n] = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+			ParamValue[n] = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ListStore[n]));
+			g_object_unref(ListStore[n]);
+			GtkCellRenderer *column;
+			column = gtk_cell_renderer_text_new();
+			gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(ParamValue[n]), column, TRUE);
+			gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(ParamValue[n]), column, "cell-background", 0, "text", 1, NULL);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(ParamValue[n]), 1);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (PARAMETER[n].type == T_BOOL) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ParamValue[n] = gtk_check_button_new_with_label("On/Off");
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (PARAMETER[n].type == T_STRING) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ParamValue[n] = gtk_entry_new();
+			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), PARAMETER[n].vstr);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else {
+			continue;
+		}
+		if (strcmp(PARAMETER[n].group, "View") == 0) {
+			gtk_box_pack_start(GTK_BOX(ViewBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 0;
+			PARAMETER[n].l2 = ViewNum;
+			ViewNum++;
+		} else if (strcmp(PARAMETER[n].group, "Tool") == 0) {
+			gtk_box_pack_start(GTK_BOX(ToolBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 1;
+			PARAMETER[n].l2 = ToolNum;
+			ToolNum++;
+		} else if (strcmp(PARAMETER[n].group, "Milling") == 0) {
+			gtk_box_pack_start(GTK_BOX(MillingBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 2;
+			PARAMETER[n].l2 = MillingNum;
+			MillingNum++;
+		} else if (strcmp(PARAMETER[n].group, "Machine") == 0) {
+			gtk_box_pack_start(GTK_BOX(MachineBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 3;
+			PARAMETER[n].l2 = MachineNum;
+			MachineNum++;
+		} else if (strcmp(PARAMETER[n].group, "Material") == 0) {
+			gtk_box_pack_start(GTK_BOX(MaterialBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 4;
+			PARAMETER[n].l2 = MaterialNum;
+			MaterialNum++;
+		}
 	}
+
+
+	GtkWidget *TreeLabel = gtk_label_new("Objects");
+	GtkWidget *TreeBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), TreeBox, TreeLabel);
+	GtkWidget *TreeView = create_view_and_model();
+	gtk_box_pack_start(GTK_BOX(TreeBox), TreeView, 1, 1, 0);
+
+/*
+	for (n = 0; n < O_P_LAST; n++) {
+		GtkWidget *Box = gtk_hbox_new(0, 0);
+		if (OBJECT_PARAMETER[n].type == T_FLOAT) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(OBJECT_PARAMETER[n].vdouble, OBJECT_PARAMETER[n].min, OBJECT_PARAMETER[n].max, OBJECT_PARAMETER[n].step, OBJECT_PARAMETER[n].step * 10.0, 0.0);
+			ParamValue[n] = gtk_spin_button_new(Adj, OBJECT_PARAMETER[n].step, 3);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (OBJECT_PARAMETER[n].type == T_DOUBLE) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(OBJECT_PARAMETER[n].vdouble, OBJECT_PARAMETER[n].min, OBJECT_PARAMETER[n].max, OBJECT_PARAMETER[n].step, OBJECT_PARAMETER[n].step * 10.0, 0.0);
+			ParamValue[n] = gtk_spin_button_new(Adj, OBJECT_PARAMETER[n].step, 3);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (OBJECT_PARAMETER[n].type == T_INT) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(OBJECT_PARAMETER[n].vdouble, OBJECT_PARAMETER[n].min, OBJECT_PARAMETER[n].max, OBJECT_PARAMETER[n].step, OBJECT_PARAMETER[n].step * 10.0, 0.0);
+			ParamValue[n] = gtk_spin_button_new(Adj, OBJECT_PARAMETER[n].step, 3);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (OBJECT_PARAMETER[n].type == T_SELECT) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ListStore[n] = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+			ParamValue[n] = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ListStore[n]));
+			g_object_unref(ListStore[n]);
+			GtkCellRenderer *column;
+			column = gtk_cell_renderer_text_new();
+			gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(ParamValue[n]), column, TRUE);
+			gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(ParamValue[n]), column, "cell-background", 0, "text", 1, NULL);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(ParamValue[n]), 1);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (OBJECT_PARAMETER[n].type == T_BOOL) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ParamValue[n] = gtk_check_button_new_with_label("On/Off");
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (OBJECT_PARAMETER[n].type == T_STRING) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ParamValue[n] = gtk_entry_new();
+			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), OBJECT_PARAMETER[n].vstr);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else {
+			continue;
+		}
+		gtk_box_pack_start(GTK_BOX(TreeBox), Box, 0, 0, 0);
+	}
+*/
+	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "A", -1);
+	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "B", -1);
+	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "C", -1);
+
+	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "A", -1);
+	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "B", -1);
+	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
+
+	MaterialLoadList();
+	ToolLoadTable();
+
+
+	ParameterUpdate();
+	for (n = 0; n < P_LAST; n++) {
+		if (PARAMETER[n].type == T_FLOAT) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		} else if (PARAMETER[n].type == T_DOUBLE) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		} else if (PARAMETER[n].type == T_INT) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		} else if (PARAMETER[n].type == T_SELECT) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		} else if (PARAMETER[n].type == T_BOOL) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "toggled", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		} else if (PARAMETER[n].type == T_STRING) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		}
+	}
+
+
+	GtkWidget *StatusBar = gtk_statusbar_new();
+
+	hbox = gtk_hbox_new(0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), NbBox, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), glCanvas, 1, 1, 0);
+
+
+
+	GtkWidget *Logo = gtk_image_new_from_file("logo-top.png");
+	GtkWidget *topBox = gtk_hbox_new(0, 0);
+	gtk_box_pack_start(GTK_BOX(topBox), ToolBar, 1, 1, 0);
+	gtk_box_pack_start(GTK_BOX(topBox), Logo, 0, 0, 0);
+
+
+
+
+	vbox = gtk_vbox_new(0, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), MenuBar, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), topBox, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, 1, 1, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), StatusBar, 0, 0, 0);
+
+	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(window), "OpenCAM 2D");
+
+
+	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	gtk_window_set_icon(GTK_WINDOW(window), create_pixbuf("logo-top.png"));
+
+	gtk_signal_connect(GTK_OBJECT(window), "destroy_event", GTK_SIGNAL_FUNC (handler_destroy), NULL);
+	gtk_signal_connect(GTK_OBJECT(window), "delete_event", GTK_SIGNAL_FUNC (handler_destroy), NULL);
+	gtk_container_add (GTK_CONTAINER (window), vbox);
+
+	gtk_widget_show_all(window);
+
+	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
+	gtk_main ();
+
+
 
 	return 0;
 }
