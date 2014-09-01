@@ -1715,14 +1715,14 @@ void draw_helplines (void) {
 	}
 
 	/* Scale-Arrow's */
-	float gridXYZ = 10.0;
-	float gridXYZmin = 1.0;
+	float gridXYZ = PARAMETER[P_V_HELP_GRID].vfloat * 10.0;
+	float gridXYZmin = PARAMETER[P_V_HELP_GRID].vfloat;
 	float lenY = size_y;
 	float lenX = size_x;
 	float lenZ = PARAMETER[P_M_DEPTH].vdouble * -1;
 	float offXYZ = 10.0;
-	float arrow_d = 1.0;
-	float arrow_l = 6.0;
+	float arrow_d = 1.0 * PARAMETER[P_V_HELP_ARROW].vfloat;
+	float arrow_l = 6.0 * PARAMETER[P_V_HELP_ARROW].vfloat;
 	GLUquadricObj *quadratic = gluNewQuadric();
 
 	int pos_n = 0;
