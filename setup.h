@@ -23,7 +23,8 @@ enum {
 	T_FLOAT,
 	T_DOUBLE,
 	T_STRING,
-	T_SELECT
+	T_SELECT,
+	T_FILE
 };
 
 enum {

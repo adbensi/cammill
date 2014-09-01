@@ -22,7 +22,7 @@ PARA PARAMETER[] = {
 	{"CalcSpeed",	"Tool",		"-cs",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1, 0, 0},
 	{"Speed",	"Tool",		"-ts",	T_INT,		10000,	0.0,	0.0,	"",	1.0,	10.0,	100000.0,	"rpm", 1, 0, 0},
 	{"Wings",	"Tool",		"-tw",	T_INT,		2,	0.0,	0.0,	"",	1.0,	1.0,	10.0,		"#", 1, 0, 0},
-	{"Table",	"Tool",		"-tt",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
+	{"Table",	"Tool",		"-tt",	T_FILE	,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
 	{"MaxFeedRate",	"Milling",	"-fm",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1, 0, 0},
 	{"FeedRate",	"Milling",	"-fr",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1, 0, 0},
 	{"PlungeRate",	"Milling",	"-pr",	T_INT	,	100,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1, 0, 0},
@@ -37,10 +37,10 @@ PARA PARAMETER[] = {
 	{"Rotary-Axis",	"Machine",	"-ra",	T_SELECT,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 0, 0},
 	{"Tangencial-Axis","Machine",	"-ta",	T_SELECT,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 0, 0},
 	{"Tangencial-MaxAngle","Machine", "-tm",T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1, 0, 0},
-	{"Output-File",	"Milling",	"-o",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
+	{"Output-File",	"Milling",	"-o",	T_FILE,		0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
 	{"Select",	"Material",	"-ms",	T_SELECT,	1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0, 0, 0},
 	{"Rotary/Diameter","Material",	"-md",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.01,	0.01,	300.0,		"mm", 1, 0, 0},
-	{"Post-Command","Milling"	,	"-pc",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
+	{"Post-Command","Milling",	"-pc",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
 };
 
 PARA OBJECT_PARAMETER[] = {
@@ -69,6 +69,8 @@ void SetupShow (void) {
 			fprintf(stdout, "%22s: %i\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_STRING) {
 			fprintf(stdout, "%22s: %s\n", name_str, PARAMETER[n].vstr);
+		} else if (PARAMETER[n].type == T_FILE) {
+			fprintf(stdout, "%22s: %s\n", name_str, PARAMETER[n].vstr);
 		}
 	}
 	fprintf(stdout, "\n");
@@ -89,6 +91,8 @@ void SetupShowGcode (FILE *out) {
 		} else if (PARAMETER[n].type == T_BOOL) {
 			fprintf(out, "(%22s: %i)\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_STRING) {
+			fprintf(out, "(%22s: %s)\n", name_str, PARAMETER[n].vstr);
+		} else if (PARAMETER[n].type == T_FILE) {
 			fprintf(out, "(%22s: %s)\n", name_str, PARAMETER[n].vstr);
 		}
 	}
@@ -112,6 +116,8 @@ void SetupShowHelp (void) {
 			fprintf(stdout, "%5s 0/1      %s\n", PARAMETER[n].arg, name_str);
 		} else if (PARAMETER[n].type == T_STRING) {
 			fprintf(stdout, "%5s STRING   %s\n", PARAMETER[n].arg, name_str);
+		} else if (PARAMETER[n].type == T_FILE) {
+			fprintf(stdout, "%5s FILE     %s\n", PARAMETER[n].arg, name_str);
 		}
 	}
 	fprintf(stdout, "\n");
@@ -141,6 +147,8 @@ void SetupSave (void) {
 		} else if (PARAMETER[n].type == T_BOOL) {
 			fprintf(cfg_fp, "%s=%i\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_STRING) {
+			fprintf(cfg_fp, "%s=%s\n", name_str, PARAMETER[n].vstr);
+		} else if (PARAMETER[n].type == T_FILE) {
 			fprintf(cfg_fp, "%s=%s\n", name_str, PARAMETER[n].vstr);
 		}
 	}
@@ -178,6 +186,8 @@ void SetupLoad (void) {
 						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
 					} else if (PARAMETER[n].type == T_STRING) {
 						strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
+					} else if (PARAMETER[n].type == T_FILE) {
+						strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
 					}
 				}
 			}
@@ -199,6 +209,8 @@ int SetupArgCheck (char *arg, char *arg2) {
 			} else if (PARAMETER[n].type == T_BOOL) {
 				PARAMETER[n].vint = atoi(arg2);
 			} else if (PARAMETER[n].type == T_STRING) {
+				strcpy(PARAMETER[n].vstr, arg2);
+			} else if (PARAMETER[n].type == T_FILE) {
 				strcpy(PARAMETER[n].vstr, arg2);
 			}
 			return 1;

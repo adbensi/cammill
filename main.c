@@ -95,6 +95,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data);
 GtkTreeStore *treestore;
 GtkListStore *ListStore[P_LAST];
 GtkWidget *ParamValue[P_LAST];
+GtkWidget *ParamButton[P_LAST];
 GtkWidget *glCanvas;
 int width = 800;
 int height = 600;
@@ -2179,9 +2180,9 @@ void ToolLoadTable (void) {
 		}
 		tooltbl_diameters[0] = 1;
 		n = 0;
+		gtk_list_store_clear(ListStore[P_TOOL_SELECT]);
 		sprintf(tmp_str, "FREE");
 		gtk_list_store_insert_with_values(ListStore[P_TOOL_SELECT], NULL, -1, 0, NULL, 1, tmp_str, -1);
-
 		n++;
 		while ((read = getline(&line, &len, tt_fp)) != -1) {
 			if (strncmp(line, "T", 1) == 0) {
@@ -2358,7 +2359,53 @@ void handler_destroy (GtkWidget *widget, gpointer data) {
 }
 
 void handler_save_gcode (GtkWidget *widget, gpointer data) {
-	save_gcode = 1;
+	GtkWidget *dialog;
+	dialog = gtk_file_chooser_dialog_new ("Save G-Code File",
+		GTK_WINDOW(window),
+		GTK_FILE_CHOOSER_ACTION_SAVE,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	NULL);
+	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+	if (PARAMETER[P_MFILE].vstr[0] == 0) {
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
+		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "test.ngc");
+	} else {
+		gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), PARAMETER[P_MFILE].vstr);
+	}
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		strcpy(PARAMETER[P_MFILE].vstr, filename);
+		g_free(filename);
+		save_gcode = 1;
+	}
+	gtk_widget_destroy (dialog);
+}
+
+void handler_load_tooltable (GtkWidget *widget, gpointer data) {
+	GtkWidget *dialog;
+	dialog = gtk_file_chooser_dialog_new ("Load Tooltable",
+		GTK_WINDOW(window),
+		GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	NULL);
+	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+	if (PARAMETER[P_TOOL_TABLE].vstr[0] == 0) {
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
+		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "tool.tbl");
+	} else {
+		gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), PARAMETER[P_TOOL_TABLE].vstr);
+	}
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		strcpy(PARAMETER[P_TOOL_TABLE].vstr, filename);
+		ToolLoadTable();
+		g_free(filename);
+	}
+	gtk_widget_destroy (dialog);
 }
 
 void handler_save_setup (GtkWidget *widget, gpointer data) {
@@ -2523,6 +2570,8 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		PARAMETER[n].vint = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 	} else if (PARAMETER[n].type == T_STRING) {
 		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
+	} else if (PARAMETER[n].type == T_FILE) {
+		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
 	}
 }
 
@@ -2554,6 +2603,8 @@ void ParameterUpdate (void) {
 			}
 		} else if (PARAMETER[n].type == T_STRING) {
 			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), PARAMETER[n].vstr);
+		} else if (PARAMETER[n].type == T_FILE) {
+			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), PARAMETER[n].vstr);
 		} else {
 			continue;
 		}
@@ -2571,6 +2622,8 @@ void ParameterUpdate (void) {
 		} else if (PARAMETER[n].type == T_BOOL) {
 			sprintf(value2, "%i", PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_STRING) {
+			sprintf(value2, "%s", PARAMETER[n].vstr);
+		} else if (PARAMETER[n].type == T_FILE) {
 			sprintf(value2, "%s", PARAMETER[n].vstr);
 		} else {
 			continue;
@@ -2596,7 +2649,7 @@ void on_changed (GtkWidget *widget, gpointer statusbar) {
 GtkTreeModel *create_and_fill_model (void) {
 	GtkTreeIter toplevel;
 	GtkTreeIter value;
-	treestore = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING );
+	treestore = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 
 	gtk_tree_store_append(treestore, &toplevel, NULL);
 	gtk_tree_store_set(treestore, &toplevel, 0, "Parameter", -1);
@@ -2656,6 +2709,9 @@ GtkTreeModel *create_and_fill_model (void) {
 		} else if (PARAMETER[n].type == T_STRING) {
 			sprintf(tmp_str, "%s", PARAMETER[n].vstr);
 			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+		} else if (PARAMETER[n].type == T_FILE) {
+			sprintf(tmp_str, "%s", PARAMETER[n].vstr);
+			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
 		} else {
 			continue;
 		}
@@ -2695,6 +2751,9 @@ GtkTreeModel *create_and_fill_model (void) {
 					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
 					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
 				} else if (OBJECT_PARAMETER[n].type == T_STRING) {
+					sprintf(tmp_str, "%s", OBJECT_PARAMETER[n].vstr);
+					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
+				} else if (OBJECT_PARAMETER[n].type == T_FILE) {
 					sprintf(tmp_str, "%s", OBJECT_PARAMETER[n].vstr);
 					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
 				} else {
@@ -2801,6 +2860,10 @@ int main (int argc, char *argv[]) {
 		MenuItem = gtk_menu_item_new_with_label("Save G-Code");
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
+
+		MenuItem = gtk_menu_item_new_with_label("Load Tooltable");
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_tooltable), NULL);
 
 		MenuItem = gtk_menu_item_new_with_label("Save Setup");
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
@@ -2931,6 +2994,18 @@ int main (int argc, char *argv[]) {
 			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), PARAMETER[n].vstr);
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (PARAMETER[n].type == T_FILE) {
+			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ParamValue[n] = gtk_entry_new();
+			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), PARAMETER[n].vstr);
+			ParamButton[n] = gtk_button_new();
+			GtkWidget *image = gtk_image_new_from_stock(GTK_STOCK_OPEN, GTK_ICON_SIZE_BUTTON);
+			gtk_button_set_image(GTK_BUTTON(ParamButton[n]), image);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamButton[n], 0, 0, 0);
 		} else {
 			continue;
 		}
@@ -3025,6 +3100,14 @@ int main (int argc, char *argv[]) {
 			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), OBJECT_PARAMETER[n].vstr);
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
+		} else if (OBJECT_PARAMETER[n].type == T_FILE) {
+			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
+			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+			gtk_container_add(GTK_CONTAINER(Align), Label);
+			ParamValue[n] = gtk_entry_new();
+			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), OBJECT_PARAMETER[n].vstr);
+			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
+			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else {
 			continue;
 		}
@@ -3038,6 +3121,11 @@ int main (int argc, char *argv[]) {
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "A", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "B", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
+
+	g_signal_connect(G_OBJECT(ParamButton[P_MFILE]), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
+	g_signal_connect(G_OBJECT(ParamButton[P_TOOL_TABLE]), "clicked", GTK_SIGNAL_FUNC(handler_load_tooltable), NULL);
+
+
 
 	MaterialLoadList();
 	ToolLoadTable();
@@ -3057,6 +3145,8 @@ int main (int argc, char *argv[]) {
 			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "toggled", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
 		} else if (PARAMETER[n].type == T_STRING) {
 			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
+		} else if (PARAMETER[n].type == T_FILE) {
+			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
 		}
 	}
 
@@ -3068,7 +3158,12 @@ int main (int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(hbox), glCanvas, 1, 1, 0);
 
 
-	GtkWidget *Logo = gtk_image_new_from_file("logo-top.png");
+	GtkWidget *LogoIMG = gtk_image_new_from_file("logo-top.png");
+	GtkWidget *Logo = gtk_event_box_new();
+	gtk_container_add(GTK_CONTAINER(Logo), LogoIMG);
+	gtk_signal_connect(GTK_OBJECT(Logo), "button_press_event", GTK_SIGNAL_FUNC(handler_about), NULL);
+
+
 	GtkWidget *topBox = gtk_hbox_new(0, 0);
 	gtk_box_pack_start(GTK_BOX(topBox), ToolBar, 1, 1, 0);
 	gtk_box_pack_start(GTK_BOX(topBox), Logo, 0, 0, 0);
