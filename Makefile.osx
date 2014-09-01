@@ -10,7 +10,7 @@
 #export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}​:/opt/X11/lib/pkgconfig"
 
 INCLUDES = -I./
-LIBS = -lGL -lGLU -lX11 -lm -lpthread -lstdc++ -lXext -ldl -lXi -lxcb -lXau -lXdmcp -lc `pkg-config gtk+-2.0 --libs` `pkg-config gtk+-2.0 --cflags` `pkg-config gtkgl-2.0 --libs` `pkg-config gtkgl-2.0 --cflags`
+LIBS = -lGL -lGLU -lX11 -lm -lpthread -lstdc++ -lXext -ldl -lXi -lxcb -lXau -lXdmcp -lc `pkg-config gtk+-2.0 --libs` `pkg-config gtk+-2.0 --cflags` `pkg-config gtkglext-x11-1.0 --libs` `pkg-config gtkglext-x11-1.0 --cflags`
 
 all: c-dxf2gcode
 
