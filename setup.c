@@ -68,6 +68,8 @@ void SetupShow (void) {
 			fprintf(stdout, "%22s: %f\n", name_str, PARAMETER[n].vdouble);
 		} else if (PARAMETER[n].type == T_INT) {
 			fprintf(stdout, "%22s: %i\n", name_str, PARAMETER[n].vint);
+		} else if (PARAMETER[n].type == T_SELECT) {
+			fprintf(stdout, "%22s: %i\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_BOOL) {
 			fprintf(stdout, "%22s: %i\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_STRING) {
@@ -90,6 +92,8 @@ void SetupShowGcode (FILE *out) {
 		} else if (PARAMETER[n].type == T_DOUBLE) {
 			fprintf(out, "(%22s: %f)\n", name_str, PARAMETER[n].vdouble);
 		} else if (PARAMETER[n].type == T_INT) {
+			fprintf(out, "(%22s: %i)\n", name_str, PARAMETER[n].vint);
+		} else if (PARAMETER[n].type == T_SELECT) {
 			fprintf(out, "(%22s: %i)\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_BOOL) {
 			fprintf(out, "(%22s: %i)\n", name_str, PARAMETER[n].vint);
@@ -114,6 +118,8 @@ void SetupShowHelp (void) {
 		} else if (PARAMETER[n].type == T_DOUBLE) {
 			fprintf(stdout, "%5s DOUBLE   %s\n", PARAMETER[n].arg, name_str);
 		} else if (PARAMETER[n].type == T_INT) {
+			fprintf(stdout, "%5s INT      %s\n", PARAMETER[n].arg, name_str);
+		} else if (PARAMETER[n].type == T_SELECT) {
 			fprintf(stdout, "%5s INT      %s\n", PARAMETER[n].arg, name_str);
 		} else if (PARAMETER[n].type == T_BOOL) {
 			fprintf(stdout, "%5s 0/1      %s\n", PARAMETER[n].arg, name_str);
@@ -146,6 +152,8 @@ void SetupSave (void) {
 		} else if (PARAMETER[n].type == T_DOUBLE) {
 			fprintf(cfg_fp, "%s=%f\n", name_str, PARAMETER[n].vdouble);
 		} else if (PARAMETER[n].type == T_INT) {
+			fprintf(cfg_fp, "%s=%i\n", name_str, PARAMETER[n].vint);
+		} else if (PARAMETER[n].type == T_SELECT) {
 			fprintf(cfg_fp, "%s=%i\n", name_str, PARAMETER[n].vint);
 		} else if (PARAMETER[n].type == T_BOOL) {
 			fprintf(cfg_fp, "%s=%i\n", name_str, PARAMETER[n].vint);
@@ -185,6 +193,8 @@ void SetupLoad (void) {
 						PARAMETER[n].vdouble = atof(line2 + strlen(name_str));
 					} else if (PARAMETER[n].type == T_INT) {
 						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
+					} else if (PARAMETER[n].type == T_SELECT) {
+						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
 					} else if (PARAMETER[n].type == T_BOOL) {
 						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
 					} else if (PARAMETER[n].type == T_STRING) {
@@ -208,6 +218,8 @@ int SetupArgCheck (char *arg, char *arg2) {
 			} else if (PARAMETER[n].type == T_DOUBLE) {
 				PARAMETER[n].vdouble = atof(arg2);
 			} else if (PARAMETER[n].type == T_INT) {
+				PARAMETER[n].vint = atoi(arg2);
+			} else if (PARAMETER[n].type == T_SELECT) {
 				PARAMETER[n].vint = atoi(arg2);
 			} else if (PARAMETER[n].type == T_BOOL) {
 				PARAMETER[n].vint = atoi(arg2);

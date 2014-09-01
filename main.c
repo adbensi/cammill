@@ -92,6 +92,7 @@ int last_mouse_state = 0;
 void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
 
+GtkWidget *StatusBar;
 GtkTreeStore *treestore;
 GtkListStore *ListStore[P_LAST];
 GtkWidget *ParamValue[P_LAST];
@@ -2073,6 +2074,7 @@ void mainloop (void) {
 			sprintf(cmd_str, PARAMETER[P_POST_CMD].vstr, PARAMETER[P_MFILE].vstr);
 			system(cmd_str);
 		}
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving g-code...done"), "saving g-code...done");
 		save_gcode = 0;
 	}
 
@@ -2366,10 +2368,12 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		strcpy(PARAMETER[P_V_DXF].vstr, filename);
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf..."), "reading dxf...");
 		dxf_read(PARAMETER[P_V_DXF].vstr);
 		init_objects();
 		DrawCheckSize();
 		DrawSetZero();
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf...done"), "reading dxf...done");
 		g_free(filename);
 	}
 	gtk_widget_destroy (dialog);
@@ -2417,18 +2421,25 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 		char *file_nosuffix = suffix_remove(file);
 		file_nosuffix = realloc(file_nosuffix, strlen(file_nosuffix) + 5);
 		strcat(file_nosuffix, ".ngc");
-		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), dir);
-		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), file_nosuffix);
+
+		if (strstr(PARAMETER[P_V_DXF].vstr, "/") > 0) {
+			gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), dir);
+		} else {
+			gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), "./");
+		}
+
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), file_nosuffix);
 		free(file_nosuffix);
 	} else {
-		gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), PARAMETER[P_MFILE].vstr);
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER (dialog), PARAMETER[P_MFILE].vstr);
 	}
-	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		strcpy(PARAMETER[P_MFILE].vstr, filename);
 		g_free(filename);
 		save_gcode = 1;
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving g-code..."), "saving g-code...");
 	}
 	gtk_widget_destroy (dialog);
 }
@@ -2460,14 +2471,18 @@ void handler_load_tooltable (GtkWidget *widget, gpointer data) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		strcpy(PARAMETER[P_TOOL_TABLE].vstr, filename);
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "loading tooltable..."), "loading tooltable...");
 		ToolLoadTable();
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "loading tooltable...done"), "loading tooltable...done");
 		g_free(filename);
 	}
 	gtk_widget_destroy (dialog);
 }
 
 void handler_save_setup (GtkWidget *widget, gpointer data) {
+	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving setup...done"), "saving setup...done");
 	SetupSave();
+	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving setup...done"), "saving setup...done");
 }
 
 void handler_about (GtkWidget *widget, gpointer data) {
@@ -2690,19 +2705,6 @@ void ParameterUpdate (void) {
 		gtk_tree_store_set(GTK_TREE_STORE(treestore), &iter, 1, value2, -1);
 	}
 }
-
-
-void on_changed (GtkWidget *widget, gpointer statusbar) {
-	GtkTreeIter iter;
-	GtkTreeModel *model;
-	char *value;
-	if (gtk_tree_selection_get_selected(GTK_TREE_SELECTION(widget), &model, &iter)) {
-		gtk_tree_model_get(model, &iter, 0, &value, -1);
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar), gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar), value), value);
-		g_free(value);
-	}
-}
-
 
 GtkTreeModel *create_and_fill_model (void) {
 	GtkTreeIter toplevel;
@@ -2964,13 +2966,16 @@ int main (int argc, char *argv[]) {
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveGcode, -1);
 	g_signal_connect(G_OBJECT(ToolItemSaveGcode), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 
-	GtkToolItem *ToolItemSaveSetup = gtk_tool_button_new_from_stock(GTK_STOCK_NEW);
+	GtkToolItem *ToolItemSaveSetup = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
 	gtk_tool_item_set_tooltip_text(ToolItemSaveSetup, "Save Setup");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveSetup, -1);
 	g_signal_connect(G_OBJECT(ToolItemSaveSetup), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
 
 	GtkToolItem *ToolItemSep = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
+
+	GtkToolItem *ToolItemSep2 = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep2, -1); 
 
 	GtkToolItem *ToolItemExit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
 	gtk_tool_item_set_tooltip_text(ToolItemExit, "Quit");
@@ -3223,7 +3228,7 @@ int main (int argc, char *argv[]) {
 	}
 
 
-	GtkWidget *StatusBar = gtk_statusbar_new();
+	StatusBar = gtk_statusbar_new();
 
 	hbox = gtk_hbox_new(0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), NbBox, 0, 0, 0);
