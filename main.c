@@ -17,7 +17,7 @@
 #endif
 
 #include <gtk/gtk.h>
-#include <gtkgl/gtkglarea.h>
+#include <gtk/gtkgl.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -2322,23 +2322,35 @@ void ArgsRead (int argc, char **argv) {
 
 
 void view_init_gl(void) {
-	gtk_gl_area_make_current(GTK_GL_AREA(glCanvas));
-	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective((M_PI / 4) / M_PI * 180, (float)width / (float)height, 0.1, 1000.0);
-	gluLookAt(0, 0, 6,  0, 0, 0,  0, 1, 0);
-	glMatrixMode(GL_MODELVIEW);
-	glEnable(GL_NORMALIZE);
+	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
+	GdkGLContext *glcontext = gtk_widget_get_gl_context(glCanvas);
+	if (gdk_gl_drawable_gl_begin(gldrawable, glcontext)) {
+		glViewport(0, 0, width, height);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective((M_PI / 4) / M_PI * 180, (float)width / (float)height, 0.1, 1000.0);
+		gluLookAt(0, 0, 6,  0, 0, 0,  0, 1, 0);
+		glMatrixMode(GL_MODELVIEW);
+		glEnable(GL_NORMALIZE);
+		gdk_gl_drawable_gl_end(gldrawable);
+	}
 }
 
 void view_draw (void) {
-	gtk_gl_area_make_current(GTK_GL_AREA(glCanvas));
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ParameterUpdate();
-	mainloop();
-	gtk_gl_area_swapbuffers(GTK_GL_AREA(glCanvas));
+	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
+	GdkGLContext *glcontext = gtk_widget_get_gl_context(glCanvas);
+	if (gdk_gl_drawable_gl_begin(gldrawable, glcontext)) {
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		ParameterUpdate();
+		mainloop();
+		if (gdk_gl_drawable_is_double_buffered (gldrawable)) {
+			gdk_gl_drawable_swap_buffers(gldrawable);
+		} else {
+			glFlush();
+		}
+		gdk_gl_drawable_gl_end(gldrawable);
+	}
 }
 
 void handler_destroy (GtkWidget *widget, gpointer data) {
@@ -2461,15 +2473,21 @@ int handler_periodic_action (gpointer d) {
 }
 
 GtkWidget *create_gl() {
-	static GtkWidget * global_first = NULL;
-	static int attr[] = {GDK_GL_RGBA, GDK_GL_DOUBLEBUFFER, GDK_GL_DEPTH_SIZE, 16, GDK_GL_NONE};
-	GtkWidget *f;
-	if ( global_first ) {
-		f = gtk_gl_area_share_new(attr, GTK_GL_AREA(global_first));
-	} else {
-		f = global_first = gtk_gl_area_new(attr);
+	static GdkGLConfig *glconfig = NULL;
+	static GdkGLContext *glcontext = NULL;
+	GtkWidget *area;
+	if (glconfig == NULL) {
+		glconfig = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGB | GDK_GL_MODE_DEPTH | GDK_GL_MODE_DOUBLE);
+		if (glconfig == NULL) {
+			glconfig = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGB | GDK_GL_MODE_DEPTH);
+			if (glconfig == NULL) {
+				exit(1);
+			}
+		}
 	}
-	gtk_widget_set_events(GTK_WIDGET(f)
+	area = gtk_drawing_area_new();
+	gtk_widget_set_gl_capability(area, glconfig, glcontext, TRUE, GDK_GL_RGBA_TYPE); 
+	gtk_widget_set_events(GTK_WIDGET(area)
 		,GDK_BUTTON_MOTION_MASK 
 		|GDK_BUTTON_PRESS_MASK 
 		|GDK_BUTTON_RELEASE_MASK
@@ -2478,9 +2496,8 @@ GtkWidget *create_gl() {
 		|GDK_KEY_RELEASE_MASK
 		|GDK_EXPOSURE_MASK
 	);
-	GTK_WIDGET_SET_FLAGS(GTK_WIDGET(f), GTK_CAN_FOCUS);
-	gtk_signal_connect( GTK_OBJECT(f), "enter-notify-event", GTK_SIGNAL_FUNC(gtk_widget_grab_focus), NULL);
-	return(f);
+	gtk_signal_connect(GTK_OBJECT(area), "enter-notify-event", GTK_SIGNAL_FUNC(gtk_widget_grab_focus), NULL);
+	return(area);
 }
 
 void ParameterChanged (GtkWidget *widget, gpointer data) {
@@ -2751,6 +2768,9 @@ int main (int argc, char *argv[]) {
 	GtkWidget *hbox;
 	GtkWidget *vbox;
 	gtk_init(&argc, &argv);
+
+	gtk_gl_init(&argc, &argv);
+
 
 	glCanvas = create_gl();
 	gtk_widget_set_usize(GTK_WIDGET(glCanvas), 800, 600);
@@ -3039,13 +3059,10 @@ int main (int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(hbox), glCanvas, 1, 1, 0);
 
 
-
 	GtkWidget *Logo = gtk_image_new_from_file("logo-top.png");
 	GtkWidget *topBox = gtk_hbox_new(0, 0);
 	gtk_box_pack_start(GTK_BOX(topBox), ToolBar, 1, 1, 0);
 	gtk_box_pack_start(GTK_BOX(topBox), Logo, 0, 0, 0);
-
-
 
 
 	vbox = gtk_vbox_new(0, 0);
