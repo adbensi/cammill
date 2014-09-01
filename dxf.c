@@ -90,7 +90,8 @@ void dxf_read (char *file) {
 	ssize_t read;
 	int num = 0;
 	int onum = 0;
-	for (num = 0; num < line_last; num++) {
+	line_last = 0;
+	for (num = 0; num < MAX_LINES; num++) {
 		myLINES[num].used = 0.0;
 		myLINES[num].x1 = 0.0;
 		myLINES[num].y1 = 0.0;
@@ -118,7 +119,7 @@ void dxf_read (char *file) {
 
 	fp = fopen(file, "r");
 	if (fp == NULL) {
-		exit(EXIT_FAILURE);
+		return;
 	}
 
 	clear_dxfoptions();

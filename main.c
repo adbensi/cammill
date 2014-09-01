@@ -70,7 +70,6 @@ int object_laser[MAX_OBJECTS];
 double object_depth[MAX_OBJECTS];
 FILE *fd_out = NULL;
 int object_last = 0;
-char dxf_file[2048];
 int batchmode = 0;
 int save_gcode = 0;
 char tool_descr[100][1024];
@@ -2269,10 +2268,11 @@ void DrawSetZero (void) {
 void ArgsRead (int argc, char **argv) {
 	int num = 0;
 	if (argc < 2) {
-		SetupShowHelp();
-		exit(1);
+//		SetupShowHelp();
+//		exit(1);
 	}
 	mill_layer[0] = 0;
+	PARAMETER[P_V_DXF].vstr[0] = 0;
 	strcpy(PARAMETER[P_MFILE].vstr, "-");
 	for (num = 1; num < argc; num++) {
 		if (SetupArgCheck(argv[num], argv[num + 1]) == 1) {
@@ -2284,43 +2284,11 @@ void ArgsRead (int argc, char **argv) {
 			fprintf(stderr, "### unknown argument: %s ###\n", argv[num]);
 			SetupShowHelp();
 			exit(1);
+		} else {
+			strcpy(PARAMETER[P_V_DXF].vstr, argv[argc - 1]);
 		}
 	}
-	strcpy(dxf_file, argv[argc - 1]);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void view_init_gl(void) {
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
@@ -2358,6 +2326,55 @@ void handler_destroy (GtkWidget *widget, gpointer data) {
 	gtk_main_quit();
 }
 
+void handler_load_dxf (GtkWidget *widget, gpointer data) {
+	GtkWidget *dialog;
+	dialog = gtk_file_chooser_dialog_new ("Load DXF-Drawing",
+		GTK_WINDOW(window),
+		GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	NULL);
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+
+	GtkFileFilter *ffilter;
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "DXF-Drawings");
+	gtk_file_filter_add_pattern(ffilter, "*.dxf");
+	gtk_file_filter_add_pattern(ffilter, "*.DXF");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+/*
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "DWG-Drawings");
+	gtk_file_filter_add_pattern(ffilter, "*.dwg");
+	gtk_file_filter_add_pattern(ffilter, "*.DXF");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+	
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "SVG-Drawings");
+	gtk_file_filter_add_pattern(ffilter, "*.scg");
+	gtk_file_filter_add_pattern(ffilter, "*.SVG");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+*/
+
+	if (PARAMETER[P_TOOL_TABLE].vstr[0] == 0) {
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
+		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "test.dxf");
+	} else {
+		gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), PARAMETER[P_V_DXF].vstr);
+	}
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		strcpy(PARAMETER[P_V_DXF].vstr, filename);
+		dxf_read(PARAMETER[P_V_DXF].vstr);
+		init_objects();
+		DrawCheckSize();
+		DrawSetZero();
+		g_free(filename);
+	}
+	gtk_widget_destroy (dialog);
+}
+
 void handler_save_gcode (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
 	dialog = gtk_file_chooser_dialog_new ("Save G-Code File",
@@ -2367,6 +2384,13 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 	NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+
+	GtkFileFilter *ffilter;
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "G-Code");
+	gtk_file_filter_add_pattern(ffilter, "*.ngc");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+
 	if (PARAMETER[P_MFILE].vstr[0] == 0) {
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
 		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "test.ngc");
@@ -2392,6 +2416,14 @@ void handler_load_tooltable (GtkWidget *widget, gpointer data) {
 		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 	NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+
+	GtkFileFilter *ffilter;
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "Tooltable");
+	gtk_file_filter_add_pattern(ffilter, "*.tbl");
+	gtk_file_filter_add_pattern(ffilter, "*.TBL");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+
 	if (PARAMETER[P_TOOL_TABLE].vstr[0] == 0) {
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
 		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "tool.tbl");
@@ -2825,7 +2857,10 @@ int main (int argc, char *argv[]) {
 	SetupShow();
 
 	/* import DXF */
-	dxf_read(dxf_file);
+	if (PARAMETER[P_V_DXF].vstr[0] != 0) {
+		dxf_read(PARAMETER[P_V_DXF].vstr);
+	}
+
 	init_objects();
 	DrawCheckSize();
 	DrawSetZero();
@@ -2857,6 +2892,10 @@ int main (int argc, char *argv[]) {
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(FileMenu), FileMenuList);
 	gtk_menu_bar_append(GTK_MENU_BAR(MenuBar), FileMenu);
 
+		MenuItem = gtk_menu_item_new_with_label("Load DXF");
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
+
 		MenuItem = gtk_menu_item_new_with_label("Save G-Code");
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
@@ -2887,6 +2926,12 @@ int main (int argc, char *argv[]) {
 
 	GtkWidget *ToolBar = gtk_toolbar_new();
 	gtk_toolbar_set_style(GTK_TOOLBAR(ToolBar), GTK_TOOLBAR_ICONS);
+
+
+	GtkToolItem *ToolItemLoadDXF = gtk_tool_button_new_from_stock(GTK_STOCK_OPEN);
+	gtk_tool_item_set_tooltip_text(ToolItemLoadDXF, "Load DXF");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemLoadDXF, -1);
+	g_signal_connect(G_OBJECT(ToolItemLoadDXF), "clicked", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
 	GtkToolItem *ToolItemSaveGcode = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
 	gtk_tool_item_set_tooltip_text(ToolItemSaveGcode, "Save G-Code");
@@ -3124,6 +3169,7 @@ int main (int argc, char *argv[]) {
 
 	g_signal_connect(G_OBJECT(ParamButton[P_MFILE]), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 	g_signal_connect(G_OBJECT(ParamButton[P_TOOL_TABLE]), "clicked", GTK_SIGNAL_FUNC(handler_load_tooltable), NULL);
+	g_signal_connect(G_OBJECT(ParamButton[P_V_DXF]), "clicked", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
 
 
