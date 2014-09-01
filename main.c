@@ -2385,6 +2385,14 @@ void handler_about (GtkWidget *widget, gpointer data) {
 void handler_draw (GtkWidget *w, GdkEventExpose* e, void *v) {
 }
 
+void handler_scrollwheel (GtkWidget *w, GdkEventButton* e, void *v) {
+	if (e->state == 0) {
+		PARAMETER[P_V_ZOOM].vfloat += 0.05;
+	} else if (e->state == 1) {
+		PARAMETER[P_V_ZOOM].vfloat -= 0.05;
+	}
+}
+
 void handler_button_press (GtkWidget *w, GdkEventButton* e, void *v) {
 //	printf("button_press x=%g y=%g b=%d state=%d\n", e->x, e->y, e->button, e->state);
 	int mouseX = e->x;
@@ -2775,11 +2783,12 @@ int main (int argc, char *argv[]) {
 	glCanvas = create_gl();
 	gtk_widget_set_usize(GTK_WIDGET(glCanvas), 800, 600);
 	gtk_signal_connect(GTK_OBJECT(glCanvas), "expose_event", GTK_SIGNAL_FUNC(handler_draw), NULL);  
-	gtk_signal_connect( GTK_OBJECT(glCanvas), "button_press_event", GTK_SIGNAL_FUNC(handler_button_press), NULL);  
-	gtk_signal_connect( GTK_OBJECT(glCanvas), "button_release_event", GTK_SIGNAL_FUNC(handler_button_release), NULL);  
-	gtk_signal_connect( GTK_OBJECT(glCanvas), "configure_event", GTK_SIGNAL_FUNC(handler_configure), NULL);  
-	gtk_signal_connect( GTK_OBJECT(glCanvas), "motion_notify_event", GTK_SIGNAL_FUNC(handler_motion), NULL);  
-	gtk_signal_connect( GTK_OBJECT(glCanvas), "key_press_event", GTK_SIGNAL_FUNC(handler_keypress), NULL);  
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "button_press_event", GTK_SIGNAL_FUNC(handler_button_press), NULL);  
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "button_release_event", GTK_SIGNAL_FUNC(handler_button_release), NULL);  
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "configure_event", GTK_SIGNAL_FUNC(handler_configure), NULL);  
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "motion_notify_event", GTK_SIGNAL_FUNC(handler_motion), NULL);  
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "key_press_event", GTK_SIGNAL_FUNC(handler_keypress), NULL);  
+	gtk_signal_connect(GTK_OBJECT(glCanvas), "scroll-event", GTK_SIGNAL_FUNC(handler_scrollwheel), NULL);  
 
 	// top-menu
 	GtkWidget *MenuBar = gtk_menu_bar_new();
