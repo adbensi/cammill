@@ -18,6 +18,7 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtkgl.h>
+#include <libgen.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -2355,7 +2356,6 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 	gtk_file_filter_add_pattern(ffilter, "*.SVG");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
 */
-
 	if (PARAMETER[P_TOOL_TABLE].vstr[0] == 0) {
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
 		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "test.dxf");
@@ -2375,6 +2375,23 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 	gtk_widget_destroy (dialog);
 }
 
+char *suffix_remove (char *mystr) {
+	char *retstr;
+	char *lastdot;
+	if (mystr == NULL) {
+		return NULL;
+	}
+	if ((retstr = malloc (strlen (mystr) + 1)) == NULL) {
+        	return NULL;
+	}
+	strcpy(retstr, mystr);
+	lastdot = strrchr(retstr, '.');
+	if (lastdot != NULL) {
+		*lastdot = '\0';
+	}
+	return retstr;
+}
+
 void handler_save_gcode (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
 	dialog = gtk_file_chooser_dialog_new ("Save G-Code File",
@@ -2392,8 +2409,17 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
 
 	if (PARAMETER[P_MFILE].vstr[0] == 0) {
-		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
-		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "test.ngc");
+		char dir[2048];
+		strcpy(dir, PARAMETER[P_V_DXF].vstr);
+		dirname(dir);
+		char file[2048];
+		strcpy(file, basename(PARAMETER[P_V_DXF].vstr));
+		char *file_nosuffix = suffix_remove(file);
+		file_nosuffix = realloc(file_nosuffix, strlen(file_nosuffix) + 5);
+		strcat(file_nosuffix, ".ngc");
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), dir);
+		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), file_nosuffix);
+		free(file_nosuffix);
 	} else {
 		gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), PARAMETER[P_MFILE].vstr);
 	}
