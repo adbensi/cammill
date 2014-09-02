@@ -1876,7 +1876,7 @@ void mainloop (void) {
 	gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
 
 	/* get diameter from tooltable by number */
-	if (PARAMETER[P_TOOL_SELECT].vint != 0) {
+	if (PARAMETER[P_TOOL_SELECT].vint > 0) {
 		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
 		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
 	} else {
