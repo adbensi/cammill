@@ -985,11 +985,6 @@ void object_draw (FILE *fd_out, int object_num) {
 	}
 }
 
-void output_text (char *text) {
-	output_text_gl(text, 0.0, 0.0, 0.0);
-}
-
-
 void mill_move_in (double x, double y, double depth, int lasermode) {
 	// move to
 	if (lasermode == 1) {
@@ -1688,9 +1683,8 @@ void draw_helplines (void) {
 		glTranslatef(lenX, -offXYZ, 0.0);
 		glPushMatrix();
 		glTranslatef(-lenX / 2.0, -arrow_d * 2.0 - 11.0, 0.0);
-		glScalef(20.0, 20.0, 20.0);
 		sprintf(tmp_str, "%0.2fmm", lenX);
-		output_text(tmp_str);
+		output_text_gl_center(tmp_str, 0.0, 0.0, 0.0, 0.2);
 		glPopMatrix();
 		glRotatef(-90.0, 0.0, 1.0, 0.0);
 		gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
@@ -1771,11 +1765,10 @@ void draw_helplines (void) {
 	glPushMatrix();
 	glTranslatef(arrow_d * 2.0 + 1.0, lenY / 2.0, 0.0);
 	glRotatef(90.0, 0.0, 0.0, 1.0);
-	glScalef(20.0, 20.0, 20.0);
 	sprintf(tmp_str, "%0.2fmm", lenY);
 	glPushMatrix();
-	glTranslatef(0.0, 0.2, 0.0);
-	output_text(tmp_str);
+	glTranslatef(0.0, 4.0, 0.0);
+	output_text_gl_center(tmp_str, 0.0, 0.0, 0.0, 0.2);
 	glPopMatrix();
 	glPopMatrix();
 	glRotatef(-90.0, 1.0, 0.0, 0.0);
@@ -1803,11 +1796,10 @@ void draw_helplines (void) {
 	glTranslatef(lenX, -offXYZ, 0.0);
 	glPushMatrix();
 	glTranslatef(-lenX / 2.0, -arrow_d * 2.0 - 1.0, 0.0);
-	glScalef(20.0, 20.0, 20.0);
 	sprintf(tmp_str, "%0.2fmm", lenX);
 	glPushMatrix();
-	glTranslatef(0.0, -0.2, 0.0);
-	output_text(tmp_str);
+	glTranslatef(0.0, -4.0, 0.0);
+	output_text_gl_center(tmp_str, 0.0, 0.0, 0.0, 0.2);
 	glPopMatrix();
 	glPopMatrix();
 	glRotatef(-90.0, 0.0, 1.0, 0.0);
@@ -1836,9 +1828,11 @@ void draw_helplines (void) {
 	glPushMatrix();
 	glTranslatef(arrow_d * 2.0 - 1.0, -arrow_d * 2.0 - 1.0, lenZ / 2.0);
 	glRotatef(90.0, 0.0, 1.0, 0.0);
-	glScalef(20.0, 20.0, 20.0);
 	sprintf(tmp_str, "%0.2fmm", lenZ);
-	output_text(tmp_str);
+	glPushMatrix();
+	glTranslatef(0.0, -4.0, 0.0);
+	output_text_gl_center(tmp_str, 0.0, 0.0, 0.0, 0.2);
+	glPopMatrix();
 	glPopMatrix();
 	glRotatef(-90.0, 0.0, 0.0, 1.0);
 	gluCylinder(quadratic, 0.0, (arrow_d * 3), arrow_l ,32, 1);
@@ -2069,8 +2063,8 @@ void mainloop (void) {
 	if (batchmode == 0) {
 		for (nnum = 0; nnum < 100; nnum++) {
 			if (myMTEXT[nnum].used == 1) {
-//				draw_text(GLUT_BITMAP_HELVETICA_18, myMTEXT[nnum].text, myMTEXT[nnum].x, myMTEXT[nnum].y - myMTEXT[nnum].s);
-				output_text_gl(myMTEXT[nnum].text, myMTEXT[nnum].x, myMTEXT[nnum].y - myMTEXT[nnum].s, 0.0);
+				glColor4f(1.0, 1.0, 1.0, 1.0);
+				output_text_gl(myMTEXT[nnum].text, myMTEXT[nnum].x, myMTEXT[nnum].y - myMTEXT[nnum].s, 0.10, myMTEXT[nnum].s);
 			}
 		}
 	}

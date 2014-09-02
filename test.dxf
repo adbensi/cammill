@@ -2945,6 +2945,158 @@ ByLayer
  31
 0.0
   0
+LINE
+  5
+7B
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+100.0
+ 20
+290.0
+ 30
+0.0
+ 11
+0.0
+ 21
+290.0
+ 31
+0.0
+  0
+MTEXT
+  5
+7C
+100
+AcDbEntity
+100
+AcDbMText
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+0.0
+ 20
+290.0
+ 30
+0.0
+ 40
+15.0
+ 41
+100.0
+ 71
+1
+ 72
+2
+  1
+hallo text
+  7
+iso
+ 50
+0.0
+ 73
+1
+ 44
+1.0
+  0
+LINE
+  5
+7D
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+100.0
+ 20
+275.0
+ 30
+0.0
+ 11
+100.0
+ 21
+290.0
+ 31
+0.0
+  0
+LINE
+  5
+7E
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+0.0
+ 20
+275.0
+ 30
+0.0
+ 11
+100.0
+ 21
+275.0
+ 31
+0.0
+  0
+LINE
+  5
+7F
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+0.0
+ 20
+290.0
+ 30
+0.0
+ 11
+0.0
+ 21
+275.0
+ 31
+0.0
+  0
 ENDSEC
   0
 SECTION
@@ -2983,7 +3135,7 @@ E
   3
 AcDbVariableDictionary
 350
-7B
+80
   0
 DICTIONARY
   5
@@ -3447,7 +3599,7 @@ Layout2
   0
 DICTIONARY
   5
-7B
+80
 100
 AcDbDictionary
 281
@@ -3455,15 +3607,15 @@ AcDbDictionary
   3
 DIMASSOC
 350
-7D
+82
   3
 HIDETEXT
 350
-7C
+81
   0
 DICTIONARYVAR
   5
-7C
+81
 100
 DictionaryVariables
 280
@@ -3473,7 +3625,7 @@ DictionaryVariables
   0
 DICTIONARYVAR
   5
-7D
+82
 100
 DictionaryVariables
 280
