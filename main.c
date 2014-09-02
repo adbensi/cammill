@@ -235,7 +235,7 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 	if (invert == 0) {
 		glColor4f(0.0, 0.5, 0.2, 0.5);
 	} else {
-		glColor4f(0.0, 0.2, 0.5, 0.5);
+		glColor4f(0.0, 0.75, 0.3, 0.5);
 	}
 
 //	glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -325,6 +325,7 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 	glDisable(GL_TEXTURE_GEN_T);
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_MODELVIEW);
+	gluDeleteTess(tobj);
 }
 
 int object_line_last (int object_num) {
@@ -462,7 +463,7 @@ void object_optimize_dir (int object_num) {
 }
 
 
-int intersect (double p0_x, double p0_y, double p1_x, double p1_y, double p2_x, double p2_y, double p3_x, double p3_y, double *i_x, double *i_y) {
+int intersect_check (double p0_x, double p0_y, double p1_x, double p1_y, double p2_x, double p2_y, double p3_x, double p3_y, double *i_x, double *i_y) {
 	double s02_x, s02_y, s10_x, s10_y, s32_x, s32_y, s_numer, t_numer, denom, t;
 	s10_x = p1_x - p0_x;
 	s10_y = p1_y - p0_y;
@@ -492,7 +493,7 @@ int intersect (double p0_x, double p0_y, double p1_x, double p1_y, double p2_x, 
 	return 1;
 }
 
-void intersect_old (double l1x1, double l1y1, double l1x2, double l1y2, double l2x1, double l2y1, double l2x2, double l2y2, double *x, double *y) {
+void intersect (double l1x1, double l1y1, double l1x2, double l1y2, double l2x1, double l2y1, double l2x2, double l2y2, double *x, double *y) {
 	double a1 = l1x2 - l1x1;
 	double b1 = l2x1 - l2x2;
 	double c1 = l2x1 - l1x1;
@@ -713,6 +714,8 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 	char tx_str[128];
 	char ty_str[128];
 	if (gcmd != 0) {
+
+/*
 		if (mill_start_all != 0) {
 			if (gcmd == 2 || gcmd == 3) {
 				double e = x - mill_last_x;
@@ -807,7 +810,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 double i_x = 0.0;
 double i_y = 0.0;
 
-if (holding_tabs_num > 0 && mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect(mill_last_x, mill_last_y, x, y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1 || intersect(x, y, mill_last_x, mill_last_y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1)) {
+if (holding_tabs_num > 0 && mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1)) {
 
 	double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
 	double i_x2 = i_x;
@@ -833,6 +836,9 @@ if (holding_tabs_num > 0 && mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (inter
 
 			}
 		}
+*/
+		draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
 	} else {
 		if (mill_start_all != 0) {
 			glColor4f(0.0, 1.0, 1.0, 1.0);
@@ -2109,11 +2115,15 @@ void mainloop (void) {
 			}
 			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
 				if (PARAMETER[P_M_TEXT].vint == 1) {
-					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+					if (save_gcode == 1 || PARAMETER[P_V_OFFSETS].vint == 1) {
+						object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+					}
 					object_draw(fd_out, shortest_object);
 				}
 			} else {
-				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				if (save_gcode == 1 || PARAMETER[P_V_OFFSETS].vint == 1) {
+					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				}
 				object_draw(fd_out, shortest_object);
 			}
 			last_x = next_x;
@@ -2153,7 +2163,9 @@ void mainloop (void) {
 			object_optimize_dir(shortest_object);
 			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
 			} else {
-				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				if (save_gcode == 1 || PARAMETER[P_V_OFFSETS].vint == 1) {
+					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				}
 				object_draw(fd_out, shortest_object);
 			}
 			last_x = next_x;

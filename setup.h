@@ -30,6 +30,7 @@ enum {
 enum {
 	P_V_ZOOM,
 	P_V_HELPLINES,
+	P_V_OFFSETS,
 	P_V_HELPDIA,
 	P_V_NCDEBUG,
 	P_V_ROTX,
