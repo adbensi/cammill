@@ -105,6 +105,11 @@ GtkWidget *window;
 GtkWidget *dialog;
 
 
+
+double holding_tabs_num = 0;
+double holding_tabs[10][4];
+
+
 void line_invert (int num) {
 	double tempx = myLINES[num].x2;
 	double tempy = myLINES[num].y2;
@@ -410,6 +415,18 @@ double line_angle (int lnum) {
 	return alpha;
 }
 
+double vector_angle (double x1, double y1, double x2, double y2) {
+	double dx = x2 - x1;
+	double dy = y2 - y1;
+	double alpha = toDeg(atan(dy / dx));
+	if (dx < 0 && dy >= 0) {
+		alpha = alpha + 180;
+	} else if (dx < 0 && dy < 0) {
+		alpha = alpha - 180;
+	}
+	return alpha;
+}
+
 double line_angle2 (int lnum) {
 	double dx = myLINES[lnum].x2 - myLINES[lnum].x1;
 	double dy = myLINES[lnum].y2 - myLINES[lnum].y1;
@@ -444,7 +461,38 @@ void object_optimize_dir (int object_num) {
 	}
 }
 
-void intersect (double l1x1, double l1y1, double l1x2, double l1y2, double l2x1, double l2y1, double l2x2, double l2y2, double *x, double *y) {
+
+int intersect (double p0_x, double p0_y, double p1_x, double p1_y, double p2_x, double p2_y, double p3_x, double p3_y, double *i_x, double *i_y) {
+	double s02_x, s02_y, s10_x, s10_y, s32_x, s32_y, s_numer, t_numer, denom, t;
+	s10_x = p1_x - p0_x;
+	s10_y = p1_y - p0_y;
+	s02_x = p0_x - p2_x;
+	s02_y = p0_y - p2_y;
+	s_numer = s10_x * s02_y - s10_y * s02_x;
+	if (s_numer < 0) {
+		return 0;
+	}
+	s32_x = p3_x - p2_x;
+	s32_y = p3_y - p2_y;
+	t_numer = s32_x * s02_y - s32_y * s02_x;
+	if (t_numer < 0) {
+		return 0;
+	}
+	denom = s10_x * s32_y - s32_x * s10_y;
+	if (s_numer > denom || t_numer > denom) {
+		return 0;
+	}
+	t = t_numer / denom;
+	if (i_x != NULL) {
+		*i_x = p0_x + (t * s10_x);
+	}
+	if (i_y != NULL) {
+		*i_y = p0_y + (t * s10_y);
+	}
+	return 1;
+}
+
+void intersect_old (double l1x1, double l1y1, double l1x2, double l1y2, double l2x1, double l2y1, double l2x2, double l2y2, double *x, double *y) {
 	double a1 = l1x2 - l1x1;
 	double b1 = l2x1 - l2x2;
 	double c1 = l2x1 - l1x1;
@@ -452,8 +500,8 @@ void intersect (double l1x1, double l1y1, double l1x2, double l1y2, double l2x1,
 	double b2 = l2y1 - l2y2;
 	double c2 = l2y1 - l1y1;
 	double t = (b1 * c2 - b2 * c1) / (a2 * b1 - a1 * b2);
-	*x = l1x1 + t * (l1x2 - l1x1);
-	*y = l1y1 + t * (l1y2 - l1y1);
+	*x = l1x1 + t * a1;
+	*y = l1y1 + t * a2;
 	return;
 }
 
@@ -754,7 +802,35 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 					draw_line((float)lx, (float)ly, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 				}
 			} else {
-				draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
+
+double i_x = 0.0;
+double i_y = 0.0;
+
+if (holding_tabs_num > 0 && mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect(mill_last_x, mill_last_y, x, y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1 || intersect(x, y, mill_last_x, mill_last_y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1)) {
+
+	double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
+	double i_x2 = i_x;
+	double i_y2 = i_y;
+	add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
+	double alpha2 = vector_angle(x, y, i_x, i_y);
+	double i_x3 = i_x;
+	double i_y3 = i_y;
+	add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
+
+	draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
+	draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+//	draw_line((float)i_x2, (float)i_y2, (float)mill_last_z, (float)i_x, (float)i_y, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+//	draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
+	draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
+} else {
+	draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+}
+
+
 			}
 		}
 	} else {
@@ -982,6 +1058,17 @@ void object_draw (FILE *fd_out, int object_num) {
 	gluCylinder(quadratic, 0.0, 5.0, 5.0, 32, 1);
 	glPopMatrix();
 */
+
+
+
+	holding_tabs[0][0] = 95.0;
+	holding_tabs[0][1] = -100.0;
+	holding_tabs[0][2] = 95.0;
+	holding_tabs[0][3] = 400.0;
+
+//	draw_line((float)holding_tabs[0][0], (float)holding_tabs[0][1], (float)PARAMETER[P_T_DEPTH].vdouble, (float)holding_tabs[0][2], (float)holding_tabs[0][3], (float)PARAMETER[P_T_DEPTH].vdouble, 1.0);
+
+
 
 	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
@@ -2763,6 +2850,10 @@ GtkTreeModel *create_and_fill_model (void) {
 	gtk_tree_store_append(treestore, &childMilling, &toplevel);
 	gtk_tree_store_set(treestore, &childMilling, 0, "Milling", -1);
 
+	GtkTreeIter childHolding;
+	gtk_tree_store_append(treestore, &childHolding, &toplevel);
+	gtk_tree_store_set(treestore, &childHolding, 0, "Holding-Tabs", -1);
+
 	GtkTreeIter childMachine;
 	gtk_tree_store_append(treestore, &childMachine, &toplevel);
 	gtk_tree_store_set(treestore, &childMachine, 0, "Machine", -1);
@@ -2783,6 +2874,8 @@ GtkTreeModel *create_and_fill_model (void) {
 			gtk_tree_store_append(treestore, &value, &childTool);
 		} else if (strcmp(PARAMETER[n].group, "Milling") == 0) {
 			gtk_tree_store_append(treestore, &value, &childMilling);
+		} else if (strcmp(PARAMETER[n].group, "Holding-Tabs") == 0) {
+			gtk_tree_store_append(treestore, &value, &childHolding);
 		} else if (strcmp(PARAMETER[n].group, "Machine") == 0) {
 			gtk_tree_store_append(treestore, &value, &childMachine);
 		} else if (strcmp(PARAMETER[n].group, "Material") == 0) {
@@ -2932,6 +3025,13 @@ int main (int argc, char *argv[]) {
 //	LayerLoadList();
 
 
+
+//	holding_tabs[0][0] = 1.0;
+//	holding_tabs[0][1] = 1.0;
+//	holding_tabs[0][2] = 220.0;
+//	holding_tabs[0][3] = 220.0;
+//	holding_tabs_num = 1;
+
 	GtkWidget *hbox;
 	GtkWidget *vbox;
 	gtk_init(&argc, &argv);
@@ -3038,6 +3138,11 @@ int main (int argc, char *argv[]) {
 	GtkWidget *MillingBox = gtk_vbox_new(0, 0);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MillingBox, MillingLabel);
 
+	int HoldingNum = 0;
+	GtkWidget *HoldingLabel = gtk_label_new("Holding-Tabs");
+	GtkWidget *HoldingBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), HoldingBox, HoldingLabel);
+
 	int MachineNum = 0;
 	GtkWidget *MachineLabel = gtk_label_new("Machine");
 	GtkWidget *MachineBox = gtk_vbox_new(0, 0);
@@ -3135,14 +3240,19 @@ int main (int argc, char *argv[]) {
 			PARAMETER[n].l1 = 2;
 			PARAMETER[n].l2 = MillingNum;
 			MillingNum++;
+		} else if (strcmp(PARAMETER[n].group, "Holding-Tabs") == 0) {
+			gtk_box_pack_start(GTK_BOX(HoldingBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 3;
+			PARAMETER[n].l2 = HoldingNum;
+			HoldingNum++;
 		} else if (strcmp(PARAMETER[n].group, "Machine") == 0) {
 			gtk_box_pack_start(GTK_BOX(MachineBox), Box, 0, 0, 0);
-			PARAMETER[n].l1 = 3;
+			PARAMETER[n].l1 = 4;
 			PARAMETER[n].l2 = MachineNum;
 			MachineNum++;
 		} else if (strcmp(PARAMETER[n].group, "Material") == 0) {
 			gtk_box_pack_start(GTK_BOX(MaterialBox), Box, 0, 0, 0);
-			PARAMETER[n].l1 = 4;
+			PARAMETER[n].l1 = 5;
 			PARAMETER[n].l2 = MaterialNum;
 			MaterialNum++;
 		}
