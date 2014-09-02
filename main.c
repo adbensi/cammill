@@ -24,14 +24,12 @@
 #include <string.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <math.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <dxf.h>
-//#include <font.h>
+#include <font.h>
 #include <setup.h>
 
 void texture_init (void);
@@ -92,6 +90,7 @@ int last_mouse_state = 0;
 void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
 
+GtkWidget *SizeInfoLabel;
 GtkWidget *StatusBar;
 GtkTreeStore *treestore;
 GtkListStore *ListStore[P_LAST];
@@ -1852,6 +1851,11 @@ void mainloop (void) {
 	if (scale > (4.0 / size_y)) {
 		scale = (4.0 / size_y);
 	}
+	char tmp_str[1024];
+	sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm", size_x, size_y);
+	gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
+
+
 	/* get diameter from tooltable by number */
 	if (PARAMETER[P_TOOL_SELECT].vint != 0) {
 		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
@@ -2951,10 +2955,8 @@ int main (int argc, char *argv[]) {
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_about), NULL);
 
 
-
 	GtkWidget *ToolBar = gtk_toolbar_new();
 	gtk_toolbar_set_style(GTK_TOOLBAR(ToolBar), GTK_TOOLBAR_ICONS);
-
 
 	GtkToolItem *ToolItemLoadDXF = gtk_tool_button_new_from_stock(GTK_STOCK_OPEN);
 	gtk_tool_item_set_tooltip_text(ToolItemLoadDXF, "Load DXF");
@@ -3234,6 +3236,9 @@ int main (int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(hbox), NbBox, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), glCanvas, 1, 1, 0);
 
+	SizeInfoLabel = gtk_label_new("Width=0mm / Height=0mm");
+	GtkWidget *SizeInfo = gtk_event_box_new();
+	gtk_container_add(GTK_CONTAINER(SizeInfo), SizeInfoLabel);
 
 	GtkWidget *LogoIMG = gtk_image_new_from_file("logo-top.png");
 	GtkWidget *Logo = gtk_event_box_new();
@@ -3243,6 +3248,7 @@ int main (int argc, char *argv[]) {
 
 	GtkWidget *topBox = gtk_hbox_new(0, 0);
 	gtk_box_pack_start(GTK_BOX(topBox), ToolBar, 1, 1, 0);
+	gtk_box_pack_start(GTK_BOX(topBox), SizeInfo, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(topBox), Logo, 0, 0, 0);
 
 

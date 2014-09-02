@@ -10,19 +10,18 @@ CFLAGS+="-DGSEAL_ENABLE"
 
 
 
-all: c-dxf2gcode
+all: opencam2d
 
-c-dxf2gcode: main.c setup.c dxf.c dxf.h texture.c
-#	gcc -Wall -O3 -o c-dxf2gcode main.c setup.c dxf.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
-	clang -Wall -O3 -o c-dxf2gcode main.c setup.c dxf.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+opencam2d: main.c setup.c dxf.c dxf.h font.c font.h texture.c
+	clang -Wall -O3 -o opencam2d main.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
 
 gprof:
-	gcc -pg -Wall -O3 -o c-dxf2gcode main.c setup.c dxf.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
-	echo "./c-dxf2gcode"
-	echo "gprof c-dxf2gcode gmon.out"
+	gcc -pg -Wall -O3 -o opencam2d main.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+	echo "./opencam2d"
+	echo "gprof opencam2d gmon.out"
 
 clean:
-	rm -rf c-dxf2gcode
+	rm -rf opencam2d
 
 
 
