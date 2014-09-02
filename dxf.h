@@ -45,6 +45,14 @@ typedef struct{
 	int closed;
 	int inside;
 	int visited;
+	int selections;
+	int offset;
+	int force;
+	int overcut;
+	int pocket;
+	int laser;
+	int depth;
+	double object_depth;
 	char layer[256];
 } _OBJECT;
 
@@ -57,19 +65,20 @@ typedef struct{
 	double x2;
 	double y2;
 	double opt;
+	int in_object;
 } _LINE;
 
 typedef struct{
 	int used;
 	char layer[256];
-	double x;
-	double y;
-	double s;
+	float x;
+	float y;
+	float s;
 	char text[1024];
 } _MTEXT;
 
-extern _OBJECT myOBJECTS[MAX_OBJECTS];
-extern _LINE myLINES[MAX_LINES];
+extern _OBJECT *myOBJECTS;
+extern _LINE *myLINES;
 extern _MTEXT myMTEXT[100];
 extern int mtext_n;
 extern char dxf_options[256][256];

@@ -13,7 +13,7 @@ CFLAGS+="-DGSEAL_ENABLE"
 all: opencam2d
 
 opencam2d: main.c setup.c dxf.c dxf.h font.c font.h texture.c
-	clang -Wall -O3 -o opencam2d main.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+	clang -ggdb -Wall -O3 -o opencam2d main.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
 
 gprof:
 	gcc -pg -Wall -O3 -o opencam2d main.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}

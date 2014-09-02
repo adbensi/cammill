@@ -16,8 +16,8 @@ double get_len (double x1, double y1, double x2, double y2);
 
 int mtext_n = 0;
 char dxf_options[256][256];
-_OBJECT myOBJECTS[MAX_OBJECTS];
-_LINE myLINES[MAX_LINES];
+_OBJECT *myOBJECTS = NULL;
+_LINE *myLINES = NULL;
 _MTEXT myMTEXT[100];
 
 char dxf_typename[TYPE_LAST][16];
@@ -31,7 +31,12 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		printf("###### LINE TO BIG; %f %f -> %f %f ######\n", x1, y1, x2, y2);
 		return;
 	}
-	if (line_n < MAX_LINES - 1) {
+	if (line_n < MAX_LINES) {
+		if (myLINES == NULL) {
+			myLINES = malloc(sizeof(_LINE) * 2);
+		} else {
+			myLINES = realloc(myLINES, sizeof(_LINE) * (line_last + 2));
+		}
 		myLINES[line_n].used = 1;
 		myLINES[line_n].type = type;
 		strcpy(myLINES[line_n].layer, layer);
@@ -40,6 +45,7 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		myLINES[line_n].x2 = x2;
 		myLINES[line_n].y2 = y2;
 		myLINES[line_n].opt = opt;
+		myLINES[line_n].in_object = -1;
 		line_n++;
 		line_last = line_n;
 	} else {
@@ -87,14 +93,13 @@ void dxf_read (char *file) {
 	ssize_t read;
 	int num = 0;
 	int onum = 0;
+
 	line_last = 0;
-	for (num = 0; num < MAX_LINES; num++) {
-		myLINES[num].used = 0.0;
-		myLINES[num].x1 = 0.0;
-		myLINES[num].y1 = 0.0;
-		myLINES[num].x2 = 0.0;
-		myLINES[num].y2 = 0.0;
+	if (myLINES != NULL) {
+		free(myLINES);
+		myLINES = NULL;
 	}
+
 	strcpy(dxf_typename[TYPE_NONE], "None");
 	strcpy(dxf_typename[TYPE_LINE], "Line");
 	strcpy(dxf_typename[TYPE_ARC], "Arc");
@@ -103,16 +108,6 @@ void dxf_read (char *file) {
 	strcpy(dxf_typename[TYPE_POINT], "Point");
 	strcpy(dxf_typename[TYPE_POLYLINE], "Polyline");
 	strcpy(dxf_typename[TYPE_VERTEX], "Vertex");
-
-	for (num = 0; num < MAX_LINES; num++) {
-		myLINES[num].used = 0;
-	}
-	for (onum = 0; onum < MAX_OBJECTS; onum++) {
-		myOBJECTS[onum].visited = 0;
-		for (num = 0; num < MAX_LINES; num++) {
-			myOBJECTS[onum].line[num] = 0;
-		}
-	}
 
 	fp = fopen(file, "r");
 	if (fp == NULL) {

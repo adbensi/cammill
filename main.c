@@ -1504,7 +1504,7 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 //	for (num4 = 0; num4 < depth; num4++) {
 //		printf(" ");
 //	}
-	for (num5 = 0; num5 < MAX_OBJECTS; num5++) {
+	for (num5 = 0; num5 < object_last; num5++) {
 		if (myOBJECTS[num5].line[0] == 0) {
 			break;
 		}
@@ -1575,7 +1575,7 @@ int line_open_check (int num) {
 	int onum = 0;
 	double px = 0.0;
 	double py = 0.0;
-	for (onum = 0; onum < MAX_OBJECTS; onum++) {
+	for (onum = 0; onum < object_last; onum++) {
 		if (myOBJECTS[onum].line[0] == 0) {
 			break;
 		}
@@ -1679,7 +1679,12 @@ void init_objects (void) {
 	int object_num = 0;
 
 	/* init objects */
-	for (object_num = 0; object_num < MAX_OBJECTS; object_num++) {
+	if (myOBJECTS != NULL) {
+		free(myOBJECTS);
+		myOBJECTS = NULL;
+	}
+	myOBJECTS = malloc(sizeof(_OBJECT) * line_last);
+	for (object_num = 0; object_num < line_last; object_num++) {
 		object_selections[object_num] = 1;
 		object_force[object_num] = 0;
 		object_offset[object_num] = 0;
@@ -1704,6 +1709,7 @@ void init_objects (void) {
 				find_next_line(object_num, num2, num2, 1, 0);
 				myOBJECTS[object_num].closed = 0;
 				object_num++;
+				object_last = object_num + 2;
 			}
 		}
 	}
@@ -1722,9 +1728,9 @@ void init_objects (void) {
 				myOBJECTS[object_num].closed = 0;
 				object_num++;
 			}
+			object_last = object_num + 2;
 		}
 	}
-	object_last = object_num;
 
 	/* check if object inside or outside */
 	for (num5b = 0; num5b < object_last; num5b++) {
@@ -2056,7 +2062,7 @@ void mainloop (void) {
 	double last_y = 0.0;
 	double next_x = 0.0;
 	double next_y = 0.0;
-	for (object_num = 0; object_num < MAX_OBJECTS; object_num++) {
+	for (object_num = 0; object_num < object_last; object_num++) {
 		myOBJECTS[object_num].visited = 0;
 	}
 
@@ -2924,7 +2930,7 @@ GtkTreeModel *create_and_fill_model (void) {
 	gtk_tree_store_set(treestore, &toplevel, 0, "Objects", -1);
 
 	int num2 = 0;
-	for (num2 = 0; num2 < MAX_OBJECTS; num2++) {
+	for (num2 = 0; num2 < object_last; num2++) {
 		if (myOBJECTS[num2].line[0] != 0) {
 			char tmp_str[1024];
 			sprintf(tmp_str, "Object #%i", num2);
