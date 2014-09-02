@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include <dxf.h>
+#include <font.h>
 
 
 double get_len (double x1, double y1, double x2, double y2);
@@ -26,14 +27,10 @@ int line_last = 0;
 
 void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt) {
 //	printf("## ADD_LINE: %f,%f -> %f,%f (%s / %f)\n", x1, y1, x2, y2, layer, opt);
-
 	if (x1 > 10000.0 || y1 > 10000.0 || x2 > 10000.0 || y2 > 10000.0) {
-
 		printf("###### LINE TO BIG; %f %f -> %f %f ######\n", x1, y1, x2, y2);
-
 		return;
 	}
-
 	if (line_n < MAX_LINES - 1) {
 		myLINES[line_n].used = 1;
 		myLINES[line_n].type = type;
@@ -255,6 +252,7 @@ void dxf_read (char *file) {
 						myMTEXT[mtext_n].s = p_y2;
 						strcpy(myMTEXT[mtext_n].text, dxf_options[OPTION_MTEXT_TEXT]);
 						strcpy(myMTEXT[mtext_n].layer, dxf_options[OPTION_LAYERNAME]);
+						output_text_dxf(myMTEXT[mtext_n].text, myMTEXT[mtext_n].x, myMTEXT[mtext_n].y, 0.0, myMTEXT[mtext_n].s);
 						mtext_n++;
 					} else {
 						pl_flag = 0;

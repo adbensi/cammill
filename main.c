@@ -974,6 +974,15 @@ void object_draw (FILE *fd_out, int object_num) {
 			}
 		}
 	}
+
+/*
+	GLUquadricObj *quadratic = gluNewQuadric();
+	glPushMatrix();
+	glTranslatef((float)size_x / (float)width * (float)last_mouse_x, (float)size_y - ((float)size_y / (float)height * (float)last_mouse_y), 4.0);
+	gluCylinder(quadratic, 0.0, 5.0, 5.0, 32, 1);
+	glPopMatrix();
+*/
+
 	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
 			if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 0) {
@@ -1610,7 +1619,10 @@ void init_objects (void) {
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1) {
 			int ret = find_next_line(object_num, num2, num2, 1, 0);
-			if (ret == 1) {
+			if (myLINES[num2].type == TYPE_MTEXT) {
+				myOBJECTS[object_num].closed = 0;
+				object_num++;
+			} else if (ret == 1) {
 				myOBJECTS[object_num].closed = 1;
 				object_num++;
 			} else if (ret == 0) {
@@ -1843,6 +1855,7 @@ void draw_helplines (void) {
 	glPopMatrix();
 }
 
+
 void mainloop (void) {
 	int object_num = 0;
 	size_x = (max_x - min_x);
@@ -1852,9 +1865,15 @@ void mainloop (void) {
 		scale = (4.0 / size_y);
 	}
 	char tmp_str[1024];
+
+/*
+	sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm (%f, %f)", size_x, size_y, \
+		 (float)size_x / (float)width * (float)last_mouse_x, \
+		 (float)size_y - ((float)size_y / (float)height * (float)last_mouse_y) \
+	);
+*/
 	sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm", size_x, size_y);
 	gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
-
 
 	/* get diameter from tooltable by number */
 	if (PARAMETER[P_TOOL_SELECT].vint != 0) {
@@ -1901,12 +1920,10 @@ void mainloop (void) {
 		glRotatef(PARAMETER[P_V_ROTY].vfloat, 0.0, 1.0, 0.0);
 		glRotatef(PARAMETER[P_V_ROTX].vfloat, 1.0, 0.0, 0.0);
 
-
 		glTranslatef(-size_x / 2.0, 0.0, 0.0);
 		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 			glTranslatef(0.0, -size_y / 2.0, 0.0);
 		}
-
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
 			if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 				draw_helplines();
@@ -2003,9 +2020,15 @@ void mainloop (void) {
 				resort_object(shortest_object, shortest_line);
 				object_optimize_dir(shortest_object);
 			}
-			object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-			object_draw(fd_out, shortest_object);
-
+			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
+				if (PARAMETER[P_M_TEXT].vint == 1) {
+					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+					object_draw(fd_out, shortest_object);
+				}
+			} else {
+				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				object_draw(fd_out, shortest_object);
+			}
 			last_x = next_x;
 			last_y = next_y;
 
@@ -2041,8 +2064,11 @@ void mainloop (void) {
 			myOBJECTS[shortest_object].visited = 1;
 			resort_object(shortest_object, shortest_line);
 			object_optimize_dir(shortest_object);
-			object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-			object_draw(fd_out, shortest_object);
+			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
+			} else {
+				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				object_draw(fd_out, shortest_object);
+			}
 			last_x = next_x;
 			last_y = next_y;
 
@@ -2063,8 +2089,10 @@ void mainloop (void) {
 	if (batchmode == 0) {
 		for (nnum = 0; nnum < 100; nnum++) {
 			if (myMTEXT[nnum].used == 1) {
-				glColor4f(1.0, 1.0, 1.0, 1.0);
-				output_text_gl(myMTEXT[nnum].text, myMTEXT[nnum].x, myMTEXT[nnum].y - myMTEXT[nnum].s, 0.10, myMTEXT[nnum].s);
+				if (PARAMETER[P_M_TEXT].vint == 0) {
+					glColor4f(1.0, 1.0, 1.0, 1.0);
+					output_text_gl(myMTEXT[nnum].text, myMTEXT[nnum].x, myMTEXT[nnum].y - myMTEXT[nnum].s, 0.10, myMTEXT[nnum].s);
+				}
 			}
 		}
 	}
@@ -2562,11 +2590,12 @@ void handler_button_press (GtkWidget *w, GdkEventButton* e, void *v) {
 	}
 }
 
-void handler_button_release(GtkWidget *w, GdkEventButton* e, void *v) {
+void handler_button_release (GtkWidget *w, GdkEventButton* e, void *v) {
 //	printf("button_release x=%g y=%g b=%d state=%d\n", e->x, e->y, e->button, e->state);
+	last_mouse_button = -1;
 }
 
-void handler_motion(GtkWidget *w, GdkEventMotion* e, void *v) {
+void handler_motion (GtkWidget *w, GdkEventMotion* e, void *v) {
 //	printf("button_motion x=%g y=%g state=%d\n", e->x, e->y, e->state);
 	int mouseX = e->x;
 	int mouseY = e->y;
@@ -2579,14 +2608,17 @@ void handler_motion(GtkWidget *w, GdkEventMotion* e, void *v) {
 	} else if (last_mouse_button == 3 && last_mouse_state == 0) {
 		PARAMETER[P_V_ROTZ].vfloat = (float)(mouseX - last_mouse_x) / 5.0;
 		PARAMETER[P_V_ZOOM].vfloat = (float)(mouseY - last_mouse_y) / 100;
+	} else {
+		last_mouse_x = mouseX;
+		last_mouse_y = mouseY;
 	}
 }
 
-void handler_keypress(GtkWidget *w, GdkEventKey* e, void *v) {
+void handler_keypress (GtkWidget *w, GdkEventKey* e, void *v) {
 //	printf("key_press state=%d key=%s\n", e->state, e->string);
 }
 
-void handler_configure(GtkWidget *w, GdkEventConfigure* e, void *v) {
+void handler_configure (GtkWidget *w, GdkEventConfigure* e, void *v) {
 //	printf("configure width=%d height=%d ratio=%g\n", e->width, e->height, e->width/(float)e->height);
 	width = e->width;
 	height = e->height;
@@ -2605,7 +2637,7 @@ int handler_periodic_action (gpointer d) {
 	return(1);
 }
 
-GtkWidget *create_gl() {
+GtkWidget *create_gl () {
 	static GdkGLConfig *glconfig = NULL;
 	static GdkGLContext *glcontext = NULL;
 	GtkWidget *area;
@@ -2621,7 +2653,7 @@ GtkWidget *create_gl() {
 	area = gtk_drawing_area_new();
 	gtk_widget_set_gl_capability(area, glconfig, glcontext, TRUE, GDK_GL_RGBA_TYPE); 
 	gtk_widget_set_events(GTK_WIDGET(area)
-		,GDK_BUTTON_MOTION_MASK 
+		,GDK_POINTER_MOTION_MASK 
 		|GDK_BUTTON_PRESS_MASK 
 		|GDK_BUTTON_RELEASE_MASK
 		|GDK_ENTER_NOTIFY_MASK

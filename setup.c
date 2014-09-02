@@ -36,6 +36,7 @@ PARA PARAMETER[] = {
 	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
 	{"Rotary-Mode",	"Milling",	"-rm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
 	{"Tangencial-Mode","Milling",	"-tm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
+	{"Mill Text",	"Milling",	"-mt",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
 	{"Laser-Diameter","Machine",	"-lw",	T_DOUBLE,	0,	0.0,	0.4,	"",	0.01,	0.01,	10.0,		"mm", 1, 0, 0},
 	{"Rotary-Axis",	"Machine",	"-ra",	T_SELECT,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 0, 0},
 	{"Tangencial-Axis","Machine",	"-ta",	T_SELECT,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 0, 0},
