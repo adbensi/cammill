@@ -68,6 +68,7 @@ typedef struct{
 	double y2;
 	double opt;
 	int in_object;
+	int blockdata;
 } _LINE;
 
 typedef struct{

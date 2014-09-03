@@ -54,18 +54,18 @@ int line_n = 1;
 int line_last = 0;
 
 void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt) {
-//	printf("## ADD_LINE: %f,%f -> %f,%f (%s / %f)\n", x1, y1, x2, y2, layer, opt);
+//	printf("## ADD_LINE (%i %i): %f,%f -> %f,%f (%s / %f)\n", line_n, line_last, x1, y1, x2, y2, layer, opt);
 	if (x1 > 10000.0 || y1 > 10000.0 || x2 > 10000.0 || y2 > 10000.0) {
 		printf("###### LINE TO BIG; %f %f -> %f %f ######\n", x1, y1, x2, y2);
 		return;
 	}
 	if (line_n < MAX_LINES) {
 		if (myLINES == NULL) {
-			myLINES = malloc(sizeof(_LINE) * 2);
+			myLINES = malloc(sizeof(_LINE) * 5);
 		} else {
-			myLINES = realloc(myLINES, sizeof(_LINE) * (line_last + 2));
+			myLINES = realloc(myLINES, sizeof(_LINE) * (line_last + 5));
 		}
-		myLINES[line_n].used = 1;
+		myLINES[line_n].used = 1 - block;
 		myLINES[line_n].type = type;
 		strcpy(myLINES[line_n].layer, layer);
 		myLINES[line_n].x1 = x1;
@@ -75,6 +75,7 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		myLINES[line_n].opt = opt;
 		myLINES[line_n].in_object = -1;
 		strcpy(myLINES[line_n].block, block_name);
+		myLINES[line_n].blockdata = block;
 		line_n++;
 		line_last = line_n;
 	} else {
@@ -170,16 +171,24 @@ void dxf_read (char *file) {
 						block = 0;
 						block_name[0] = 0;
 					} else if (strcmp(last_0, "INSERT") == 0) {
+						block = 0;
+						block_name[0] = 0;
 						block_x = atof(dxf_options[OPTION_POINT_X]);
 						block_y = atof(dxf_options[OPTION_POINT_Y]);
+						float scale_x = atof(dxf_options[41]);
+						float scale_y = atof(dxf_options[42]);
+						if (scale_x == 0.0) {
+							scale_x = 1.0;
+						}
+						if (scale_y == 0.0) {
+							scale_y = 1.0;
+						}
 						strcpy(block_name, dxf_options[2]);
 						int num = 0;
-						for (num = 0; num < line_last; num++) {
-							if (strcmp(myLINES[num].block, block_name) == 0) {
-								myLINES[num].x1 += block_x;
-								myLINES[num].y1 += block_y;
-								myLINES[num].x2 += block_x;
-								myLINES[num].y2 += block_y;
+						int last = line_last;
+						for (num = 0; num < last - 1; num++) {
+							if (myLINES[num].blockdata == 1 && myLINES[num].block[0] != 0 && strcmp(myLINES[num].block, block_name) == 0) {
+								add_line(myLINES[num].type, dxf_options[OPTION_LAYERNAME], myLINES[num].x1 * scale_x + block_x, myLINES[num].y1 * scale_y + block_y, myLINES[num].x2 * scale_x + block_x, myLINES[num].y2 * scale_y + block_y, myLINES[num].opt);
 							}
 						}
 					} else if (strcmp(last_0, "LINE") == 0) {
