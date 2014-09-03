@@ -12,6 +12,12 @@
 #include <font.h>
 
 
+int block = 0;
+double block_x = 0.0;
+double block_y = 0.0;
+char block_name[1024];
+
+
 double get_len (double x1, double y1, double x2, double y2);
 
 int mtext_n = 0;
@@ -46,6 +52,7 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		myLINES[line_n].y2 = y2;
 		myLINES[line_n].opt = opt;
 		myLINES[line_n].in_object = -1;
+		strcpy(myLINES[line_n].block, block_name);
 		line_n++;
 		line_last = line_n;
 	} else {
@@ -91,8 +98,6 @@ void dxf_read (char *file) {
 	char line2[1024];
 	size_t len = 0;
 	ssize_t read;
-	int num = 0;
-	int onum = 0;
 
 	line_last = 0;
 	if (myLINES != NULL) {
@@ -134,7 +139,28 @@ void dxf_read (char *file) {
 			trimline(line2, 1024, line);
 			if (dxfoption == 0) {
 				if (last_0[0] != 0) {
-					if (strcmp(last_0, "LINE") == 0) {
+					if (strcmp(last_0, "BLOCK") == 0) {
+						block = 1;
+						block_x = atof(dxf_options[OPTION_POINT_X]);
+						block_y = atof(dxf_options[OPTION_POINT_Y]);
+						strcpy(block_name, dxf_options[OPTION_BLOCKNAME]);
+					} else if (strcmp(last_0, "ENDBLK") == 0) {
+						block = 0;
+						block_name[0] = 0;
+					} else if (strcmp(last_0, "INSERT") == 0) {
+						block_x = atof(dxf_options[OPTION_POINT_X]);
+						block_y = atof(dxf_options[OPTION_POINT_Y]);
+						strcpy(block_name, dxf_options[2]);
+						int num = 0;
+						for (num = 0; num < line_last; num++) {
+							if (strcmp(myLINES[num].block, block_name) == 0) {
+								myLINES[num].x1 += block_x;
+								myLINES[num].y1 += block_y;
+								myLINES[num].x2 += block_x;
+								myLINES[num].y2 += block_y;
+							}
+						}
+					} else if (strcmp(last_0, "LINE") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_LINE_X1]);
 						double p_y1 = atof(dxf_options[OPTION_LINE_Y1]);
 						double p_x2 = atof(dxf_options[OPTION_LINE_X2]);

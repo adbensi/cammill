@@ -60,13 +60,6 @@ int layer_sel = 0;
 int layer_selections[100];
 int layer_force[100];
 double layer_depth[100];
-int object_selections[MAX_OBJECTS];
-int object_offset[MAX_OBJECTS];
-int object_force[MAX_OBJECTS];
-int object_overcut[MAX_OBJECTS];
-int object_pocket[MAX_OBJECTS];
-int object_laser[MAX_OBJECTS];
-double object_depth[MAX_OBJECTS];
 FILE *fd_out = NULL;
 int object_last = 0;
 int batchmode = 0;
@@ -104,11 +97,8 @@ int need_init = 1;
 GtkWidget *window;
 GtkWidget *dialog;
 
-
-
 double holding_tabs_num = 0;
 double holding_tabs[10][4];
-
 
 void line_invert (int num) {
 	double tempx = myLINES[num].x2;
@@ -875,7 +865,7 @@ void object_draw (FILE *fd_out, int object_num) {
 	if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
 		lasermode = 1;
 	} else {
-		lasermode = object_laser[object_num];
+		lasermode = myOBJECTS[object_num].laser;
 	}
 	for (num2 = 1; num2 < 100; num2++) {
 //		if (strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
@@ -886,10 +876,10 @@ void object_draw (FILE *fd_out, int object_num) {
 //			}
 //		}
 	}
-	if (object_force[object_num] == 1) {
-		mill_depth_real = object_depth[object_num];
+	if (myOBJECTS[object_num].force == 1) {
+		mill_depth_real = myOBJECTS[object_num].depth;
 	} else {
-		object_depth[object_num] = mill_depth_real;
+		myOBJECTS[object_num].depth = mill_depth_real;
 	}
 
 	/* find last line in object */
@@ -899,7 +889,7 @@ void object_draw (FILE *fd_out, int object_num) {
 		}
 	}
 /*
-	if (object_pocket[object_num] == 1 && myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 1) {
+	if (myOBJECTS[object_num].pocket == 1 && myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 1) {
 		double lmx = 0.0;
 		double lmy = 0.0;
 		double fdmx = 0.0;
@@ -994,7 +984,7 @@ void object_draw (FILE *fd_out, int object_num) {
 	}
 */
 
-	if (object_selections[object_num] == 0) {
+	if (myOBJECTS[object_num].selection == 0) {
 		return;
 	}
 
@@ -1424,19 +1414,19 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	} else {
 		offset = 0;
 	}
-	if (object_force[object_num] == 1) {
-		mill_depth_real = object_depth[object_num];
-		if (object_offset[object_num] == 1) {
+	if (myOBJECTS[object_num].force == 1) {
+		mill_depth_real = myOBJECTS[object_num].depth;
+		if (myOBJECTS[object_num].offset == 1) {
 			redir_object(object_num);
-		} else if (object_offset[object_num] == 2) {
+		} else if (myOBJECTS[object_num].offset == 2) {
 			offset = 0;
 		}
-		overcut = object_overcut[object_num];
-		lasermode = object_laser[object_num];
+		overcut = myOBJECTS[object_num].overcut;
+		lasermode = myOBJECTS[object_num].laser;
 	} else {
-		object_depth[object_num] = mill_depth_real;
-		object_overcut[object_num] = overcut;
-		object_laser[object_num] = lasermode;
+		myOBJECTS[object_num].depth = mill_depth_real;
+		myOBJECTS[object_num].overcut = overcut;
+		myOBJECTS[object_num].laser = lasermode;
 	}
 	if (lasermode == 1) {
 		tool_offset = PARAMETER[P_H_LASERDIA].vdouble / 2.0;
@@ -1444,7 +1434,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	} else {
 		tool_offset = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
 	}
-	if (object_selections[object_num] == 0) {
+	if (myOBJECTS[object_num].selection == 0) {
 		return;
 	}
 
@@ -1685,12 +1675,12 @@ void init_objects (void) {
 	}
 	myOBJECTS = malloc(sizeof(_OBJECT) * line_last);
 	for (object_num = 0; object_num < line_last; object_num++) {
-		object_selections[object_num] = 1;
-		object_force[object_num] = 0;
-		object_offset[object_num] = 0;
-		object_overcut[object_num] = 0;
-		object_pocket[object_num] = 0;
-		object_laser[object_num] = 0;
+		myOBJECTS[object_num].selection = 1;
+		myOBJECTS[object_num].force = 0;
+		myOBJECTS[object_num].offset = 0;
+		myOBJECTS[object_num].overcut = 0;
+		myOBJECTS[object_num].pocket = 0;
+		myOBJECTS[object_num].laser = 0;
 		myOBJECTS[object_num].visited = 0;
 		for (num2 = 0; num2 < line_last; num2++) {
 			myOBJECTS[object_num].line[num2] = 0;
@@ -2704,13 +2694,13 @@ void handler_motion (GtkWidget *w, GdkEventMotion* e, void *v) {
 //	printf("button_motion x=%g y=%g state=%d\n", e->x, e->y, e->state);
 	int mouseX = e->x;
 	int mouseY = e->y;
-	if (last_mouse_button == 1 && last_mouse_state == 0) {
+	if (last_mouse_button == 1) {
 		PARAMETER[P_V_TRANSX].vint = (mouseX - last_mouse_x) / 2;
 		PARAMETER[P_V_TRANSY].vint = (mouseY - last_mouse_y) / -2;
-	} else if (last_mouse_button == 2 && last_mouse_state == 0) {
+	} else if (last_mouse_button == 2) {
 		PARAMETER[P_V_ROTY].vfloat = (float)(mouseX - last_mouse_x) / 5.0;
 		PARAMETER[P_V_ROTX].vfloat = (float)(mouseY - last_mouse_y) / 5.0;
-	} else if (last_mouse_button == 3 && last_mouse_state == 0) {
+	} else if (last_mouse_button == 3) {
 		PARAMETER[P_V_ROTZ].vfloat = (float)(mouseX - last_mouse_x) / 5.0;
 		PARAMETER[P_V_ZOOM].vfloat = (float)(mouseY - last_mouse_y) / 100;
 	} else {

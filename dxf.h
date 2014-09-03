@@ -19,6 +19,7 @@
 #define OPTION_MTEXT_Y		20
 #define OPTION_MTEXT_SIZE	40
 #define OPTION_MTEXT_TEXT	 1
+#define OPTION_BLOCKNAME	 3
 #define OPTION_LAYERNAME	 8
 
 #define PI 3.14159265358979323846264338327950288419716939937511
@@ -45,7 +46,7 @@ typedef struct{
 	int closed;
 	int inside;
 	int visited;
-	int selections;
+	int selection;
 	int offset;
 	int force;
 	int overcut;
@@ -60,6 +61,7 @@ typedef struct{
 	int used;
 	int type;
 	char layer[256];
+	char block[256];
 	double x1;
 	double y1;
 	double x2;
@@ -71,6 +73,7 @@ typedef struct{
 typedef struct{
 	int used;
 	char layer[256];
+	char block[256];
 	float x;
 	float y;
 	float s;
