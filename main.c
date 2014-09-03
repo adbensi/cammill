@@ -2281,21 +2281,21 @@ void MaterialLoadList (void) {
     Holz: Bis zu 3000 m/min
 */
 
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Langspanend)", -1);
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Langsp.)", -1);
 	material_vc[0] = 200;
 	material_fz[0][0] = 0.04;
 	material_fz[0][1] = 0.05;
 	material_fz[0][2] = 0.10;
 	material_texture[0] = "metal.bmp";
 
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Kurzspanend)", -1);
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Kurzsp.)", -1);
 	material_vc[1] = 150;
 	material_fz[1][0] = 0.04;
 	material_fz[1][1] = 0.05;
 	material_fz[1][2] = 0.10;
 	material_texture[1] = "metal.bmp";
 
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "NE-Metalle(Messing,Bronze,Kupfer,Zink,Rotguß)", -1);
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "NE-Metalle", -1);
 	material_vc[2] = 150;
 	material_fz[2][0] = 0.04;
 	material_fz[2][1] = 0.05;
@@ -2316,7 +2316,7 @@ void MaterialLoadList (void) {
 	material_fz[4][2] = 0.0;
 	material_texture[4] = "plast.bmp";
 
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Duroplaste(mit Füllstoffen)", -1);
+	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Duroplaste", -1);
 	material_vc[5] = 125;
 	material_fz[5][0] = 0.04;
 	material_fz[5][1] = 0.08;
@@ -2675,7 +2675,7 @@ void handler_about (GtkWidget *widget, gpointer data) {
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
 	gtk_window_set_title(GTK_WINDOW(dialog), "About");
 	gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_QUIT, 1);
-	GtkWidget *label = gtk_label_new("OpenCAM 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <fpv-community.de>");
+	GtkWidget *label = gtk_label_new("OpenCAM 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <mcules@fpv-club.de>");
 	gtk_widget_modify_font(label, pango_font_description_from_string("Tahoma 18"));
 	GtkWidget *image = gtk_image_new_from_file("logo.png");
 	GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
