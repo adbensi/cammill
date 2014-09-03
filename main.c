@@ -241,24 +241,25 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 	GLUtesselator *tobj;
 	GLdouble rect2[MAX_LINES][3];
 
-	if (invert == 0) {
-		glColor4f(0.0, 0.5, 0.2, 0.5);
-	} else {
-		glColor4f(0.0, 0.75, 0.3, 0.5);
+	if (PARAMETER[P_V_TEXTURES].vint == 1) {
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+		texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_TEXTURE_GEN_S);
+		glEnable(GL_TEXTURE_GEN_T);
+		glTexGend(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+		glTexGend(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
+		glScalef(0.002, 0.002, 0.002);
+	} else  {
+		if (invert == 0) {
+			glColor4f(0.0, 0.5, 0.2, 0.5);
+		} else {
+			glColor4f(0.0, 0.75, 0.3, 0.5);
+		}
 	}
 
-	glColor4f(1.0, 1.0, 1.0, 1.0);
-	texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
-
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_TEXTURE_GEN_S);
-	glEnable(GL_TEXTURE_GEN_T);
-	glTexGend(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-	glTexGend(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	glScalef(0.002, 0.002, 0.002);
-	glTranslatef(0.0, 0.0, 0.0);
 
 	tobj = gluNewTess();
 	gluTessCallback(tobj, GLU_TESS_VERTEX, (GLvoid (CALLBACK*) ()) &glVertex3dv);
