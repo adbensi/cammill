@@ -725,6 +725,7 @@ void mill_z (int gcmd, double z) {
 void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 	char tx_str[128];
 	char ty_str[128];
+	char tz_str[128];
 	if (gcmd != 0) {
 
 /*
@@ -817,60 +818,104 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 					draw_line((float)lx, (float)ly, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 				}
 			} else {
-
-
-double i_x = 0.0;
-double i_y = 0.0;
-
-if (holding_tabs_num > 0 && mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, holding_tabs[0][0], holding_tabs[0][1], holding_tabs[0][2], holding_tabs[0][3], &i_x, &i_y) == 1)) {
-
-	double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
-	double i_x2 = i_x;
-	double i_y2 = i_y;
-	add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
-	double alpha2 = vector_angle(x, y, i_x, i_y);
-	double i_x3 = i_x;
-	double i_y3 = i_y;
-	add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
-
-	draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-
-	draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
-//	draw_line((float)i_x2, (float)i_y2, (float)mill_last_z, (float)i_x, (float)i_y, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
-//	draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-
-	draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-
-} else {
-	draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-}
-
-
+				draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			}
 		}
 */
-		draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
+
+		double i_x = 0.0;
+		double i_y = 0.0;
+		int hflag = 0;
+		int num = 0;
+		if (PARAMETER[P_T_USE].vint == 1) {
+			for (num = 0; num < line_last; num++) {
+				if (myLINES[num].istab == 1) {
+					if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1)) {
+						double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
+						double i_x2 = i_x;
+						double i_y2 = i_y;
+						add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
+						double alpha2 = vector_angle(x, y, i_x, i_y);
+						double i_x3 = i_x;
+						double i_y3 = i_y;
+						add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
+						draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+						draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+						draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+						hflag = 1;
+						if (save_gcode == 1) {
+							if (gcmd == 1) {
+								if (PARAMETER[P_T_TYPE].vint == 0) {
+									translateAxisX(i_x2, tx_str);
+									translateAxisY(i_y2, ty_str);
+									fprintf(fd_out, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
+									translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
+									fprintf(fd_out, "G00 %s\n", tz_str);
+									translateAxisX(i_x3, tx_str);
+									translateAxisY(i_y3, ty_str);
+									fprintf(fd_out, "G0%i %s %s F%i (tab)\n", gcmd, tx_str, ty_str, feed);
+									translateAxisZ(mill_last_z, tz_str);
+									fprintf(fd_out, "G01 %s F%i  (tabend)\n", tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
+									translateAxisX(x, tx_str);
+									translateAxisY(y, ty_str);
+									fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+								} else {
+									translateAxisX(i_x2, tx_str);
+									translateAxisY(i_y2, ty_str);
+									fprintf(fd_out, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
+									translateAxisX(i_x, tx_str);
+									translateAxisY(i_y, ty_str);
+									translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
+									fprintf(fd_out, "G0%i %s %s %s F%i (tab2top)\n", gcmd, tx_str, ty_str, tz_str, feed);
+									translateAxisX(i_x3, tx_str);
+									translateAxisY(i_y3, ty_str);
+									translateAxisZ(mill_last_z, tz_str);
+									fprintf(fd_out, "G0%i %s %s %s F%i (tab2bottom)\n", gcmd, tx_str, ty_str, tz_str, feed);
+									translateAxisX(x, tx_str);
+									translateAxisY(y, ty_str);
+									fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+								}
+							} else if (gcmd == 2 || gcmd == 3) {
+								fprintf(fd_out, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+							}
+						}
+					}
+				}
+			}
+		}
+		if (hflag == 0) {
+			draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+
+			if (save_gcode == 1) {
+				translateAxisX(x, tx_str);
+				translateAxisY(y, ty_str);
+				if (gcmd == 1) {
+					fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+				} else if (gcmd == 2 || gcmd == 3) {
+					fprintf(fd_out, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+				}
+			}
+
+		}
 
 	} else {
 		if (mill_start_all != 0) {
 			glColor4f(0.0, 1.0, 1.0, 1.0);
 			draw_line3((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z);
 		}
+
+		if (save_gcode == 1) {
+			translateAxisX(x, tx_str);
+			translateAxisY(y, ty_str);
+			fprintf(fd_out, "G00 %s %s\n", tx_str, ty_str);
+		}
+
+
 	}
 	mill_start_all = 1;
 	mill_last_x = x;
 	mill_last_y = y;
-	if (save_gcode == 1) {
-		translateAxisX(x, tx_str);
-		translateAxisY(y, ty_str);
-		if (gcmd == 0) {
-			fprintf(fd_out, "G00 %s %s\n", tx_str, ty_str);
-		} else if (gcmd == 1) {
-			fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-		} else if (gcmd == 2 || gcmd == 3) {
-			fprintf(fd_out, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
-		}
-	}
 }
 
 void object_draw (FILE *fd_out, int object_num) {

@@ -1027,7 +1027,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-1
+2
   0
 LAYER
   5
@@ -1038,6 +1038,28 @@ AcDbSymbolTableRecord
 AcDbLayerTableRecord
   2
 0
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+290
+1
+370
+0
+390
+F
+  0
+LAYER
+  5
+43
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+holding-tabs
  70
 0
  62
@@ -1377,7 +1399,7 @@ ENTITIES
   0
 LINE
   5
-43
+44
 100
 AcDbEntity
 100
@@ -1405,7 +1427,7 @@ ByLayer
   0
 LINE
   5
-44
+45
 100
 AcDbEntity
 100
@@ -1433,7 +1455,7 @@ ByLayer
   0
 LINE
   5
-45
+46
 100
 AcDbEntity
 100
@@ -1456,34 +1478,6 @@ ByLayer
 70.0
  21
 70.0
- 31
-0.0
-  0
-LINE
-  5
-46
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-70.0
- 20
-70.0
- 30
-0.0
- 11
-70.0
- 21
-40.0
  31
 0.0
   0
@@ -1505,6 +1499,34 @@ ByLayer
  10
 70.0
  20
+70.0
+ 30
+0.0
+ 11
+70.0
+ 21
+40.0
+ 31
+0.0
+  0
+LINE
+  5
+48
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+70.0
+ 20
 40.0
  30
 0.0
@@ -1517,7 +1539,7 @@ ByLayer
   0
 LINE
   5
-48
+49
 100
 AcDbEntity
 100
@@ -1545,7 +1567,7 @@ ByLayer
   0
 LINE
   5
-49
+4A
 100
 AcDbEntity
 100
@@ -1566,34 +1588,6 @@ ByLayer
 0.0
  11
 100.0
- 21
-20.0
- 31
-0.0
-  0
-LINE
-  5
-4A
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-100.0
- 20
-20.0
- 30
-0.0
- 11
-170.0
  21
 20.0
  31
@@ -1615,6 +1609,34 @@ AcDbLine
   6
 ByLayer
  10
+100.0
+ 20
+20.0
+ 30
+0.0
+ 11
+170.0
+ 21
+20.0
+ 31
+0.0
+  0
+LINE
+  5
+4C
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
 170.0
  20
 20.0
@@ -1629,7 +1651,7 @@ ByLayer
   0
 LINE
   5
-4C
+4D
 100
 AcDbEntity
 100
@@ -1657,7 +1679,7 @@ ByLayer
   0
 LINE
   5
-4D
+4E
 100
 AcDbEntity
 100
@@ -1680,34 +1702,6 @@ ByLayer
 170.0
  21
 90.0
- 31
-0.0
-  0
-LINE
-  5
-4E
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-170.0
- 20
-90.0
- 30
-0.0
- 11
-170.0
- 21
-70.0
  31
 0.0
   0
@@ -1729,6 +1723,34 @@ ByLayer
  10
 170.0
  20
+90.0
+ 30
+0.0
+ 11
+170.0
+ 21
+70.0
+ 31
+0.0
+  0
+LINE
+  5
+50
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+170.0
+ 20
 70.0
  30
 0.0
@@ -1741,7 +1763,7 @@ ByLayer
   0
 LINE
   5
-50
+51
 100
 AcDbEntity
 100
@@ -1769,7 +1791,7 @@ ByLayer
   0
 LINE
   5
-51
+52
 100
 AcDbEntity
 100
@@ -1797,7 +1819,7 @@ ByLayer
   0
 ARC
   5
-52
+53
 100
 AcDbEntity
   8
@@ -1827,7 +1849,7 @@ AcDbArc
   0
 LINE
   5
-53
+54
 100
 AcDbEntity
 100
@@ -1855,7 +1877,7 @@ ByLayer
   0
 LINE
   5
-54
+55
 100
 AcDbEntity
 100
@@ -1883,7 +1905,7 @@ ByLayer
   0
 LINE
   5
-55
+56
 100
 AcDbEntity
 100
@@ -1906,34 +1928,6 @@ ByLayer
 220.0
  21
 220.0
- 31
-0.0
-  0
-LINE
-  5
-56
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-220.0
- 20
-220.0
- 30
-0.0
- 11
-180.0
- 21
-180.0
  31
 0.0
   0
@@ -1953,6 +1947,34 @@ AcDbLine
   6
 ByLayer
  10
+220.0
+ 20
+220.0
+ 30
+0.0
+ 11
+180.0
+ 21
+180.0
+ 31
+0.0
+  0
+LINE
+  5
+58
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
 180.0
  20
 180.0
@@ -1967,7 +1989,7 @@ ByLayer
   0
 LINE
   5
-58
+59
 100
 AcDbEntity
 100
@@ -1995,7 +2017,7 @@ ByLayer
   0
 LINE
   5
-59
+5A
 100
 AcDbEntity
 100
@@ -2023,7 +2045,7 @@ ByLayer
   0
 LINE
   5
-5A
+5B
 100
 AcDbEntity
 100
@@ -2051,7 +2073,7 @@ ByLayer
   0
 CIRCLE
   5
-5B
+5C
 100
 AcDbEntity
 100
@@ -2075,7 +2097,7 @@ ByLayer
   0
 LINE
   5
-5C
+5D
 100
 AcDbEntity
 100
@@ -2096,34 +2118,6 @@ ByLayer
 0.0
  11
 10.0
- 21
-90.0
- 31
-0.0
-  0
-LINE
-  5
-5D
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-10.0
- 20
-90.0
- 30
-0.0
- 11
-80.0
  21
 90.0
  31
@@ -2145,6 +2139,34 @@ AcDbLine
   6
 ByLayer
  10
+10.0
+ 20
+90.0
+ 30
+0.0
+ 11
+80.0
+ 21
+90.0
+ 31
+0.0
+  0
+LINE
+  5
+5F
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
 20.0
  20
 40.0
@@ -2159,7 +2181,7 @@ ByLayer
   0
 LINE
   5
-5F
+60
 100
 AcDbEntity
 100
@@ -2187,7 +2209,7 @@ ByLayer
   0
 LINE
   5
-60
+61
 100
 AcDbEntity
 100
@@ -2215,7 +2237,7 @@ ByLayer
   0
 LINE
   5
-61
+62
 100
 AcDbEntity
 100
@@ -2243,7 +2265,7 @@ ByLayer
   0
 LINE
   5
-62
+63
 100
 AcDbEntity
 100
@@ -2271,7 +2293,7 @@ ByLayer
   0
 LINE
   5
-63
+64
 100
 AcDbEntity
 100
@@ -2299,7 +2321,7 @@ ByLayer
   0
 ARC
   5
-64
+65
 100
 AcDbEntity
   8
@@ -2329,7 +2351,7 @@ AcDbArc
   0
 LINE
   5
-65
+66
 100
 AcDbEntity
 100
@@ -2357,7 +2379,7 @@ ByLayer
   0
 LINE
   5
-66
+67
 100
 AcDbEntity
 100
@@ -2385,7 +2407,7 @@ ByLayer
   0
 LINE
   5
-67
+68
 100
 AcDbEntity
 100
@@ -2408,34 +2430,6 @@ ByLayer
 60.0
  21
 140.0
- 31
-0.0
-  0
-LINE
-  5
-68
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-60.0
- 20
-140.0
- 30
-0.0
- 11
-60.0
- 21
-150.0
  31
 0.0
   0
@@ -2457,6 +2451,34 @@ ByLayer
  10
 60.0
  20
+140.0
+ 30
+0.0
+ 11
+60.0
+ 21
+150.0
+ 31
+0.0
+  0
+LINE
+  5
+6A
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+60.0
+ 20
 150.0
  30
 0.0
@@ -2469,7 +2491,7 @@ ByLayer
   0
 LINE
   5
-6A
+6B
 100
 AcDbEntity
 100
@@ -2497,7 +2519,7 @@ ByLayer
   0
 LINE
   5
-6B
+6C
 100
 AcDbEntity
 100
@@ -2525,7 +2547,7 @@ ByLayer
   0
 LINE
   5
-6C
+6D
 100
 AcDbEntity
 100
@@ -2553,7 +2575,7 @@ ByLayer
   0
 ARC
   5
-6D
+6E
 100
 AcDbEntity
   8
@@ -2583,7 +2605,7 @@ AcDbArc
   0
 LINE
   5
-6E
+6F
 100
 AcDbEntity
 100
@@ -2611,7 +2633,7 @@ ByLayer
   0
 LINE
   5
-6F
+70
 100
 AcDbEntity
 100
@@ -2639,7 +2661,7 @@ ByLayer
   0
 LINE
   5
-70
+71
 100
 AcDbEntity
 100
@@ -2660,34 +2682,6 @@ ByLayer
 0.0
  11
 100.0
- 21
-170.0
- 31
-0.0
-  0
-LINE
-  5
-71
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-100.0
- 20
-170.0
- 30
-0.0
- 11
-80.0
  21
 170.0
  31
@@ -2709,15 +2703,15 @@ AcDbLine
   6
 ByLayer
  10
-80.0
+100.0
  20
 170.0
  30
 0.0
  11
-70.0
+80.0
  21
-180.0
+170.0
  31
 0.0
   0
@@ -2737,15 +2731,15 @@ AcDbLine
   6
 ByLayer
  10
-0.0
+80.0
  20
-140.0
+170.0
  30
 0.0
  11
-10.0
+70.0
  21
-140.0
+180.0
  31
 0.0
   0
@@ -2765,13 +2759,13 @@ AcDbLine
   6
 ByLayer
  10
-10.0
+0.0
  20
 140.0
  30
 0.0
  11
-20.0
+10.0
  21
 140.0
  31
@@ -2793,7 +2787,7 @@ AcDbLine
   6
 ByLayer
  10
-20.0
+10.0
  20
 140.0
  30
@@ -2801,7 +2795,7 @@ ByLayer
  11
 20.0
  21
-130.0
+140.0
  31
 0.0
   0
@@ -2823,13 +2817,13 @@ ByLayer
  10
 20.0
  20
-130.0
+140.0
  30
 0.0
  11
 20.0
  21
-120.0
+130.0
  31
 0.0
   0
@@ -2851,6 +2845,34 @@ ByLayer
  10
 20.0
  20
+130.0
+ 30
+0.0
+ 11
+20.0
+ 21
+120.0
+ 31
+0.0
+  0
+LINE
+  5
+78
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+20.0
+ 20
 120.0
  30
 0.0
@@ -2863,7 +2885,7 @@ ByLayer
   0
 LINE
   5
-78
+79
 100
 AcDbEntity
 100
@@ -2891,7 +2913,7 @@ ByLayer
   0
 LINE
   5
-79
+7A
 100
 AcDbEntity
 100
@@ -2919,7 +2941,7 @@ ByLayer
   0
 LINE
   5
-7A
+7B
 100
 AcDbEntity
 100
@@ -2947,7 +2969,7 @@ ByLayer
   0
 LINE
   5
-7B
+7C
 100
 AcDbEntity
 100
@@ -2975,7 +2997,7 @@ ByLayer
   0
 MTEXT
   5
-7C
+7D
 100
 AcDbEntity
 100
@@ -3015,7 +3037,7 @@ iso
   0
 LINE
   5
-7D
+7E
 100
 AcDbEntity
 100
@@ -3038,34 +3060,6 @@ ByLayer
 100.0
  21
 290.0
- 31
-0.0
-  0
-LINE
-  5
-7E
-100
-AcDbEntity
-100
-AcDbLine
-  8
-0
- 62
-256
-370
--1
-  6
-ByLayer
- 10
-0.0
- 20
-275.0
- 30
-0.0
- 11
-100.0
- 21
-275.0
  31
 0.0
   0
@@ -3087,6 +3081,34 @@ ByLayer
  10
 0.0
  20
+275.0
+ 30
+0.0
+ 11
+100.0
+ 21
+275.0
+ 31
+0.0
+  0
+LINE
+  5
+80
+100
+AcDbEntity
+100
+AcDbLine
+  8
+0
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+0.0
+ 20
 290.0
  30
 0.0
@@ -3094,6 +3116,342 @@ ByLayer
 0.0
  21
 275.0
+ 31
+0.0
+  0
+LINE
+  5
+81
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+100.0
+ 20
+90.0
+ 30
+0.0
+ 11
+100.0
+ 21
+110.0
+ 31
+0.0
+  0
+LINE
+  5
+82
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+104.0
+ 20
+4.0
+ 30
+0.0
+ 11
+104.0
+ 21
+-3.0
+ 31
+0.0
+  0
+LINE
+  5
+83
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+150.0
+ 20
+40.0
+ 30
+0.0
+ 11
+157.0
+ 21
+43.0
+ 31
+0.0
+  0
+LINE
+  5
+84
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+121.0
+ 20
+37.0
+ 30
+0.0
+ 11
+118.0
+ 21
+42.0
+ 31
+0.0
+  0
+LINE
+  5
+85
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+139.0
+ 20
+24.0
+ 30
+0.0
+ 11
+139.0
+ 21
+18.0
+ 31
+0.0
+  0
+LINE
+  5
+86
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+144.0
+ 20
+66.0
+ 30
+0.0
+ 11
+144.0
+ 21
+73.0
+ 31
+0.0
+  0
+LINE
+  5
+87
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+121.0
+ 20
+80.0
+ 30
+0.0
+ 11
+118.0
+ 21
+80.0
+ 31
+0.0
+  0
+LINE
+  5
+88
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+143.0
+ 20
+92.0
+ 30
+0.0
+ 11
+143.0
+ 21
+88.0
+ 31
+0.0
+  0
+LINE
+  5
+89
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+169.0
+ 20
+80.0
+ 30
+0.0
+ 11
+172.0
+ 21
+80.0
+ 31
+0.0
+  0
+LINE
+  5
+8A
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+112.0
+ 20
+189.0
+ 30
+0.0
+ 11
+118.0
+ 21
+194.0
+ 31
+0.0
+  0
+LINE
+  5
+8B
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+111.7374136229023946
+ 20
+127.4096742349458395
+ 30
+0.0
+ 11
+111.7374136229023946
+ 21
+107.4096742349458395
+ 31
+0.0
+  0
+LINE
+  5
+8C
+100
+AcDbEntity
+100
+AcDbLine
+  8
+holding-tabs
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+46.064837117472905
+ 20
+177.2010266535046412
+ 30
+0.0
+ 11
+26.064837117472905
+ 21
+177.2010266535046412
  31
 0.0
   0
@@ -3135,7 +3493,7 @@ E
   3
 AcDbVariableDictionary
 350
-80
+8D
   0
 DICTIONARY
   5
@@ -3599,7 +3957,7 @@ Layout2
   0
 DICTIONARY
   5
-80
+8D
 100
 AcDbDictionary
 281
@@ -3607,15 +3965,15 @@ AcDbDictionary
   3
 DIMASSOC
 350
-82
+8F
   3
 HIDETEXT
 350
-81
+8E
   0
 DICTIONARYVAR
   5
-81
+8E
 100
 DictionaryVariables
 280
@@ -3625,7 +3983,7 @@ DictionaryVariables
   0
 DICTIONARYVAR
   5
-82
+8F
 100
 DictionaryVariables
 280

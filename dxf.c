@@ -65,7 +65,16 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		} else {
 			myLINES = realloc(myLINES, sizeof(_LINE) * (line_last + 5));
 		}
-		myLINES[line_n].used = 1 - block;
+		if (strcmp(layer, "holding-tabs") == 0) {
+			myLINES[line_n].istab = 1;
+			myLINES[line_n].used = 0;
+		} else if (block == 1) {
+			myLINES[line_n].istab = 0;
+			myLINES[line_n].used = 0;
+		} else {
+			myLINES[line_n].istab = 0;
+			myLINES[line_n].used = 1;
+		}
 		myLINES[line_n].type = type;
 		strcpy(myLINES[line_n].layer, layer);
 		myLINES[line_n].x1 = x1;
