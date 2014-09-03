@@ -81,10 +81,10 @@ Image *loadTexture(char *filename) {
 	image1 = (Image *) malloc(sizeof(Image));
 	if (image1 == NULL) {
 		printf("Error allocating space for image");
-		exit(0);
+		return NULL;
 	}
 	if (!ImageLoad(filename, image1)) {
-		exit(1);
+		return NULL;
 	}
 	return image1;
 }
@@ -98,7 +98,7 @@ GLuint texture_load (char *filename) {
 	Image *image1 = loadTexture(filename);
 	if(image1 == NULL) {
 		printf("Image was not returned from loadTexture\n");
-		exit(0);
+		return -1;
 	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glBindTexture(GL_TEXTURE_2D, texture);

@@ -119,9 +119,6 @@ int need_init = 1;
 GtkWidget *window;
 GtkWidget *dialog;
 
-double holding_tabs_num = 0;
-double holding_tabs[10][4];
-
 void line_invert (int num) {
 	double tempx = myLINES[num].x2;
 	double tempy = myLINES[num].y2;
@@ -250,8 +247,8 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 		glColor4f(0.0, 0.75, 0.3, 0.5);
 	}
 
-//	glColor4f(1.0, 1.0, 1.0, 1.0);
-//	texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
+	glColor4f(1.0, 1.0, 1.0, 1.0);
+	texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_TEXTURE_GEN_S);
@@ -1121,15 +1118,6 @@ void object_draw (FILE *fd_out, int object_num) {
 	gluCylinder(quadratic, 0.0, 5.0, 5.0, 32, 1);
 	glPopMatrix();
 */
-
-
-
-	holding_tabs[0][0] = 95.0;
-	holding_tabs[0][1] = -100.0;
-	holding_tabs[0][2] = 95.0;
-	holding_tabs[0][3] = 400.0;
-
-//	draw_line((float)holding_tabs[0][0], (float)holding_tabs[0][1], (float)PARAMETER[P_T_DEPTH].vdouble, (float)holding_tabs[0][2], (float)holding_tabs[0][3], (float)PARAMETER[P_T_DEPTH].vdouble, 1.0);
 
 
 
@@ -2297,28 +2285,28 @@ void MaterialLoadList (void) {
 	material_fz[0][0] = 0.04;
 	material_fz[0][1] = 0.05;
 	material_fz[0][2] = 0.10;
-	material_texture[0] = "metall.bmp";
+	material_texture[0] = "metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Kurzspanend)", -1);
 	material_vc[1] = 150;
 	material_fz[1][0] = 0.04;
 	material_fz[1][1] = 0.05;
 	material_fz[1][2] = 0.10;
-	material_texture[1] = "metall.bmp";
+	material_texture[1] = "metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "NE-Metalle(Messing,Bronze,Kupfer,Zink,Rotguß)", -1);
 	material_vc[2] = 150;
 	material_fz[2][0] = 0.04;
 	material_fz[2][1] = 0.05;
 	material_fz[2][2] = 0.10;
-	material_texture[2] = "metall.bmp";
+	material_texture[2] = "metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "VA-Stahl", -1);
 	material_vc[3] = 100;
 	material_fz[3][0] = 0.05;
 	material_fz[3][1] = 0.06;
 	material_fz[3][2] = 0.07;
-	material_texture[3] = "metall.bmp";
+	material_texture[3] = "metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Thermoplaste", -1);
 	material_vc[4] = 100;
@@ -2353,7 +2341,7 @@ void MaterialLoadList (void) {
 	material_fz[8][0] = 0.04;
 	material_fz[8][1] = 0.08;
 	material_fz[8][2] = 0.10;
-	material_texture[8] = "holz.bmp";
+	material_texture[8] = "wood.bmp";
 
 
 
@@ -3100,12 +3088,6 @@ int main (int argc, char *argv[]) {
 //	LayerLoadList();
 
 
-
-//	holding_tabs[0][0] = 1.0;
-//	holding_tabs[0][1] = 1.0;
-//	holding_tabs[0][2] = 220.0;
-//	holding_tabs[0][3] = 220.0;
-//	holding_tabs_num = 1;
 
 	GtkWidget *hbox;
 	GtkWidget *vbox;
