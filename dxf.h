@@ -82,6 +82,7 @@ typedef struct{
 	char text[1024];
 } _MTEXT;
 
+extern char LayerNames[MAX_OBJECTS][256];
 extern _OBJECT *myOBJECTS;
 extern _LINE *myLINES;
 extern _MTEXT myMTEXT[100];

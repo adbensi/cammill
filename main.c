@@ -259,8 +259,6 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 			glColor4f(0.0, 0.75, 0.3, 0.5);
 		}
 	}
-
-
 	tobj = gluNewTess();
 	gluTessCallback(tobj, GLU_TESS_VERTEX, (GLvoid (CALLBACK*) ()) &glVertex3dv);
 	gluTessCallback(tobj, GLU_TESS_BEGIN, (GLvoid (CALLBACK*) ()) &beginCallback);
@@ -347,14 +345,6 @@ int object_line_last (int object_num) {
 		}
 	}
 	return ret;
-}
-
-void draw_text (void *font, char *text, int x, int y) {
-//	glRasterPos2i(x, y);
-//	while (*text != '\0') {
-//		glutBitmapCharacter(font, *text);
-//		++text;
-//	}
 }
 
 double get_len (double x1, double y1, double x2, double y2) {
@@ -1106,7 +1096,8 @@ void object_draw (FILE *fd_out, int object_num) {
 				if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 					glColor4f(1.0, 1.0, 1.0, 1.0);
 					sprintf(tmp_str, "%i", object_num);
-					draw_text(GLUT_BITMAP_HELVETICA_18, tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1);
+					output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
+
 				}
 			}
 		}
@@ -2973,45 +2964,56 @@ GtkTreeModel *create_and_fill_model (void) {
 
 
 	gtk_tree_store_append(treestore, &toplevel, NULL);
-	gtk_tree_store_set(treestore, &toplevel, 0, "Objects", -1);
+	gtk_tree_store_set(treestore, &toplevel, 0, "Layers", -1);
 
-	int num2 = 0;
-	for (num2 = 0; num2 < object_last; num2++) {
-		if (myOBJECTS[num2].line[0] != 0) {
+	int num = 0;
+	for (num = 0; num < object_last; num++) {
+		if (LayerNames[num][0] != 0) {
+
 			char tmp_str[1024];
-			sprintf(tmp_str, "Object #%i", num2);
+			sprintf(tmp_str, "Layer: %s", LayerNames[num]);
 
 			GtkTreeIter childObject;
 			gtk_tree_store_append(treestore, &childObject, &toplevel);
 			gtk_tree_store_set(treestore, &childObject, 0, tmp_str, -1);
 
-			for (n = 0; n < O_P_LAST; n++) {
-				char name_str[1024];
-				sprintf(name_str, "%s", OBJECT_PARAMETER[n].name);
-				gtk_tree_store_append(treestore, &value, &childObject);
-				if (OBJECT_PARAMETER[n].type == T_FLOAT) {
-					sprintf(tmp_str, "%f", OBJECT_PARAMETER[n].vfloat);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else if (OBJECT_PARAMETER[n].type == T_DOUBLE) {
-					sprintf(tmp_str, "%f", OBJECT_PARAMETER[n].vdouble);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else if (OBJECT_PARAMETER[n].type == T_INT) {
-					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else if (OBJECT_PARAMETER[n].type == T_SELECT) {
-					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else if (OBJECT_PARAMETER[n].type == T_BOOL) {
-					sprintf(tmp_str, "%i", OBJECT_PARAMETER[n].vint);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else if (OBJECT_PARAMETER[n].type == T_STRING) {
-					sprintf(tmp_str, "%s", OBJECT_PARAMETER[n].vstr);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else if (OBJECT_PARAMETER[n].type == T_FILE) {
-					sprintf(tmp_str, "%s", OBJECT_PARAMETER[n].vstr);
-					gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-				} else {
-					continue;
+			int num2 = 0;
+			for (num2 = 0; num2 < object_last; num2++) {
+				if (myOBJECTS[num2].line[0] != 0 && strcmp(myOBJECTS[num2].layer, LayerNames[num]) == 0) {
+					char tmp_str[1024];
+
+					GtkTreeIter Object;
+					gtk_tree_store_append(treestore, &Object, &childObject);
+					sprintf(tmp_str, "Object #%i", num2);
+					gtk_tree_store_set(treestore, &Object, 0, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].selection);
+					gtk_tree_store_set(treestore, &value, 0, "Selected", 1, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].offset);
+					gtk_tree_store_set(treestore, &value, 0, "Offset", 1, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].force);
+					gtk_tree_store_set(treestore, &value, 0, "Force", 1, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].overcut);
+					gtk_tree_store_set(treestore, &value, 0, "Overcut", 1, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].pocket);
+					gtk_tree_store_set(treestore, &value, 0, "Pocket", 1, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].laser);
+					gtk_tree_store_set(treestore, &value, 0, "Laser", 1, tmp_str, -1);
+
+					gtk_tree_store_append(treestore, &value, &Object);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].depth);
+					gtk_tree_store_set(treestore, &value, 0, "Depth", 1, tmp_str, -1);
 				}
 			}
 		}

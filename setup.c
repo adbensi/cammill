@@ -53,15 +53,6 @@ PARA PARAMETER[] = {
 	{"Post-Command","Milling",	"-pc",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, 0},
 };
 
-PARA OBJECT_PARAMETER[] = {
-	{"Use",		"Object",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
-	{"Overwite",	"Object",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
-	{"Overcut",	"Object",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
-	{"Pocket",	"Object",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
-	{"Lasermode",	"Object",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, 0},
-	{"Depth",	"Object",	"-md",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1, 0, 0},
-};
-
 
 void SetupShow (void) {
 	int n = 0;

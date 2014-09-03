@@ -39,6 +39,7 @@ double block_x = 0.0;
 double block_y = 0.0;
 char block_name[1024];
 
+char LayerNames[MAX_OBJECTS][256];
 
 double get_len (double x1, double y1, double x2, double y2);
 
@@ -60,6 +61,15 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		return;
 	}
 	if (line_n < MAX_LINES) {
+		int num = 0;
+		for (num = 0; num < line_last; num++) {
+			if (strcmp(LayerNames[num], layer) == 0) {
+				break;
+			} else if (LayerNames[num][0] == 0) {
+				strcpy(LayerNames[num], layer);
+				break;
+			}
+		}
 		if (myLINES == NULL) {
 			myLINES = malloc(sizeof(_LINE) * 5);
 		} else {
@@ -149,6 +159,11 @@ void dxf_read (char *file) {
 	fp = fopen(file, "r");
 	if (fp == NULL) {
 		return;
+	}
+
+	int num = 0;
+	for (num = 0; num < line_last; num++) {
+		LayerNames[num][0] = 0;
 	}
 
 	clear_dxfoptions();

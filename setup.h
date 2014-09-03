@@ -75,18 +75,7 @@ enum {
 	P_LAST
 };
 
-enum {
-	O_P_USE,
-	O_P_OVERWRITE,
-	O_P_OVERCUT,
-	O_P_POCKET,
-	O_P_LASER,
-	O_P_DEPTH,
-	O_P_LAST
-};
-
 extern PARA PARAMETER[];
-extern PARA OBJECT_PARAMETER[];
 
 void SetupShow (void);
 void SetupShowGcode (FILE *out);
