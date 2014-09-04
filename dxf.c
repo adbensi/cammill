@@ -329,7 +329,7 @@ void dxf_read (char *file) {
 						double e_y = atof(dxf_options[21]);
 						double ratio = atof(dxf_options[40]);
 
-printf("ELLIPSE: %f %f  %f %f  %f\n", c_x, c_y, e_x, e_y, ratio);
+						//printf("ELLIPSE: %f %f  %f %f  %f\n", c_x, c_y, e_x, e_y, ratio);
 
 						double p_x1 = c_x;
 						double p_y1 = c_y;
@@ -344,7 +344,7 @@ printf("ELLIPSE: %f %f  %f %f  %f\n", c_x, c_y, e_x, e_y, ratio);
 						double last_y = (p_y1 + y2);
 						double an = 0;
 
-						double p_rast = (p_a2 - p_a1) / 10.0;
+						double p_rast = (p_a2 - p_a1) / 20.0;
 
 						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
 							double angle1 = toRad(an);
