@@ -96,7 +96,7 @@ int material_vc[100];
 float material_fz[100][3];
 char *rotary_axis[3] = {"A", "B", "C"};
 char cline[1024];
-char gcode_buffer[30000];
+char *gcode_buffer = NULL;
 
 int last_mouse_x = 0;
 int last_mouse_y = 0;
@@ -120,6 +120,18 @@ int need_init = 1;
 
 GtkWidget *window;
 GtkWidget *dialog;
+
+void append_gcode (char *text) {
+	if (gcode_buffer == NULL) {
+		int len = strlen(text) + 1;
+		gcode_buffer = malloc(len);
+		gcode_buffer[0] = 0;
+	} else {
+		int len = strlen(gcode_buffer) + strlen(text) + 1;
+		gcode_buffer = realloc(gcode_buffer, len);
+	}
+	strcat(gcode_buffer, text);
+}
 
 void line_invert (int num) {
 	double tempx = myLINES[num].x2;
@@ -693,10 +705,10 @@ void mill_z (int gcmd, double z) {
 	translateAxisZ(z, tz_str);
 	if (gcmd == 0) {
 		sprintf(cline, "G0%i %s\n", gcmd, tz_str);
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 	} else {
 		sprintf(cline, "G0%i %s F%i\n", gcmd, tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 	}
 	if (mill_start_all != 0) {
 		glColor4f(0.0, 1.0, 1.0, 1.0);
@@ -839,44 +851,44 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 								translateAxisX(i_x2, tx_str);
 								translateAxisY(i_y2, ty_str);
 								sprintf(cline, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
 								sprintf(cline, "G00 %s\n", tz_str);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisX(i_x3, tx_str);
 								translateAxisY(i_y3, ty_str);
 								sprintf(cline, "G0%i %s %s F%i (tab)\n", gcmd, tx_str, ty_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisZ(mill_last_z, tz_str);
 								sprintf(cline, "G01 %s F%i  (tabend)\n", tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisX(x, tx_str);
 								translateAxisY(y, ty_str);
 								sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 							} else {
 								translateAxisX(i_x2, tx_str);
 								translateAxisY(i_y2, ty_str);
 								sprintf(cline, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisX(i_x, tx_str);
 								translateAxisY(i_y, ty_str);
 								translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
 								sprintf(cline, "G0%i %s %s %s F%i (tab2top)\n", gcmd, tx_str, ty_str, tz_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisX(i_x3, tx_str);
 								translateAxisY(i_y3, ty_str);
 								translateAxisZ(mill_last_z, tz_str);
 								sprintf(cline, "G0%i %s %s %s F%i (tab2bottom)\n", gcmd, tx_str, ty_str, tz_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 								translateAxisX(x, tx_str);
 								translateAxisY(y, ty_str);
 								sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-								strcat(gcode_buffer, cline);
+								append_gcode(cline);
 							}
 						} else if (gcmd == 2 || gcmd == 3) {
 							sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
-							strcat(gcode_buffer, cline);
+							append_gcode(cline);
 						}
 					}
 				}
@@ -888,10 +900,10 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 			translateAxisY(y, ty_str);
 			if (gcmd == 1) {
 				sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-				strcat(gcode_buffer, cline);
+				append_gcode(cline);
 			} else if (gcmd == 2 || gcmd == 3) {
 				sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
-				strcat(gcode_buffer, cline);
+				append_gcode(cline);
 			}
 		}
 	} else {
@@ -902,7 +914,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		translateAxisX(x, tx_str);
 		translateAxisY(y, ty_str);
 		sprintf(cline, "G00 %s %s\n", tx_str, ty_str);
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 	}
 	mill_start_all = 1;
 	mill_last_x = x;
@@ -1047,21 +1059,21 @@ void object_draw (FILE *fd_out, int object_num) {
 	}
 
 	if (PARAMETER[P_V_NCDEBUG].vint == 1) {
-		strcat(gcode_buffer, "\n");
+		append_gcode("\n");
 		sprintf(cline, "(--------------------------------------------------)\n");
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 		sprintf(cline, "(Object: #%i)\n", object_num);
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 		sprintf(cline, "(Layer: %s)\n", myOBJECTS[object_num].layer);
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 		if (lasermode == 1) {
 			sprintf(cline, "(Laser-Mode: On)\n");
 		} else { 
 			sprintf(cline, "(Depth: %f)\n", mill_depth_real);
 		}
-		strcat(gcode_buffer, cline);
-		strcat(gcode_buffer, "(--------------------------------------------------)\n");
-		strcat(gcode_buffer, "\n");
+		append_gcode(cline);
+		append_gcode("(--------------------------------------------------)\n");
+		append_gcode("\n");
 	}
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
@@ -1076,7 +1088,7 @@ void object_draw (FILE *fd_out, int object_num) {
 					if (lasermode == 1) {
 						if (tool_last != 5) {
 							sprintf(cline, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
-							strcat(gcode_buffer, cline);
+							append_gcode(cline);
 						}
 						tool_last = 5;
 					}
@@ -1084,7 +1096,7 @@ void object_draw (FILE *fd_out, int object_num) {
 					if (lasermode == 1) {
 						mill_z(0, 0.0);
 						sprintf(cline, "M03 (Laser-On)\n");
-						strcat(gcode_buffer, cline);
+						append_gcode(cline);
 					}
 				}
 				if (myLINES[lnum].type == TYPE_ARC || myLINES[lnum].type == TYPE_CIRCLE) {
@@ -1134,23 +1146,23 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 	if (lasermode == 1) {
 		if (tool_last != 5) {
 			sprintf(cline, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
-			strcat(gcode_buffer, cline);
+			append_gcode(cline);
 			mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 		}
 		tool_last = 5;
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 		mill_z(0, 0.0);
 		sprintf(cline, "M03 (Laser-On)\n");
-		strcat(gcode_buffer, cline);
+		append_gcode(cline);
 	} else {
 		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
 			sprintf(cline, "M06 T%i (Change-Tool)\n", PARAMETER[P_TOOL_NUM].vint);
-			strcat(gcode_buffer, cline);
+			append_gcode(cline);
 		}
 		tool_last = PARAMETER[P_TOOL_NUM].vint;
 		sprintf(cline, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED_MAX].vint);
-		strcat(gcode_buffer, cline);
-		strcat(gcode_buffer, "\n");
+		append_gcode(cline);
+		append_gcode("\n");
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 	}
@@ -1161,11 +1173,11 @@ void mill_move_out (int lasermode) {
 	// move out
 	if (lasermode == 1) {
 		sprintf(cline, "M05 (Laser-Off)\n");
-		strcat(gcode_buffer, cline);
-		strcat(gcode_buffer, "\n");
+		append_gcode(cline);
+		append_gcode("\n");
 	} else {
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
-		strcat(gcode_buffer, "\n");
+		append_gcode("\n");
 	}
 }
 
@@ -1247,7 +1259,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							mill_move_in(first_x, first_y, depth, lasermode);
 							mill_start = 1;
 						}
-						strcat(gcode_buffer, "\n");
+						append_gcode("\n");
 						mill_z(1, depth);
 						mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
 					} else {
@@ -1290,7 +1302,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							last_x = first_x;
 							last_y = first_y;
 						}
-						strcat(gcode_buffer, "\n");
+						append_gcode("\n");
 						mill_z(1, depth);
 						if (overcut == 1 && myLINES[lnum1].type == TYPE_LINE && myLINES[lnum2].type == TYPE_LINE) {
 							double adx = myLINES[lnum2].x1 - px;
@@ -1344,7 +1356,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 					first_y = myLINES[lnum2].y1;
 					mill_move_in(first_x, first_y, depth, lasermode);
 					mill_start = 1;
-					strcat(gcode_buffer, "\n");
+					append_gcode("\n");
 					mill_z(1, depth);
 				}
 				double alpha1 = line_angle2(lnum1);
@@ -1367,11 +1379,11 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 						if (alpha_diff > PARAMETER[P_H_KNIFEMAXANGLE].vdouble || alpha_diff < -PARAMETER[P_H_KNIFEMAXANGLE].vdouble) {
 							mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 							sprintf(cline, "  (TAN: %f)\n", alpha2);
-							strcat(gcode_buffer, cline);
+							append_gcode(cline);
 							mill_z(1, depth);
 						} else {
 							sprintf(cline, "  (TAN: %f)\n", alpha2);
-							strcat(gcode_buffer, cline);
+							append_gcode(cline);
 						}
 					}
 					mill_xy(1, myLINES[lnum2].x2, myLINES[lnum2].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
@@ -1398,7 +1410,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 
 	*next_x = last_x;
 	*next_y = last_y;
-	strcat(gcode_buffer, "\n");
+	append_gcode("\n");
 	if (error > 0) {
 		return;
 	}
@@ -1470,20 +1482,20 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		return;
 	}
 
-	strcat(gcode_buffer, "\n");
-	strcat(gcode_buffer, "(--------------------------------------------------)\n");
+	append_gcode("\n");
+	append_gcode("(--------------------------------------------------)\n");
 	sprintf(cline, "(Object: #%i)\n", object_num);
-	strcat(gcode_buffer, cline);
+	append_gcode(cline);
 	sprintf(cline, "(Layer: %s)\n", myOBJECTS[object_num].layer);
-	strcat(gcode_buffer, cline);
+	append_gcode(cline);
 	sprintf(cline, "(Overcut: %i)\n",  overcut);
-	strcat(gcode_buffer, cline);
+	append_gcode(cline);
 	if (lasermode == 1) {
 		sprintf(cline, "(Laser-Mode: On)\n");
 	} else { 
 		sprintf(cline, "(Depth: %f)\n", mill_depth_real);
 	}
-	strcat(gcode_buffer, cline);
+	append_gcode(cline);
 	if (offset == 0) {
 		sprintf(cline, "(Offset: None)\n");
 	} else if (offset == 1) {
@@ -1491,9 +1503,9 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	} else {
 		sprintf(cline, "(Offset: Outside)\n");
 	}
-	strcat(gcode_buffer, cline);
-	strcat(gcode_buffer, "(--------------------------------------------------)\n");
-	strcat(gcode_buffer, "\n");
+	append_gcode(cline);
+	append_gcode("(--------------------------------------------------)\n");
+	append_gcode("\n");
 
 	mill_start = 0;
 
@@ -2062,14 +2074,18 @@ void mainloop (void) {
 
 	/* init gcode */
 	tool_last = -1;
-	gcode_buffer[0] = 0;
-	strcat(gcode_buffer, "\n");
-	strcat(gcode_buffer, "G21 (Metric)\n");
-	strcat(gcode_buffer, "G40 (No Offsets)\n");
-	strcat(gcode_buffer, "G90 (Absolute-Mode)\n");
+	if (gcode_buffer != NULL) {
+		free(gcode_buffer);
+		gcode_buffer = NULL;
+	}
+	append_gcode("\n");
+	append_gcode("G21 (Metric)\n");
+	append_gcode("G40 (No Offsets)\n");
+	append_gcode("G90 (Absolute-Mode)\n");
 	sprintf(cline, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
-	strcat(gcode_buffer, cline);
-	strcat(gcode_buffer, "\n");
+	append_gcode(cline);
+	append_gcode("\n");
+
 
 	/* 'shortest' path / first inside than outside objects */ 
 	double last_x = 0.0;
@@ -2211,19 +2227,20 @@ void mainloop (void) {
 	}
 
 	/* exit gcode */
-	strcat(gcode_buffer, "M05 (Spindle-/Laser-Off)\n");
-	strcat(gcode_buffer, "M02 (Programm-End)\n");
-	GtkTextBuffer *buffer;
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
-
-
+	append_gcode("M05 (Spindle-/Laser-Off)\n");
+	append_gcode("M02 (Programm-End)\n");
 	GtkTextIter start, end;
+	GtkTextBuffer *buffer;
+
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
 	gtk_text_buffer_get_bounds(buffer, &start, &end);
 	char *gcode_check = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
-	if (strcmp(gcode_check, gcode_buffer) != 0) {
-		gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+	if (gcode_check != NULL) {
+		if (strcmp(gcode_check, gcode_buffer) != 0) {
+			gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+		}
+		free(gcode_check);
 	}
-
 	if (save_gcode == 1) {
 		if (strcmp(PARAMETER[P_MFILE].vstr, "-") == 0) {
 			fd_out = stdout;

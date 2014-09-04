@@ -134,6 +134,9 @@ void clear_dxfoptions (void) {
 	}
 }
 
+
+
+
 void dxf_read (char *file) {
 	FILE *fp;
 	char *line = NULL;
@@ -318,41 +321,51 @@ void dxf_read (char *file) {
 						} else {
 							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
 						}
-
-
 					} else if (strcmp(last_0, "ELLIPSE") == 0) {
 
+						double c_x = atof(dxf_options[10]);
+						double c_y = atof(dxf_options[20]);
+						double e_x = atof(dxf_options[11]);
+						double e_y = atof(dxf_options[21]);
+						double ratio = atof(dxf_options[40]);
 
-/*
- 10
-200.0
+printf("ELLIPSE: %f %f  %f %f  %f\n", c_x, c_y, e_x, e_y, ratio);
 
- 20
-150.0
+						double p_x1 = c_x;
+						double p_y1 = c_y;
+						double r = e_x;
+						double p_a1 = 0.0;
+						double p_a2 = 360.0;
 
- 30
-0.0
+						double angle2 = toRad(p_a1);
+						double x2 = r * cos(angle2);
+						double y2 = r * sin(angle2);
+						double last_x = (p_x1 + x2);
+						double last_y = (p_y1 + y2);
+						double an = 0;
 
- 11
-20.0
+						double p_rast = (p_a2 - p_a1) / 10.0;
 
- 21
--20.0
-
- 31
-0.0
-
- 40
-0.5
-
- 41
-0.0
-
- 42
-6.2831853071795862
-
-*/
-
+						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
+							double angle1 = toRad(an);
+							double x1 = r * cos(angle1);
+							double y1 = r * ratio * sin(angle1);
+							if (strcmp(last_0, "CIRCLE") == 0) {
+								add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r);
+							} else {
+								add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r);
+							}
+							last_x = p_x1 + x1;
+							last_y = p_y1 + y1;
+						}
+						double angle3 = toRad(p_a2);
+						double x3 = r * cos(angle3);
+						double y3 = r * sin(angle3);
+						if (strcmp(last_0, "CIRCLE") == 0) {
+							add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
+						} else {
+							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
+						}
 
 					} else if (strcmp(last_0, "MTEXT") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
