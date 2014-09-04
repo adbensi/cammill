@@ -3495,9 +3495,43 @@ iso
  50
 0.0
  73
-0
+1
  44
 1.0
+  0
+ELLIPSE
+  5
+8F
+100
+AcDbEntity
+100
+AcDbEllipse
+  8
+text
+ 62
+256
+370
+-1
+  6
+ByLayer
+ 10
+200.0
+ 20
+150.0
+ 30
+0.0
+ 11
+20.0
+ 21
+-20.0
+ 31
+0.0
+ 40
+0.5
+ 41
+0.0
+ 42
+6.2831853071795862
   0
 ENDSEC
   0
@@ -3537,7 +3571,7 @@ E
   3
 AcDbVariableDictionary
 350
-8F
+90
   0
 DICTIONARY
   5
@@ -4001,7 +4035,7 @@ Layout2
   0
 DICTIONARY
   5
-8F
+90
 100
 AcDbDictionary
 281
@@ -4009,15 +4043,15 @@ AcDbDictionary
   3
 DIMASSOC
 350
-91
+92
   3
 HIDETEXT
 350
-90
+91
   0
 DICTIONARYVAR
   5
-90
+91
 100
 DictionaryVariables
 280
@@ -4027,7 +4061,7 @@ DictionaryVariables
   0
 DICTIONARYVAR
   5
-91
+92
 100
 DictionaryVariables
 280

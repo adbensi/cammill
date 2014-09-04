@@ -318,6 +318,42 @@ void dxf_read (char *file) {
 						} else {
 							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
 						}
+
+
+					} else if (strcmp(last_0, "ELLIPSE") == 0) {
+
+
+/*
+ 10
+200.0
+
+ 20
+150.0
+
+ 30
+0.0
+
+ 11
+20.0
+
+ 21
+-20.0
+
+ 31
+0.0
+
+ 40
+0.5
+
+ 41
+0.0
+
+ 42
+6.2831853071795862
+
+*/
+
+
 					} else if (strcmp(last_0, "MTEXT") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
 						double p_y1 = atof(dxf_options[OPTION_MTEXT_Y]);

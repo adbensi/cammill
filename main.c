@@ -94,8 +94,9 @@ int material_max = 8;
 char *material_texture[100];
 int material_vc[100];
 float material_fz[100][3];
-
 char *rotary_axis[3] = {"A", "B", "C"};
+char cline[1024];
+char gcode_buffer[30000];
 
 int last_mouse_x = 0;
 int last_mouse_y = 0;
@@ -112,6 +113,7 @@ GtkListStore *ListStore[P_LAST];
 GtkWidget *ParamValue[P_LAST];
 GtkWidget *ParamButton[P_LAST];
 GtkWidget *glCanvas;
+GtkWidget *gCodeView;
 int width = 800;
 int height = 600;
 int need_init = 1;
@@ -688,13 +690,13 @@ void draw_line3 (float x1, float y1, float z1, float x2, float y2, float z2) {
 
 void mill_z (int gcmd, double z) {
 	char tz_str[128];
-	if (save_gcode == 1) {
-		translateAxisZ(z, tz_str);
-		if (gcmd == 0) {
-			fprintf(fd_out, "G0%i %s\n", gcmd, tz_str);
-		} else {
-			fprintf(fd_out, "G0%i %s F%i\n", gcmd, tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
-		}
+	translateAxisZ(z, tz_str);
+	if (gcmd == 0) {
+		sprintf(cline, "G0%i %s\n", gcmd, tz_str);
+		strcat(gcode_buffer, cline);
+	} else {
+		sprintf(cline, "G0%i %s F%i\n", gcmd, tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
+		strcat(gcode_buffer, cline);
 	}
 	if (mill_start_all != 0) {
 		glColor4f(0.0, 1.0, 1.0, 1.0);
@@ -832,41 +834,49 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 						draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
 						draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 						hflag = 1;
-						if (save_gcode == 1) {
-							if (gcmd == 1) {
-								if (PARAMETER[P_T_TYPE].vint == 0) {
-									translateAxisX(i_x2, tx_str);
-									translateAxisY(i_y2, ty_str);
-									fprintf(fd_out, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
-									translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
-									fprintf(fd_out, "G00 %s\n", tz_str);
-									translateAxisX(i_x3, tx_str);
-									translateAxisY(i_y3, ty_str);
-									fprintf(fd_out, "G0%i %s %s F%i (tab)\n", gcmd, tx_str, ty_str, feed);
-									translateAxisZ(mill_last_z, tz_str);
-									fprintf(fd_out, "G01 %s F%i  (tabend)\n", tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
-									translateAxisX(x, tx_str);
-									translateAxisY(y, ty_str);
-									fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-								} else {
-									translateAxisX(i_x2, tx_str);
-									translateAxisY(i_y2, ty_str);
-									fprintf(fd_out, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
-									translateAxisX(i_x, tx_str);
-									translateAxisY(i_y, ty_str);
-									translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
-									fprintf(fd_out, "G0%i %s %s %s F%i (tab2top)\n", gcmd, tx_str, ty_str, tz_str, feed);
-									translateAxisX(i_x3, tx_str);
-									translateAxisY(i_y3, ty_str);
-									translateAxisZ(mill_last_z, tz_str);
-									fprintf(fd_out, "G0%i %s %s %s F%i (tab2bottom)\n", gcmd, tx_str, ty_str, tz_str, feed);
-									translateAxisX(x, tx_str);
-									translateAxisY(y, ty_str);
-									fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-								}
-							} else if (gcmd == 2 || gcmd == 3) {
-								fprintf(fd_out, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+						if (gcmd == 1) {
+							if (PARAMETER[P_T_TYPE].vint == 0) {
+								translateAxisX(i_x2, tx_str);
+								translateAxisY(i_y2, ty_str);
+								sprintf(cline, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
+								strcat(gcode_buffer, cline);
+								translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
+								sprintf(cline, "G00 %s\n", tz_str);
+								strcat(gcode_buffer, cline);
+								translateAxisX(i_x3, tx_str);
+								translateAxisY(i_y3, ty_str);
+								sprintf(cline, "G0%i %s %s F%i (tab)\n", gcmd, tx_str, ty_str, feed);
+								strcat(gcode_buffer, cline);
+								translateAxisZ(mill_last_z, tz_str);
+								sprintf(cline, "G01 %s F%i  (tabend)\n", tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
+								strcat(gcode_buffer, cline);
+								translateAxisX(x, tx_str);
+								translateAxisY(y, ty_str);
+								sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+								strcat(gcode_buffer, cline);
+							} else {
+								translateAxisX(i_x2, tx_str);
+								translateAxisY(i_y2, ty_str);
+								sprintf(cline, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
+								strcat(gcode_buffer, cline);
+								translateAxisX(i_x, tx_str);
+								translateAxisY(i_y, ty_str);
+								translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
+								sprintf(cline, "G0%i %s %s %s F%i (tab2top)\n", gcmd, tx_str, ty_str, tz_str, feed);
+								strcat(gcode_buffer, cline);
+								translateAxisX(i_x3, tx_str);
+								translateAxisY(i_y3, ty_str);
+								translateAxisZ(mill_last_z, tz_str);
+								sprintf(cline, "G0%i %s %s %s F%i (tab2bottom)\n", gcmd, tx_str, ty_str, tz_str, feed);
+								strcat(gcode_buffer, cline);
+								translateAxisX(x, tx_str);
+								translateAxisY(y, ty_str);
+								sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+								strcat(gcode_buffer, cline);
 							}
+						} else if (gcmd == 2 || gcmd == 3) {
+							sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+							strcat(gcode_buffer, cline);
 						}
 					}
 				}
@@ -874,32 +884,25 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		}
 		if (hflag == 0) {
 			draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-
-			if (save_gcode == 1) {
-				translateAxisX(x, tx_str);
-				translateAxisY(y, ty_str);
-				if (gcmd == 1) {
-					fprintf(fd_out, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-				} else if (gcmd == 2 || gcmd == 3) {
-					fprintf(fd_out, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
-				}
+			translateAxisX(x, tx_str);
+			translateAxisY(y, ty_str);
+			if (gcmd == 1) {
+				sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+				strcat(gcode_buffer, cline);
+			} else if (gcmd == 2 || gcmd == 3) {
+				sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+				strcat(gcode_buffer, cline);
 			}
-
 		}
-
 	} else {
 		if (mill_start_all != 0) {
 			glColor4f(0.0, 1.0, 1.0, 1.0);
 			draw_line3((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z);
 		}
-
-		if (save_gcode == 1) {
-			translateAxisX(x, tx_str);
-			translateAxisY(y, ty_str);
-			fprintf(fd_out, "G00 %s %s\n", tx_str, ty_str);
-		}
-
-
+		translateAxisX(x, tx_str);
+		translateAxisY(y, ty_str);
+		sprintf(cline, "G00 %s %s\n", tx_str, ty_str);
+		strcat(gcode_buffer, cline);
 	}
 	mill_start_all = 1;
 	mill_last_x = x;
@@ -1044,19 +1047,21 @@ void object_draw (FILE *fd_out, int object_num) {
 	}
 
 	if (PARAMETER[P_V_NCDEBUG].vint == 1) {
-		if (save_gcode == 1) {
-			fprintf(fd_out, "\n");
-			fprintf(fd_out, "(--------------------------------------------------)\n");
-			fprintf(fd_out, "(Object: #%i)\n", object_num);
-			fprintf(fd_out, "(Layer: %s)\n", myOBJECTS[object_num].layer);
-			if (lasermode == 1) {
-				fprintf(fd_out, "(Laser-Mode: On)\n");
-			} else { 
-				fprintf(fd_out, "(Depth: %f)\n", mill_depth_real);
-			}
-			fprintf(fd_out, "(--------------------------------------------------)\n");
-			fprintf(fd_out, "\n");
+		strcat(gcode_buffer, "\n");
+		sprintf(cline, "(--------------------------------------------------)\n");
+		strcat(gcode_buffer, cline);
+		sprintf(cline, "(Object: #%i)\n", object_num);
+		strcat(gcode_buffer, cline);
+		sprintf(cline, "(Layer: %s)\n", myOBJECTS[object_num].layer);
+		strcat(gcode_buffer, cline);
+		if (lasermode == 1) {
+			sprintf(cline, "(Laser-Mode: On)\n");
+		} else { 
+			sprintf(cline, "(Depth: %f)\n", mill_depth_real);
 		}
+		strcat(gcode_buffer, cline);
+		strcat(gcode_buffer, "(--------------------------------------------------)\n");
+		strcat(gcode_buffer, "\n");
 	}
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
@@ -1070,16 +1075,16 @@ void object_draw (FILE *fd_out, int object_num) {
 				if (num == 0) {
 					if (lasermode == 1) {
 						if (tool_last != 5) {
-							if (save_gcode == 1) {
-								fprintf(fd_out, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
-							}
+							sprintf(cline, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
+							strcat(gcode_buffer, cline);
 						}
 						tool_last = 5;
 					}
 					mill_xy(0, myLINES[lnum].x1, myLINES[lnum].y1, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 					if (lasermode == 1) {
 						mill_z(0, 0.0);
-						fprintf(fd_out, "M03 (Laser-On)\n");
+						sprintf(cline, "M03 (Laser-On)\n");
+						strcat(gcode_buffer, cline);
 					}
 				}
 				if (myLINES[lnum].type == TYPE_ARC || myLINES[lnum].type == TYPE_CIRCLE) {
@@ -1128,29 +1133,24 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 	// move to
 	if (lasermode == 1) {
 		if (tool_last != 5) {
-			if (save_gcode == 1) {
-				fprintf(fd_out, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
-			}
+			sprintf(cline, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
+			strcat(gcode_buffer, cline);
 			mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 		}
 		tool_last = 5;
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 		mill_z(0, 0.0);
-		if (save_gcode == 1) {
-			fprintf(fd_out, "M03 (Laser-On)\n");
-		}
+		sprintf(cline, "M03 (Laser-On)\n");
+		strcat(gcode_buffer, cline);
 	} else {
 		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
-			if (save_gcode == 1) {
-				fprintf(fd_out, "M06 T%i (Change-Tool)\n", PARAMETER[P_TOOL_NUM].vint);
-			}
+			sprintf(cline, "M06 T%i (Change-Tool)\n", PARAMETER[P_TOOL_NUM].vint);
+			strcat(gcode_buffer, cline);
 		}
 		tool_last = PARAMETER[P_TOOL_NUM].vint;
-		if (save_gcode == 1) {
-			fprintf(fd_out, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED_MAX].vint);
-			fprintf(fd_out, "\n");
-		}
-
+		sprintf(cline, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED_MAX].vint);
+		strcat(gcode_buffer, cline);
+		strcat(gcode_buffer, "\n");
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 	}
@@ -1160,15 +1160,12 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 void mill_move_out (int lasermode) {
 	// move out
 	if (lasermode == 1) {
-		if (save_gcode == 1) {
-			fprintf(fd_out, "M05 (Laser-Off)\n");
-			fprintf(fd_out, "\n");
-		}
+		sprintf(cline, "M05 (Laser-Off)\n");
+		strcat(gcode_buffer, cline);
+		strcat(gcode_buffer, "\n");
 	} else {
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
-		if (save_gcode == 1) {
-			fprintf(fd_out, "\n");
-		}
+		strcat(gcode_buffer, "\n");
 	}
 }
 
@@ -1250,9 +1247,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							mill_move_in(first_x, first_y, depth, lasermode);
 							mill_start = 1;
 						}
-						if (save_gcode == 1) {
-							fprintf(fd_out, "\n");
-						}
+						strcat(gcode_buffer, "\n");
 						mill_z(1, depth);
 						mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
 					} else {
@@ -1295,9 +1290,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							last_x = first_x;
 							last_y = first_y;
 						}
-						if (save_gcode == 1) {
-							fprintf(fd_out, "\n");
-						}
+						strcat(gcode_buffer, "\n");
 						mill_z(1, depth);
 						if (overcut == 1 && myLINES[lnum1].type == TYPE_LINE && myLINES[lnum2].type == TYPE_LINE) {
 							double adx = myLINES[lnum2].x1 - px;
@@ -1351,9 +1344,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 					first_y = myLINES[lnum2].y1;
 					mill_move_in(first_x, first_y, depth, lasermode);
 					mill_start = 1;
-					if (save_gcode == 1) {
-						fprintf(fd_out, "\n");
-					}
+					strcat(gcode_buffer, "\n");
 					mill_z(1, depth);
 				}
 				double alpha1 = line_angle2(lnum1);
@@ -1375,14 +1366,12 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 						}
 						if (alpha_diff > PARAMETER[P_H_KNIFEMAXANGLE].vdouble || alpha_diff < -PARAMETER[P_H_KNIFEMAXANGLE].vdouble) {
 							mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
-							if (save_gcode == 1) {
-								fprintf(fd_out, "  (TAN: %f)\n", alpha2);
-							}
+							sprintf(cline, "  (TAN: %f)\n", alpha2);
+							strcat(gcode_buffer, cline);
 							mill_z(1, depth);
 						} else {
-							if (save_gcode == 1) {
-								fprintf(fd_out, "  (TAN: %f)\n", alpha2);
-							}
+							sprintf(cline, "  (TAN: %f)\n", alpha2);
+							strcat(gcode_buffer, cline);
 						}
 					}
 					mill_xy(1, myLINES[lnum2].x2, myLINES[lnum2].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
@@ -1409,11 +1398,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 
 	*next_x = last_x;
 	*next_y = last_y;
-
-	if (save_gcode == 1) {
-		fprintf(fd_out, "\n");
-	}
-
+	strcat(gcode_buffer, "\n");
 	if (error > 0) {
 		return;
 	}
@@ -1485,27 +1470,30 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		return;
 	}
 
-	if (save_gcode == 1) {
-		fprintf(fd_out, "\n");
-		fprintf(fd_out, "(--------------------------------------------------)\n");
-		fprintf(fd_out, "(Object: #%i)\n", object_num);
-		fprintf(fd_out, "(Layer: %s)\n", myOBJECTS[object_num].layer);
-		fprintf(fd_out, "(Overcut: %i)\n",  overcut);
-		if (lasermode == 1) {
-			fprintf(fd_out, "(Laser-Mode: On)\n");
-		} else { 
-			fprintf(fd_out, "(Depth: %f)\n", mill_depth_real);
-		}
-		if (offset == 0) {
-			fprintf(fd_out, "(Offset: None)\n");
-		} else if (offset == 1) {
-			fprintf(fd_out, "(Offset: Inside)\n");
-		} else {
-			fprintf(fd_out, "(Offset: Outside)\n");
-		}
-		fprintf(fd_out, "(--------------------------------------------------)\n");
-		fprintf(fd_out, "\n");
+	strcat(gcode_buffer, "\n");
+	strcat(gcode_buffer, "(--------------------------------------------------)\n");
+	sprintf(cline, "(Object: #%i)\n", object_num);
+	strcat(gcode_buffer, cline);
+	sprintf(cline, "(Layer: %s)\n", myOBJECTS[object_num].layer);
+	strcat(gcode_buffer, cline);
+	sprintf(cline, "(Overcut: %i)\n",  overcut);
+	strcat(gcode_buffer, cline);
+	if (lasermode == 1) {
+		sprintf(cline, "(Laser-Mode: On)\n");
+	} else { 
+		sprintf(cline, "(Depth: %f)\n", mill_depth_real);
 	}
+	strcat(gcode_buffer, cline);
+	if (offset == 0) {
+		sprintf(cline, "(Offset: None)\n");
+	} else if (offset == 1) {
+		sprintf(cline, "(Offset: Inside)\n");
+	} else {
+		sprintf(cline, "(Offset: Outside)\n");
+	}
+	strcat(gcode_buffer, cline);
+	strcat(gcode_buffer, "(--------------------------------------------------)\n");
+	strcat(gcode_buffer, "\n");
 
 	mill_start = 0;
 
@@ -2065,7 +2053,6 @@ void mainloop (void) {
 				draw_helplines();
 			}
 		}
-
 	} else {
 		PARAMETER[P_V_HELPLINES].vint = 0;
 		save_gcode = 1;
@@ -2074,25 +2061,15 @@ void mainloop (void) {
 	mill_start_all = 0;
 
 	/* init gcode */
-	if (save_gcode == 1) {
-		if (strcmp(PARAMETER[P_MFILE].vstr, "-") == 0) {
-			fd_out = stdout;
-		} else {
-			fd_out = fopen(PARAMETER[P_MFILE].vstr, "w");
-		}
-		if (fd_out == NULL) {
-			fprintf(stderr, "Can not open file: %s\n", PARAMETER[P_MFILE].vstr);
-			exit(0);
-		}
-		tool_last = -1;
-		SetupShowGcode(fd_out);
-		fprintf(fd_out, "\n");
-		fprintf(fd_out, "G21 (Metric)\n");
-		fprintf(fd_out, "G40 (No Offsets)\n");
-		fprintf(fd_out, "G90 (Absolute-Mode)\n");
-		fprintf(fd_out, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
-		fprintf(fd_out, "\n");
-	}
+	tool_last = -1;
+	gcode_buffer[0] = 0;
+	strcat(gcode_buffer, "\n");
+	strcat(gcode_buffer, "G21 (Metric)\n");
+	strcat(gcode_buffer, "G40 (No Offsets)\n");
+	strcat(gcode_buffer, "G90 (Absolute-Mode)\n");
+	sprintf(cline, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
+	strcat(gcode_buffer, cline);
+	strcat(gcode_buffer, "\n");
 
 	/* 'shortest' path / first inside than outside objects */ 
 	double last_x = 0.0;
@@ -2158,15 +2135,11 @@ void mainloop (void) {
 			}
 			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
 				if (PARAMETER[P_M_TEXT].vint == 1) {
-					if (save_gcode == 1 || PARAMETER[P_V_OFFSETS].vint == 1) {
-						object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-					}
+					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
 					object_draw(fd_out, shortest_object);
 				}
 			} else {
-				if (save_gcode == 1 || PARAMETER[P_V_OFFSETS].vint == 1) {
-					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-				}
+				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
 				object_draw(fd_out, shortest_object);
 			}
 			last_x = next_x;
@@ -2206,9 +2179,7 @@ void mainloop (void) {
 			object_optimize_dir(shortest_object);
 			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
 			} else {
-				if (save_gcode == 1 || PARAMETER[P_V_OFFSETS].vint == 1) {
-					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-				}
+				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
 				object_draw(fd_out, shortest_object);
 			}
 			last_x = next_x;
@@ -2240,10 +2211,33 @@ void mainloop (void) {
 	}
 
 	/* exit gcode */
+	strcat(gcode_buffer, "M05 (Spindle-/Laser-Off)\n");
+	strcat(gcode_buffer, "M02 (Programm-End)\n");
+	GtkTextBuffer *buffer;
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
+
+
+	GtkTextIter start, end;
+	gtk_text_buffer_get_bounds(buffer, &start, &end);
+	char *gcode_check = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+	if (strcmp(gcode_check, gcode_buffer) != 0) {
+		gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+	}
+
 	if (save_gcode == 1) {
-		fprintf(fd_out, "M05 (Spindle-/Laser-Off)\n");
-		fprintf(fd_out, "M02 (Programm-End)\n");
+		if (strcmp(PARAMETER[P_MFILE].vstr, "-") == 0) {
+			fd_out = stdout;
+		} else {
+			fd_out = fopen(PARAMETER[P_MFILE].vstr, "w");
+		}
+		if (fd_out == NULL) {
+			fprintf(stderr, "Can not open file: %s\n", PARAMETER[P_MFILE].vstr);
+			exit(0);
+		}
+		SetupShowGcode(fd_out);
+		fprintf(fd_out, "%s", gcode_buffer);
 		fclose(fd_out);
+
 		if (PARAMETER[P_POST_CMD].vstr[0] != 0) {
 			char cmd_str[2048];
 			sprintf(cmd_str, PARAMETER[P_POST_CMD].vstr, PARAMETER[P_MFILE].vstr);
@@ -3168,7 +3162,18 @@ int main (int argc, char *argv[]) {
 
 	GtkToolItem *ToolItemSep = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
+/*
+	GtkToolItem *TB;
+	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
+	gtk_tool_item_set_tooltip_text(TB, "Mill-Text");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
+	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
 
+	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
+	gtk_tool_item_set_tooltip_text(TB, "Laser-Mode");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
+	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
+*/
 	GtkToolItem *ToolItemSep2 = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep2, -1); 
 
@@ -3180,6 +3185,7 @@ int main (int argc, char *argv[]) {
 
 	GtkWidget *NbBox = gtk_table_new(2, 2, FALSE);
 	GtkWidget *notebook = gtk_notebook_new();
+	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
 	gtk_table_attach_defaults(GTK_TABLE(NbBox), notebook, 0, 1, 0, 1);
 
@@ -3199,7 +3205,7 @@ int main (int argc, char *argv[]) {
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MillingBox, MillingLabel);
 
 	int HoldingNum = 0;
-	GtkWidget *HoldingLabel = gtk_label_new("Holding-Tabs");
+	GtkWidget *HoldingLabel = gtk_label_new("Tabs");
 	GtkWidget *HoldingBox = gtk_vbox_new(0, 0);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), HoldingBox, HoldingLabel);
 
@@ -3325,76 +3331,6 @@ int main (int argc, char *argv[]) {
 	GtkWidget *TreeView = create_view_and_model();
 	gtk_box_pack_start(GTK_BOX(TreeBox), TreeView, 1, 1, 0);
 
-/*
-	for (n = 0; n < O_P_LAST; n++) {
-		GtkWidget *Box = gtk_hbox_new(0, 0);
-		if (OBJECT_PARAMETER[n].type == T_FLOAT) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(OBJECT_PARAMETER[n].vdouble, OBJECT_PARAMETER[n].min, OBJECT_PARAMETER[n].max, OBJECT_PARAMETER[n].step, OBJECT_PARAMETER[n].step * 10.0, 0.0);
-			ParamValue[n] = gtk_spin_button_new(Adj, OBJECT_PARAMETER[n].step, 3);
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else if (OBJECT_PARAMETER[n].type == T_DOUBLE) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(OBJECT_PARAMETER[n].vdouble, OBJECT_PARAMETER[n].min, OBJECT_PARAMETER[n].max, OBJECT_PARAMETER[n].step, OBJECT_PARAMETER[n].step * 10.0, 0.0);
-			ParamValue[n] = gtk_spin_button_new(Adj, OBJECT_PARAMETER[n].step, 3);
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else if (OBJECT_PARAMETER[n].type == T_INT) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(OBJECT_PARAMETER[n].vdouble, OBJECT_PARAMETER[n].min, OBJECT_PARAMETER[n].max, OBJECT_PARAMETER[n].step, OBJECT_PARAMETER[n].step * 10.0, 0.0);
-			ParamValue[n] = gtk_spin_button_new(Adj, OBJECT_PARAMETER[n].step, 3);
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else if (OBJECT_PARAMETER[n].type == T_SELECT) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			ListStore[n] = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
-			ParamValue[n] = gtk_combo_box_new_with_model(GTK_TREE_MODEL(ListStore[n]));
-			g_object_unref(ListStore[n]);
-			GtkCellRenderer *column;
-			column = gtk_cell_renderer_text_new();
-			gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(ParamValue[n]), column, TRUE);
-			gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(ParamValue[n]), column, "cell-background", 0, "text", 1, NULL);
-			gtk_combo_box_set_active(GTK_COMBO_BOX(ParamValue[n]), 1);
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else if (OBJECT_PARAMETER[n].type == T_BOOL) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			ParamValue[n] = gtk_check_button_new_with_label("On/Off");
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else if (OBJECT_PARAMETER[n].type == T_STRING) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			ParamValue[n] = gtk_entry_new();
-			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), OBJECT_PARAMETER[n].vstr);
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else if (OBJECT_PARAMETER[n].type == T_FILE) {
-			GtkWidget *Label = gtk_label_new(OBJECT_PARAMETER[n].name);
-			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
-			gtk_container_add(GTK_CONTAINER(Align), Label);
-			ParamValue[n] = gtk_entry_new();
-			gtk_entry_set_text(GTK_ENTRY(ParamValue[n]), OBJECT_PARAMETER[n].vstr);
-			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
-			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
-		} else {
-			continue;
-		}
-		gtk_box_pack_start(GTK_BOX(TreeBox), Box, 0, 0, 0);
-	}
-*/
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "A", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "B", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "C", -1);
@@ -3435,9 +3371,37 @@ int main (int argc, char *argv[]) {
 
 	StatusBar = gtk_statusbar_new();
 
-	hbox = gtk_hbox_new(0, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), NbBox, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), glCanvas, 1, 1, 0);
+	gCodeView = gtk_text_view_new();
+	GtkWidget *textWidget = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(textWidget), gCodeView);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(textWidget), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
+	GtkTextBuffer *buffer;
+	const gchar *text = "Hallo Text";
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
+	gtk_text_buffer_set_text(buffer, text, -1);
+
+
+	GtkWidget *NbBox2 = gtk_table_new(2, 2, FALSE);
+	GtkWidget *notebook2 = gtk_notebook_new();
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook2), GTK_POS_TOP);
+	gtk_table_attach_defaults(GTK_TABLE(NbBox2), notebook2, 0, 1, 0, 1);
+
+	GtkWidget *glCanvasLabel = gtk_label_new("3D-View");
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), glCanvas, glCanvasLabel);
+
+	GtkWidget *gCodeViewLabel = gtk_label_new("G-Code");
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidget, gCodeViewLabel);
+
+
+//	hbox = gtk_hbox_new(0, 0);
+//	gtk_box_pack_start(GTK_BOX(hbox), NbBox, 0, 0, 0);
+//	gtk_box_pack_start(GTK_BOX(hbox), NbBox2, 0, 0, 0);
+
+	hbox = gtk_hpaned_new();
+	gtk_paned_pack1(GTK_PANED(hbox), NbBox, TRUE, FALSE);
+	gtk_paned_pack2(GTK_PANED(hbox), NbBox2, TRUE, TRUE);
+
 
 	SizeInfoLabel = gtk_label_new("Width=0mm / Height=0mm");
 	GtkWidget *SizeInfo = gtk_event_box_new();
@@ -3470,7 +3434,7 @@ int main (int argc, char *argv[]) {
 
 	gtk_signal_connect(GTK_OBJECT(window), "destroy_event", GTK_SIGNAL_FUNC (handler_destroy), NULL);
 	gtk_signal_connect(GTK_OBJECT(window), "delete_event", GTK_SIGNAL_FUNC (handler_destroy), NULL);
-	gtk_container_add (GTK_CONTAINER (window), vbox);
+	gtk_container_add (GTK_CONTAINER(window), vbox);
 
 	gtk_widget_show_all(window);
 
