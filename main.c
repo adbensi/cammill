@@ -3085,8 +3085,13 @@ GdkPixbuf *create_pixbuf(const gchar * filename) {
 }
 
 
+#include <locale.h>
 
 int main (int argc, char *argv[]) {
+
+	// force dots in printf
+	setlocale(LC_NUMERIC, "C");
+
 	SetupLoad();
 	ArgsRead(argc, argv);
 	SetupShow();
