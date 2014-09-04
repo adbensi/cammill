@@ -1080,7 +1080,7 @@ void object_draw (FILE *fd_out, int object_num) {
 			int lnum = myOBJECTS[object_num].line[num];
 			glColor4f(0.0, 1.0, 0.0, 1.0);
 			draw_oline((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, mill_depth_real);
-			if (myOBJECTS[object_num].closed == 0) {
+			if (myOBJECTS[object_num].closed == 0 && (myLINES[lnum].type != TYPE_MTEXT || PARAMETER[P_M_TEXT].vint == 1)) {
 				draw_line2((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, 0.01, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.01, (PARAMETER[P_TOOL_DIAMETER].vdouble));
 			}
 			if (PARAMETER[P_V_NCDEBUG].vint == 11) {
@@ -1105,16 +1105,21 @@ void object_draw (FILE *fd_out, int object_num) {
 					} else {
 						mill_xy(3, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt, PARAMETER[P_M_FEEDRATE].vint, "");
 					}
+				} else if (myLINES[lnum].type == TYPE_MTEXT) {
+					if (PARAMETER[P_M_TEXT].vint == 1) {
+						mill_xy(1, myLINES[lnum].x2, myLINES[lnum].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+					}
 				} else {
 					mill_xy(1, myLINES[lnum].x2, myLINES[lnum].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 				}
 			}
 			if (num == 0) {
-				if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
-					glColor4f(1.0, 1.0, 1.0, 1.0);
-					sprintf(tmp_str, "%i", object_num);
-					output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
-
+				if (myLINES[lnum].type != TYPE_MTEXT || PARAMETER[P_M_TEXT].vint == 1) {
+					if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+						glColor4f(1.0, 1.0, 1.0, 1.0);
+						sprintf(tmp_str, "%i", object_num);
+						output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
+					}
 				}
 			}
 		}
@@ -1194,13 +1199,16 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 	double last_x = 0.0;
 	double last_y = 0.0;
 
+
 	/* find last line in object */
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			last = myOBJECTS[object_num].line[num];
 		}
 	}
-
+	if (myLINES[last].type == TYPE_MTEXT && PARAMETER[P_M_TEXT].vint == 0) {
+		return;
+	}
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			if (num == 0) {
@@ -2149,15 +2157,8 @@ void mainloop (void) {
 				resort_object(shortest_object, shortest_line);
 				object_optimize_dir(shortest_object);
 			}
-			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
-				if (PARAMETER[P_M_TEXT].vint == 1) {
-					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-					object_draw(fd_out, shortest_object);
-				}
-			} else {
-				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-				object_draw(fd_out, shortest_object);
-			}
+			object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+			object_draw(fd_out, shortest_object);
 			last_x = next_x;
 			last_y = next_y;
 
@@ -2210,19 +2211,6 @@ void mainloop (void) {
 	if (PARAMETER[P_V_HELPLINES].vint == 1) {
 		if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
 			draw_helplines();
-		}
-	}
-
-	/* draw text / opengl only */
-	int nnum = 0;
-	if (batchmode == 0) {
-		for (nnum = 0; nnum < 100; nnum++) {
-			if (myMTEXT[nnum].used == 1) {
-				if (PARAMETER[P_M_TEXT].vint == 0) {
-					glColor4f(1.0, 1.0, 1.0, 1.0);
-					output_text_gl(myMTEXT[nnum].text, myMTEXT[nnum].x, myMTEXT[nnum].y - myMTEXT[nnum].s, 0.10, myMTEXT[nnum].s);
-				}
-			}
 		}
 	}
 
@@ -2446,12 +2434,6 @@ void DrawSetZero (void) {
 			myLINES[num].y2 -= min_y;
 		}
 	}
-	for (num = 0; num < 100; num++) {
-		if (myMTEXT[num].used == 1) {
-			myMTEXT[num].x -= min_x;
-			myMTEXT[num].y -= min_y;
-		}
-	}
 }
 
 void ArgsRead (int argc, char **argv) {
@@ -2513,6 +2495,24 @@ void view_draw (void) {
 
 void handler_destroy (GtkWidget *widget, gpointer data) {
 	gtk_main_quit();
+}
+
+void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
+	int num;
+	for (num = 0; num < line_last; num++) {
+		if (myLINES[num].used == 1) {
+			double tmp = myLINES[num].x1;
+			myLINES[num].x1 = myLINES[num].y1;
+			myLINES[num].y1 = size_x - tmp;
+			tmp = myLINES[num].x2;
+			myLINES[num].x2 = myLINES[num].y2;
+			myLINES[num].y2 = size_x - tmp;
+		}
+	}
+	init_objects();
+	DrawCheckSize();
+	DrawSetZero();
+
 }
 
 void handler_load_dxf (GtkWidget *widget, gpointer data) {
@@ -3179,8 +3179,14 @@ int main (int argc, char *argv[]) {
 
 	GtkToolItem *ToolItemSep = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
-/*
+
 	GtkToolItem *TB;
+	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
+	gtk_tool_item_set_tooltip_text(TB, "Rotate 90°");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
+	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_rotate_drawing), NULL);
+
+/*
 	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
 	gtk_tool_item_set_tooltip_text(TB, "Mill-Text");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
@@ -3191,6 +3197,7 @@ int main (int argc, char *argv[]) {
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
 	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
 */
+
 	GtkToolItem *ToolItemSep2 = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep2, -1); 
 
