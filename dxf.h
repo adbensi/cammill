@@ -72,20 +72,9 @@ typedef struct{
 	int istab;
 } _LINE;
 
-typedef struct{
-	int used;
-	char layer[256];
-	char block[256];
-	float x;
-	float y;
-	float s;
-	char text[1024];
-} _MTEXT;
-
 extern char LayerNames[MAX_OBJECTS][256];
 extern _OBJECT *myOBJECTS;
 extern _LINE *myLINES;
-extern _MTEXT myMTEXT[100];
 extern int mtext_n;
 extern char dxf_options[256][256];
 extern char dxf_typename[TYPE_LAST][16];

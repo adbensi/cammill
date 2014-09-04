@@ -47,7 +47,6 @@ int mtext_n = 0;
 char dxf_options[256][256];
 _OBJECT *myOBJECTS = NULL;
 _LINE *myLINES = NULL;
-_MTEXT myMTEXT[100];
 
 char dxf_typename[TYPE_LAST][16];
 
@@ -371,14 +370,8 @@ void dxf_read (char *file) {
 					} else if (strcmp(last_0, "MTEXT") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
 						double p_y1 = atof(dxf_options[OPTION_MTEXT_Y]);
-						double p_y2 = atof(dxf_options[OPTION_MTEXT_SIZE]);
-						myMTEXT[mtext_n].used = 1;
-						myMTEXT[mtext_n].x = p_x1;
-						myMTEXT[mtext_n].y = p_y1;
-						myMTEXT[mtext_n].s = p_y2;
-						strcpy(myMTEXT[mtext_n].text, dxf_options[OPTION_MTEXT_TEXT]);
-						strcpy(myMTEXT[mtext_n].layer, dxf_options[OPTION_LAYERNAME]);
-						output_text_dxf(myMTEXT[mtext_n].text, myMTEXT[mtext_n].x, myMTEXT[mtext_n].y, 0.0, myMTEXT[mtext_n].s);
+						double p_s = atof(dxf_options[OPTION_MTEXT_SIZE]);
+						output_text_dxf(dxf_options[OPTION_MTEXT_TEXT], p_x1, p_y1, 0.0, p_s);
 						mtext_n++;
 					} else {
 						pl_flag = 0;

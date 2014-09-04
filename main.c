@@ -3181,7 +3181,7 @@ int main (int argc, char *argv[]) {
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
 
 	GtkToolItem *TB;
-	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
+	TB = gtk_tool_button_new_from_stock(GTK_STOCK_CONVERT);
 	gtk_tool_item_set_tooltip_text(TB, "Rotate 90°");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
 	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_rotate_drawing), NULL);
