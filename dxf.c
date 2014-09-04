@@ -298,9 +298,7 @@ void dxf_read (char *file) {
 						double last_x = (p_x1 + x2);
 						double last_y = (p_y1 + y2);
 						double an = 0;
-
 						double p_rast = (p_a2 - p_a1) / 10.0;
-
 						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
 							double angle1 = toRad(an);
 							double x1 = r * cos(angle1);
@@ -322,30 +320,34 @@ void dxf_read (char *file) {
 							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
 						}
 					} else if (strcmp(last_0, "ELLIPSE") == 0) {
-
 						double c_x = atof(dxf_options[10]);
 						double c_y = atof(dxf_options[20]);
 						double e_x = atof(dxf_options[11]);
 						double e_y = atof(dxf_options[21]);
 						double ratio = atof(dxf_options[40]);
-
-						//printf("ELLIPSE: %f %f  %f %f  %f\n", c_x, c_y, e_x, e_y, ratio);
-
+						double r = e_x;
+						if (e_x < 0) {
+							e_x *= -1;
+						}
+						if (e_y < 0) {
+							e_y *= -1;
+						}
+						if (e_y > e_x) {
+							r = e_y * ratio;
+							ratio = 1.0 / ratio;
+						}
+//						printf("ELLIPSE: %f %f  %f %f  %f  %f\n", c_x, c_y, e_x, e_y, ratio, r);
 						double p_x1 = c_x;
 						double p_y1 = c_y;
-						double r = e_x;
 						double p_a1 = 0.0;
 						double p_a2 = 360.0;
-
 						double angle2 = toRad(p_a1);
 						double x2 = r * cos(angle2);
-						double y2 = r * sin(angle2);
+						double y2 = r * ratio * sin(angle2);
 						double last_x = (p_x1 + x2);
 						double last_y = (p_y1 + y2);
 						double an = 0;
-
 						double p_rast = (p_a2 - p_a1) / 20.0;
-
 						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
 							double angle1 = toRad(an);
 							double x1 = r * cos(angle1);
@@ -366,7 +368,6 @@ void dxf_read (char *file) {
 						} else {
 							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
 						}
-
 					} else if (strcmp(last_0, "MTEXT") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
 						double p_y1 = atof(dxf_options[OPTION_MTEXT_Y]);
