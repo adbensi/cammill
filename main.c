@@ -118,6 +118,11 @@ int width = 800;
 int height = 600;
 int need_init = 1;
 
+double mill_distance_xy = 0.0;
+double mill_distance_z = 0.0;
+double move_distance_xy = 0.0;
+double move_distance_z = 0.0;
+
 GtkWidget *window;
 GtkWidget *dialog;
 
@@ -366,6 +371,13 @@ double get_len (double x1, double y1, double x2, double y2) {
 	double dy = y2 - y1;
 	double len = sqrt(dx * dx + dy * dy);
 	return len;
+}
+
+double set_positive (double val) {
+	if (val < 0.0) {
+		val *= -1;
+	}
+	return val;
 }
 
 /* set new first line in object */
@@ -721,6 +733,11 @@ void mill_z (int gcmd, double z) {
 			glEnd();
 		}
 	}
+	if (gcmd == 0) {
+		move_distance_z += set_positive(z - mill_last_z);
+	} else {
+		mill_distance_z += set_positive(z - mill_last_z);
+	}
 	mill_last_z = z;
 }
 
@@ -825,7 +842,6 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		}
 */
 
-
 		double i_x = 0.0;
 		double i_y = 0.0;
 		int hflag = 0;
@@ -916,6 +932,13 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		sprintf(cline, "G00 %s %s\n", tx_str, ty_str);
 		append_gcode(cline);
 	}
+
+	if (gcmd == 0) {
+		move_distance_xy += set_positive(get_len(mill_last_x, mill_last_y, x, y));
+	} else {
+		mill_distance_xy += set_positive(get_len(mill_last_x, mill_last_y, x, y));
+	}
+
 	mill_start_all = 1;
 	mill_last_x = x;
 	mill_last_y = y;
@@ -1529,7 +1552,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	if (lasermode == 1 || tangencialmode == 1) {
 		object_draw_offset_depth(fd_out, object_num, 0.0, next_x, next_y, tool_offset, overcut, lasermode, offset);
 	} else {
-		for (depth = PARAMETER[P_M_Z_STEP].vdouble; depth >= mill_depth_real + PARAMETER[P_M_Z_STEP].vdouble; depth += PARAMETER[P_M_Z_STEP].vdouble) {
+		for (depth = PARAMETER[P_M_Z_STEP].vdouble; depth > mill_depth_real + PARAMETER[P_M_Z_STEP].vdouble; depth += PARAMETER[P_M_Z_STEP].vdouble) {
 			if (depth < mill_depth_real) {
 				new_depth = mill_depth_real;
 			} else {
@@ -1738,7 +1761,7 @@ void init_objects (void) {
 		free(myOBJECTS);
 		myOBJECTS = NULL;
 	}
-	myOBJECTS = malloc(sizeof(_OBJECT) * line_last);
+	myOBJECTS = malloc(sizeof(_OBJECT) * (line_last + 1));
 	for (object_num = 0; object_num < line_last; object_num++) {
 		myOBJECTS[object_num].selection = 1;
 		myOBJECTS[object_num].force = 0;
@@ -2019,13 +2042,6 @@ void mainloop (void) {
 		scale = (4.0 / size_y);
 	}
 	char tmp_str[1024];
-
-/*
-	sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm (%f, %f)", size_x, size_y, \
-		 (float)size_x / (float)width * (float)last_mouse_x, \
-		 (float)size_y - ((float)size_y / (float)height * (float)last_mouse_y) \
-	);
-*/
 	sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm", size_x, size_y);
 	gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
 
@@ -2092,6 +2108,13 @@ void mainloop (void) {
 
 	/* init gcode */
 	tool_last = -1;
+	mill_distance_xy = 0.0;
+	mill_distance_z = 0.0;
+	move_distance_xy = 0.0;
+	move_distance_z = 0.0;
+	mill_last_x = 0.0;
+	mill_last_y = 0.0;
+	mill_last_z = PARAMETER[P_CUT_SAVE].vdouble;
 	if (gcode_buffer != NULL) {
 		free(gcode_buffer);
 		gcode_buffer = NULL;
@@ -2261,6 +2284,9 @@ void mainloop (void) {
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving g-code...done"), "saving g-code...done");
 		save_gcode = 0;
 	}
+
+	sprintf(tmp_str, "Distance: Mill-XY=%0.2fmm/Z=%0.2fmm / Move-XY=%0.2fmm/Z=%0.2fmm", mill_distance_xy, mill_distance_z, move_distance_xy, move_distance_z);
+	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), tmp_str), tmp_str);
 
 	if (batchmode == 1) {
 		onExit();
