@@ -13,6 +13,7 @@ typedef struct{
 	double max;
 	char unit[16];
 	int show;
+	int inpreset;
 	int l1;
 	int l2;
 } PARA;
@@ -82,5 +83,7 @@ void SetupShowHelp (void);
 void SetupSave (void);
 void SetupLoad (void);
 int SetupArgCheck (char *arg, char *arg2);
+void SetupSavePreset (char *cfgfile);
+void SetupLoadPreset (char *cfgfile);
 
 

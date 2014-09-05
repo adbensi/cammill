@@ -2531,7 +2531,7 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 	NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 
@@ -2555,10 +2555,9 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
 */
 	if (PARAMETER[P_TOOL_TABLE].vstr[0] == 0) {
-		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "/tmp");
-		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), "test.dxf");
+		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), "./");
 	} else {
-		gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), PARAMETER[P_V_DXF].vstr);
+		gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), PARAMETER[P_V_DXF].vstr);
 	}
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
@@ -2570,6 +2569,61 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		DrawCheckSize();
 		DrawSetZero();
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf...done"), "reading dxf...done");
+		g_free(filename);
+	}
+	gtk_widget_destroy (dialog);
+}
+
+void handler_load_preset (GtkWidget *widget, gpointer data) {
+	GtkWidget *dialog;
+	dialog = gtk_file_chooser_dialog_new ("Load DXF-Drawing",
+		GTK_WINDOW(window),
+		GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+	NULL);
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+	GtkFileFilter *ffilter;
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "Preset");
+	gtk_file_filter_add_pattern(ffilter, "*.preset");
+	gtk_file_filter_add_pattern(ffilter, "*.PRESET");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+	gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "./");
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading preset..."), "reading preset...");
+		SetupLoadPreset(filename);
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading preset...done"), "reading preset...done");
+		g_free(filename);
+	}
+	gtk_widget_destroy (dialog);
+}
+
+void handler_save_preset (GtkWidget *widget, gpointer data) {
+	GtkWidget *dialog;
+	dialog = gtk_file_chooser_dialog_new ("Save G-Code File",
+		GTK_WINDOW(window),
+		GTK_FILE_CHOOSER_ACTION_SAVE,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	NULL);
+	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+
+	GtkFileFilter *ffilter;
+	ffilter = gtk_file_filter_new();
+	gtk_file_filter_set_name(ffilter, "Preset");
+	gtk_file_filter_add_pattern(ffilter, "*.preset");
+	gtk_file_filter_add_pattern(ffilter, "*.PRESET");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
+	gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), "./");
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving Preset..."), "saving Preset...");
+		SetupSavePreset(filename);
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving Preset...done"), "saving Preset...done");
 		g_free(filename);
 	}
 	gtk_widget_destroy (dialog);
@@ -3147,6 +3201,10 @@ int main (int argc, char *argv[]) {
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
+		MenuItem = gtk_menu_item_new_with_label("Load Preset");
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_preset), NULL);
+
 		MenuItem = gtk_menu_item_new_with_label("Save G-Code");
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
@@ -3195,23 +3253,26 @@ int main (int argc, char *argv[]) {
 	GtkToolItem *ToolItemSep = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
 
+	GtkToolItem *ToolItemLoadPreset = gtk_tool_button_new_from_stock(GTK_STOCK_OPEN);
+	gtk_tool_item_set_tooltip_text(ToolItemLoadPreset, "Load Preset");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemLoadPreset, -1);
+	g_signal_connect(G_OBJECT(ToolItemLoadPreset), "clicked", GTK_SIGNAL_FUNC(handler_load_preset), NULL);
+
+	GtkToolItem *ToolItemSavePreset = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
+	gtk_tool_item_set_tooltip_text(ToolItemSavePreset, "Save Preset");
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSavePreset, -1);
+	g_signal_connect(G_OBJECT(ToolItemSavePreset), "clicked", GTK_SIGNAL_FUNC(handler_save_preset), NULL);
+
+
+	GtkToolItem *ToolItemSep1 = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep1, -1); 
+
+
 	GtkToolItem *TB;
 	TB = gtk_tool_button_new_from_stock(GTK_STOCK_CONVERT);
 	gtk_tool_item_set_tooltip_text(TB, "Rotate 90°");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
 	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_rotate_drawing), NULL);
-
-/*
-	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
-	gtk_tool_item_set_tooltip_text(TB, "Mill-Text");
-	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
-	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
-
-	TB = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
-	gtk_tool_item_set_tooltip_text(TB, "Laser-Mode");
-	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
-	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
-*/
 
 	GtkToolItem *ToolItemSep2 = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep2, -1); 
