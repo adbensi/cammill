@@ -6,7 +6,7 @@
 #port install gtkglext
 
 #export PATH="${PATH}:~/.local/bin"
-#export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}​:/opt/X11/lib/pkgconfig"
+#export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/opt/X11/lib/pkgconfig"
 
 INCLUDES = -I./
 LIBS = -lGL -lGLU -lX11 -lm -lpthread -lstdc++ -lXext -ldl -lXi -lxcb -lXau -lXdmcp -lc `pkg-config gtk+-2.0 --libs` `pkg-config gtk+-2.0 --cflags` `pkg-config gtkglext-x11-1.0 --libs` `pkg-config gtkglext-x11-1.0 --cflags`

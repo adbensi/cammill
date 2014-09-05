@@ -3351,9 +3351,11 @@ int main (int argc, char *argv[]) {
 
 	int n = 0;
 	for (n = 0; n < P_LAST; n++) {
+		GtkWidget *Label;
+		GtkTooltips *tooltips = gtk_tooltips_new ();
 		GtkWidget *Box = gtk_hbox_new(0, 0);
 		if (PARAMETER[n].type == T_FLOAT) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
@@ -3361,7 +3363,7 @@ int main (int argc, char *argv[]) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_DOUBLE) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
@@ -3369,7 +3371,7 @@ int main (int argc, char *argv[]) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_INT) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
@@ -3377,7 +3379,7 @@ int main (int argc, char *argv[]) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_SELECT) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ListStore[n] = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
@@ -3391,14 +3393,14 @@ int main (int argc, char *argv[]) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_BOOL) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ParamValue[n] = gtk_check_button_new_with_label("On/Off");
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_STRING) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ParamValue[n] = gtk_entry_new();
@@ -3406,7 +3408,7 @@ int main (int argc, char *argv[]) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_FILE) {
-			GtkWidget *Label = gtk_label_new(PARAMETER[n].name);
+			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ParamValue[n] = gtk_entry_new();
@@ -3420,6 +3422,7 @@ int main (int argc, char *argv[]) {
 		} else {
 			continue;
 		}
+		gtk_tooltips_set_tip(tooltips, Box, PARAMETER[n].help, NULL);
 		if (strcmp(PARAMETER[n].group, "View") == 0) {
 			gtk_box_pack_start(GTK_BOX(ViewBox), Box, 0, 0, 0);
 			PARAMETER[n].l1 = 0;
@@ -3535,6 +3538,7 @@ int main (int argc, char *argv[]) {
 	SizeInfoLabel = gtk_label_new("Width=0mm / Height=0mm");
 	GtkWidget *SizeInfo = gtk_event_box_new();
 	gtk_container_add(GTK_CONTAINER(SizeInfo), SizeInfoLabel);
+	gtk_container_set_border_width(GTK_CONTAINER(SizeInfo), 4);
 
 	GtkWidget *LogoIMG = gtk_image_new_from_file("logo-top.png");
 	GtkWidget *Logo = gtk_event_box_new();
