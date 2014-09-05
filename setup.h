@@ -14,6 +14,7 @@ typedef struct{
 	char unit[16];
 	int show;
 	int inpreset;
+	char help[512];
 	int l1;
 	int l2;
 } PARA;
@@ -68,6 +69,7 @@ enum {
 	P_H_ROTARYAXIS,
 	P_H_KNIFEAXIS,
 	P_H_KNIFEMAXANGLE,
+	P_H_FEEDRATE_FAST,
 	P_MFILE,
 	P_MAT_SELECT,
 	P_MAT_DIAMETER,

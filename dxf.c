@@ -133,9 +133,6 @@ void clear_dxfoptions (void) {
 	}
 }
 
-
-
-
 void dxf_read (char *file) {
 	FILE *fp;
 	char *line = NULL;

@@ -2285,7 +2285,11 @@ void mainloop (void) {
 		save_gcode = 0;
 	}
 
-	sprintf(tmp_str, "Distance: Mill-XY=%0.2fmm/Z=%0.2fmm / Move-XY=%0.2fmm/Z=%0.2fmm", mill_distance_xy, mill_distance_z, move_distance_xy, move_distance_z);
+	double milltime = mill_distance_xy / PARAMETER[P_M_FEEDRATE].vint;
+	milltime += mill_distance_z / PARAMETER[P_M_PLUNGE_SPEED].vint;
+	milltime += (move_distance_xy + move_distance_z) / PARAMETER[P_H_FEEDRATE_FAST].vint;
+
+	sprintf(tmp_str, "Distance: Mill-XY=%0.2fmm/Z=%0.2fmm / Move-XY=%0.2fmm/Z=%0.2fmm / Time>%0.1fmin", mill_distance_xy, mill_distance_z, move_distance_xy, move_distance_z, milltime);
 	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), tmp_str), tmp_str);
 
 	if (batchmode == 1) {
@@ -3302,13 +3306,12 @@ int main (int argc, char *argv[]) {
 
 	GtkToolItem *ToolItemSep2 = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep2, -1); 
-
+/*
 	GtkToolItem *ToolItemExit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
 	gtk_tool_item_set_tooltip_text(ToolItemExit, "Quit");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemExit, -1);
 	g_signal_connect(G_OBJECT(ToolItemExit), "clicked", GTK_SIGNAL_FUNC(handler_destroy), NULL);
-
-
+*/
 	GtkWidget *NbBox = gtk_table_new(2, 2, FALSE);
 	GtkWidget *notebook = gtk_notebook_new();
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
