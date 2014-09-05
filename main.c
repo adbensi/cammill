@@ -1153,6 +1153,7 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 			sprintf(cline, "M06 T%i (Change-Tool / Laser-Mode)\n", 5);
 			append_gcode(cline);
 			mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
+			append_gcode("\n");
 		}
 		tool_last = 5;
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
@@ -1431,6 +1432,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	double tool_offset = 0.0;
 	int overcut = 0;
 	int lasermode = 0;
+	int tangencialmode = 0;
 	int offset = 0;
 
 	if (PARAMETER[P_M_OVERCUT].vint == 1) {
@@ -1438,6 +1440,10 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	}
 	if (PARAMETER[P_M_LASERMODE].vint == 1) {
 		lasermode = 1;
+		PARAMETER[P_M_KNIFEMODE].vint = 0;
+	}
+	if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
+		tangencialmode = 1;
 	}
 
 	// real milling depth
@@ -1448,6 +1454,10 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
 		lasermode = 1;
 	}
+	if (strncmp(myOBJECTS[object_num].layer, "knife", 5) == 0) {
+		tangencialmode = 1;
+	}
+
 	for (num2 = 1; num2 < 100; num2++) {
 //		if (shapeEV[num2].Label != NULL && strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
 //			if (layer_force[num2] == 0) {
@@ -1480,12 +1490,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		myOBJECTS[object_num].overcut = overcut;
 		myOBJECTS[object_num].laser = lasermode;
 	}
-	if (lasermode == 1) {
-		tool_offset = PARAMETER[P_H_LASERDIA].vdouble / 2.0;
-		mill_depth_real = 0.0;
-	} else {
-		tool_offset = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
-	}
+	tool_offset = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
 	if (myOBJECTS[object_num].selection == 0) {
 		return;
 	}
@@ -1498,7 +1503,9 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	append_gcode(cline);
 	sprintf(cline, "(Overcut: %i)\n",  overcut);
 	append_gcode(cline);
-	if (lasermode == 1) {
+	if (tangencialmode == 1) {
+		sprintf(cline, "(Tangencial-Mode: On)\n");
+	} else if (lasermode == 1) {
 		sprintf(cline, "(Laser-Mode: On)\n");
 	} else { 
 		sprintf(cline, "(Depth: %f)\n", mill_depth_real);
@@ -1519,15 +1526,18 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 
 	// offset for each depth-step
 	double new_depth = 0.0;
-	for (depth = PARAMETER[P_M_Z_STEP].vdouble; depth > mill_depth_real + PARAMETER[P_M_Z_STEP].vdouble; depth += PARAMETER[P_M_Z_STEP].vdouble) {
-		if (depth < mill_depth_real) {
-			new_depth = mill_depth_real;
-		} else {
-			new_depth = depth;
+	if (lasermode == 1 || tangencialmode == 1) {
+		object_draw_offset_depth(fd_out, object_num, 0.0, next_x, next_y, tool_offset, overcut, lasermode, offset);
+	} else {
+		for (depth = PARAMETER[P_M_Z_STEP].vdouble; depth >= mill_depth_real + PARAMETER[P_M_Z_STEP].vdouble; depth += PARAMETER[P_M_Z_STEP].vdouble) {
+			if (depth < mill_depth_real) {
+				new_depth = mill_depth_real;
+			} else {
+				new_depth = depth;
+			}
+			object_draw_offset_depth(fd_out, object_num, new_depth, next_x, next_y, tool_offset, overcut, lasermode, offset);
 		}
-		object_draw_offset_depth(fd_out, object_num, new_depth, next_x, next_y, tool_offset, overcut, lasermode, offset);
 	}
-
 	mill_move_out(lasermode);
 }
 
