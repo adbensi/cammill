@@ -47,6 +47,7 @@ typedef struct{
 	int inside;
 	int visited;
 	int selection;
+	int climb;
 	int offset;
 	int force;
 	int overcut;

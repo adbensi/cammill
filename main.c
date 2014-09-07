@@ -286,9 +286,17 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 	glShadeModel(GL_FLAT);
 	gluTessBeginPolygon(tobj, NULL);
 	if (invert == 0) {
-		gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+		if (myOBJECTS[object_num].climb == 0) {
+			gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+		} else {
+			gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+		}
 	} else {
-		gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+		if (myOBJECTS[object_num].climb == 0) {
+			gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+		} else {
+			gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+		}
 	}
 	gluTessNormal(tobj, 0, 0, 1);
 
@@ -478,7 +486,11 @@ void object_optimize_dir (int object_num) {
 			double check_x = myLINES[lnum].x1;
 			double check_y = myLINES[lnum].y1;
 			add_angle_offset(&check_x, &check_y, len / 2.0, alpha);
-			add_angle_offset(&check_x, &check_y, 0.001, alpha + 90);
+			if (myOBJECTS[object_num].climb == 0) {
+				add_angle_offset(&check_x, &check_y, -0.001, alpha + 90);
+			} else {
+				add_angle_offset(&check_x, &check_y, 0.001, alpha + 90);
+			}
 			pipret = point_in_object(object_num, -1, check_x, check_y);
 			if ((pipret == 0 && myOBJECTS[object_num].inside == 0) || (pipret == 1 && myOBJECTS[object_num].inside == 1)) {
 				redir_object(object_num);
@@ -1223,7 +1235,6 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 	double last_x = 0.0;
 	double last_y = 0.0;
 
-
 	/* find last line in object */
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
@@ -1246,21 +1257,31 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 				double alpha1 = line_angle(lnum1);
 				double check1_x = myLINES[lnum1].x1;
 				double check1_y = myLINES[lnum1].y1;
-				add_angle_offset(&check1_x, &check1_y, tool_offset, alpha1 + 90);
 				double check1b_x = myLINES[lnum1].x2;
 				double check1b_y = myLINES[lnum1].y2;
 				add_angle_offset(&check1b_x, &check1b_y, 0.0, alpha1);
-				add_angle_offset(&check1b_x, &check1b_y, tool_offset, alpha1 + 90);
+				if (myOBJECTS[object_num].climb == 0) {
+					add_angle_offset(&check1_x, &check1_y, -tool_offset, alpha1 + 90);
+					add_angle_offset(&check1b_x, &check1b_y, -tool_offset, alpha1 + 90);
+				} else {
+					add_angle_offset(&check1_x, &check1_y, tool_offset, alpha1 + 90);
+					add_angle_offset(&check1b_x, &check1b_y, tool_offset, alpha1 + 90);
+				}
 
 				// line2 Offsets & Angle
 				double alpha2 = line_angle(lnum2);
 				double check2_x = myLINES[lnum2].x1;
 				double check2_y = myLINES[lnum2].y1;
 				add_angle_offset(&check2_x, &check2_y, 0.0, alpha2);
-				add_angle_offset(&check2_x, &check2_y, tool_offset, alpha2 + 90);
 				double check2b_x = myLINES[lnum2].x2;
 				double check2b_y = myLINES[lnum2].y2;
-				add_angle_offset(&check2b_x, &check2b_y, tool_offset, alpha2 + 90);
+				if (myOBJECTS[object_num].climb == 0) {
+					add_angle_offset(&check2_x, &check2_y, -tool_offset, alpha2 + 90);
+					add_angle_offset(&check2b_x, &check2b_y, -tool_offset, alpha2 + 90);
+				} else {
+					add_angle_offset(&check2_x, &check2_y, tool_offset, alpha2 + 90);
+					add_angle_offset(&check2b_x, &check2b_y, tool_offset, alpha2 + 90);
+				}
 
 				// Angle-Diff
 				alpha1 = alpha1 + 180.0;
@@ -1282,7 +1303,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 					alpha_diff += 360.0;
 				}
 				if (alpha_diff == 0.0) {
-				} else if (alpha_diff > 0.0) {
+				} else if ((myOBJECTS[object_num].climb == 1 && alpha_diff > 0.0) || (myOBJECTS[object_num].climb == 0 && alpha_diff < 0.0)) {
 					// Aussenkante
 					if (num == 0) {
 						first_x = check1b_x;
@@ -1293,7 +1314,11 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 						}
 						append_gcode("\n");
 						mill_z(1, depth);
-						mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+						if (myOBJECTS[object_num].climb == 0) {
+							mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+						} else {
+							mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+						}
 					} else {
 						if (myLINES[lnum1].type == TYPE_ARC || myLINES[lnum1].type == TYPE_CIRCLE) {
 							if (myLINES[lnum1].opt < 0) {
@@ -1303,11 +1328,19 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							}
 							if (myLINES[lnum2].type == TYPE_ARC || myLINES[lnum2].type == TYPE_CIRCLE) {
 							} else {
-								mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+								if (myOBJECTS[object_num].climb == 0) {
+									mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+								} else {
+									mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+								}
 							}
 						} else {
 							mill_xy(1, check1b_x, check1b_y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-							mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+							if (myOBJECTS[object_num].climb == 0) {
+								mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+							} else {
+								mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+							}
 						}
 					}
 					last_x = check2_x;
@@ -1457,7 +1490,6 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	int lasermode = 0;
 	int tangencialmode = 0;
 	int offset = 0;
-
 	if (PARAMETER[P_M_OVERCUT].vint == 1) {
 		overcut = 1;
 	}
@@ -1480,7 +1512,6 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	if (strncmp(myOBJECTS[object_num].layer, "knife", 5) == 0) {
 		tangencialmode = 1;
 	}
-
 	for (num2 = 1; num2 < 100; num2++) {
 //		if (shapeEV[num2].Label != NULL && strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
 //			if (layer_force[num2] == 0) {
@@ -1490,6 +1521,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 //			}
 //		}
 	}
+
 	if (myOBJECTS[object_num].closed == 1) {
 		if (myOBJECTS[object_num].inside == 1) {
 			offset = 1;
@@ -1764,6 +1796,7 @@ void init_objects (void) {
 	myOBJECTS = malloc(sizeof(_OBJECT) * (line_last + 1));
 	for (object_num = 0; object_num < line_last; object_num++) {
 		myOBJECTS[object_num].selection = 1;
+		myOBJECTS[object_num].climb = 0;
 		myOBJECTS[object_num].force = 0;
 		myOBJECTS[object_num].offset = 0;
 		myOBJECTS[object_num].overcut = 0;
@@ -1837,6 +1870,21 @@ void init_objects (void) {
 			myOBJECTS[num5b].inside = 1;
 		} else if (myOBJECTS[num5b].line[0] != 0) {
 			myOBJECTS[num5b].inside = 0;
+		}
+	}
+
+
+	for (object_num = 0; object_num < line_last; object_num++) {
+		if (strncmp(myOBJECTS[object_num].layer, "offset-inside", 13) == 0) {
+			if (myOBJECTS[object_num].inside == 0) {
+				redir_object(object_num);
+				myOBJECTS[object_num].inside = 1;
+			}
+		} else if (strncmp(myOBJECTS[object_num].layer, "offset-outside", 14) == 0) {
+			if (myOBJECTS[object_num].inside == 1) {
+				redir_object(object_num);
+				myOBJECTS[object_num].inside = 0;
+			}
 		}
 	}
 }
@@ -2127,6 +2175,14 @@ void mainloop (void) {
 	append_gcode(cline);
 	append_gcode("\n");
 
+	for (object_num = 0; object_num < object_last; object_num++) {
+		if (myOBJECTS[object_num].force == 0) {
+			myOBJECTS[object_num].depth = PARAMETER[P_T_DEPTH].vdouble;
+			myOBJECTS[object_num].overcut = PARAMETER[P_M_OVERCUT].vint;
+			myOBJECTS[object_num].laser = PARAMETER[P_M_LASERMODE].vint;
+			myOBJECTS[object_num].climb = PARAMETER[P_M_CLIMB].vint;
+		}
+	}
 
 	/* 'shortest' path / first inside than outside objects */ 
 	double last_x = 0.0;
