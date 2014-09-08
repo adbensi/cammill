@@ -3,3 +3,14 @@
 2D CAM-Tool for Linux and OSX
 
 
+Features:
+* Automatic Offsets (Inside / Outside)
+* Normal and Climb milling
+* Rotary-Axis Support
+* Laser-Mode (inc. Offsets)
+* Tool/Material calculations for feedrate and tool-speed
+* Support for milling MTEXT from dxf
+* LinuxCNC-Tooltable import
+* Setup-Presets
+* .....
+
