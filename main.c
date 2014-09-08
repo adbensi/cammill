@@ -2553,63 +2553,63 @@ void MaterialLoadList (void) {
 	material_fz[0][0] = 0.04;
 	material_fz[0][1] = 0.05;
 	material_fz[0][2] = 0.10;
-	material_texture[0] = "metal.bmp";
+	material_texture[0] = "textures/metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Kurzsp.)", -1);
 	material_vc[1] = 150;
 	material_fz[1][0] = 0.04;
 	material_fz[1][1] = 0.05;
 	material_fz[1][2] = 0.10;
-	material_texture[1] = "metal.bmp";
+	material_texture[1] = "textures/metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "NE-Metalle", -1);
 	material_vc[2] = 150;
 	material_fz[2][0] = 0.04;
 	material_fz[2][1] = 0.05;
 	material_fz[2][2] = 0.10;
-	material_texture[2] = "metal.bmp";
+	material_texture[2] = "textures/metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "VA-Stahl", -1);
 	material_vc[3] = 100;
 	material_fz[3][0] = 0.05;
 	material_fz[3][1] = 0.06;
 	material_fz[3][2] = 0.07;
-	material_texture[3] = "metal.bmp";
+	material_texture[3] = "textures/metal.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Thermoplaste", -1);
 	material_vc[4] = 100;
 	material_fz[4][0] = 0.0;
 	material_fz[4][1] = 0.0;
 	material_fz[4][2] = 0.0;
-	material_texture[4] = "plast.bmp";
+	material_texture[4] = "textures/plast.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Duroplaste", -1);
 	material_vc[5] = 125;
 	material_fz[5][0] = 0.04;
 	material_fz[5][1] = 0.08;
 	material_fz[5][2] = 0.10;
-	material_texture[5] = "plast.bmp";
+	material_texture[5] = "textures/plast.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "GFK", -1);
 	material_vc[6] = 125;
 	material_fz[6][0] = 0.04;
 	material_fz[6][1] = 0.08;
 	material_fz[6][2] = 0.10;
-	material_texture[6] = "gfk.bmp";
+	material_texture[6] = "textures/gfk.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "CFK", -1);
 	material_vc[7] = 125;
 	material_fz[7][0] = 0.04;
 	material_fz[7][1] = 0.08;
 	material_fz[7][2] = 0.10;
-	material_texture[7] = "cfk.bmp";
+	material_texture[7] = "textures/cfk.bmp";
 
 	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Holz", -1);
 	material_vc[8] = 2000;
 	material_fz[8][0] = 0.04;
 	material_fz[8][1] = 0.08;
 	material_fz[8][2] = 0.10;
-	material_texture[8] = "wood.bmp";
+	material_texture[8] = "textures/wood.bmp";
 
 
 
@@ -3027,7 +3027,7 @@ void handler_about (GtkWidget *widget, gpointer data) {
 	gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_QUIT, 1);
 	GtkWidget *label = gtk_label_new("OpenCAM 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <mcules@fpv-club.de>");
 	gtk_widget_modify_font(label, pango_font_description_from_string("Tahoma 18"));
-	GtkWidget *image = gtk_image_new_from_file("logo.png");
+	GtkWidget *image = gtk_image_new_from_file("icons/logo.png");
 	GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_box_pack_start(GTK_BOX(box), image, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
@@ -3764,6 +3764,42 @@ int main (int argc, char *argv[]) {
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "B", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
 
+/*
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "astrology", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cursive", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cyrilc_1", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cyrillic", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "futural", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "futuram", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothgbt", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothgrt", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothiceng", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothicger", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothicita", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothitt", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "greek", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "greekc", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "greeks", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "hershey", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "japanese", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "markers", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "mathlow", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "mathupp", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "meteorology", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "music", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "rowmand", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "rowmans", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "rowmant", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "scriptc", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "scripts", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "symbolic", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesg", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesi", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesib", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesr", -1);
+	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesrb", -1);
+*/
+
 	g_signal_connect(G_OBJECT(ParamButton[P_MFILE]), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 	g_signal_connect(G_OBJECT(ParamButton[P_TOOL_TABLE]), "clicked", GTK_SIGNAL_FUNC(handler_load_tooltable), NULL);
 	g_signal_connect(G_OBJECT(ParamButton[P_V_DXF]), "clicked", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
@@ -3811,7 +3847,6 @@ int main (int argc, char *argv[]) {
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
 	gtk_text_buffer_set_text(buffer, text, -1);
 
-
 	GtkSourceLanguageManager *manager = gtk_source_language_manager_get_default();
 	const gchar * const *current;
 	int i;
@@ -3827,7 +3862,6 @@ int main (int argc, char *argv[]) {
 	g_strfreev(lang_dirs);
 	GtkSourceLanguage *ngclang = gtk_source_language_manager_get_language(manager, ".ngc");
 	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), ngclang);
-
 
 
 	GtkWidget *NbBox2 = gtk_table_new(2, 2, FALSE);
@@ -3856,7 +3890,7 @@ int main (int argc, char *argv[]) {
 	gtk_container_add(GTK_CONTAINER(SizeInfo), SizeInfoLabel);
 	gtk_container_set_border_width(GTK_CONTAINER(SizeInfo), 4);
 
-	GtkWidget *LogoIMG = gtk_image_new_from_file("logo-top.png");
+	GtkWidget *LogoIMG = gtk_image_new_from_file("icons/logo-top.png");
 	GtkWidget *Logo = gtk_event_box_new();
 	gtk_container_add(GTK_CONTAINER(Logo), LogoIMG);
 	gtk_signal_connect(GTK_OBJECT(Logo), "button_press_event", GTK_SIGNAL_FUNC(handler_about), NULL);
@@ -3879,7 +3913,7 @@ int main (int argc, char *argv[]) {
 
 
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-	gtk_window_set_icon(GTK_WINDOW(window), create_pixbuf("logo-top.png"));
+	gtk_window_set_icon(GTK_WINDOW(window), create_pixbuf("icons/logo-top.png"));
 
 	gtk_signal_connect(GTK_OBJECT(window), "destroy_event", GTK_SIGNAL_FUNC (handler_destroy), NULL);
 	gtk_signal_connect(GTK_OBJECT(window), "delete_event", GTK_SIGNAL_FUNC (handler_destroy), NULL);

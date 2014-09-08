@@ -62,6 +62,7 @@ enum {
 	P_M_KNIFEMODE,
 	P_M_CLIMB,
 	P_M_TEXT,
+//	P_M_FONT,
 	P_M_NCDEBUG,
 	P_T_USE,
 	P_T_DEPTH,

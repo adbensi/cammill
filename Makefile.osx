@@ -12,10 +12,12 @@ INCLUDES = -I./
 LIBS = -lGL -lGLU -lX11 -lm -lpthread -lstdc++ -lXext -ldl -lXi -lxcb -lXau -lXdmcp -lc `pkg-config gtk+-2.0 --libs` `pkg-config gtk+-2.0 --cflags` `pkg-config gtkglext-x11-1.0 --libs` `pkg-config gtkglext-x11-1.0 --cflags`
 LIBS += `pkg-config gtksourceview-2.0 --libs` `pkg-config gtksourceview-2.0 --cflags`
 
+CFLAGS+="-DHERSHEY_FONTS_DIR=\"./\""
+
 all: opencam2d
 
-opencam2d: main.c setup.c dxf.c dxf.h font.c font.h texture.c
-	clang -Wall -O3 -o opencam2d main.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} -DOSX
+opencam2d: main.c hersheyfont.c setup.c dxf.c dxf.h font.c font.h texture.c
+	clang -Wall -O3 -o opencam2d main.c hersheyfont.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} -DOSX
 
 clean:
 	rm -rf opencam2d

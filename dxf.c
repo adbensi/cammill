@@ -361,7 +361,7 @@ void dxf_read (char *file) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
 						double p_y1 = atof(dxf_options[OPTION_MTEXT_Y]);
 						double p_s = atof(dxf_options[OPTION_MTEXT_SIZE]);
-						output_text_dxf(dxf_options[OPTION_MTEXT_TEXT], p_x1, p_y1, 0.0, p_s);
+						output_text_dxf(dxf_options[OPTION_MTEXT_TEXT], dxf_options[8], p_x1, p_y1, 0.0, p_s);
 						mtext_n++;
 					} else {
 						pl_flag = 0;
