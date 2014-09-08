@@ -1078,7 +1078,6 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	mill_start = 1;
 	translateAxisX(x - r, tx_str);
 	translateAxisY(y, ty_str);
-
 	mill_xy(0, x - r, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 	mill_z(0, depth);
 	translateAxisX(x + r, tx_str);
