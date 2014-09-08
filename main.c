@@ -151,7 +151,7 @@ void line_invert (int num) {
 
 int point_in_object (int object_num, int object_ex, double testx, double testy) {
 	int num = 0;
-	int c = 1;
+	int c = 0;
 	int onum = object_num;
 	if (object_num == -1) {
 		for (onum = 0; onum < object_last; onum++) {
@@ -260,7 +260,6 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 	int nverts = 0;
 	GLUtesselator *tobj;
 	GLdouble rect2[MAX_LINES][3];
-
 	if (PARAMETER[P_V_TEXTURES].vint == 1) {
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		texture_load(material_texture[PARAMETER[P_MAT_SELECT].vint]);
@@ -370,7 +369,6 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 					float last_y = y;
 					if (myOBJECTS[object_num].climb == 1) {
 						for (an = 0.0; an < 360.0; an += 9.0) {
-	//					for (an = 360.0; an > 0.0; an -= 9.0) {
 							float angle1 = toRad(an);
 							float x1 = r * cos(angle1);
 							float y1 = r * sin(angle1);
@@ -391,7 +389,6 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 							nverts++;
 						}
 					} else {
-	//					for (an = 0.0; an < 360.0; an += 9.0) {
 						for (an = 360.0; an > 0.0; an -= 9.0) {
 							float angle1 = toRad(an);
 							float x1 = r * cos(angle1);
@@ -1054,17 +1051,12 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 }
 
 void mill_drill (double x, double y, double depth, int feed, char *comment) {
-	char tx_str[128];
-	char ty_str[128];
 	if (comment[0] != 0) {
 		sprintf(cline, "(%s)\n", comment);
 		append_gcode(cline);
 	}
-	mill_start = 1;
-	translateAxisX(x, tx_str);
-	translateAxisY(y, ty_str);
-	mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-	mill_z(0, depth);
+	mill_z(1, depth);
+	mill_z(0, 0.0);
 	draw_line(x, y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 }
 
@@ -1075,15 +1067,13 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 		sprintf(cline, "(%s)\n", comment);
 		append_gcode(cline);
 	}
-	mill_start = 1;
-	translateAxisX(x - r, tx_str);
-	translateAxisY(y, ty_str);
-	mill_xy(0, x - r, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-	mill_z(0, depth);
+	mill_z(1, depth);
 	translateAxisX(x + r, tx_str);
+	translateAxisY(y, ty_str);
 	sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
 	append_gcode(cline);
 	translateAxisX(x - r, tx_str);
+	translateAxisY(y, ty_str);
 	sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
 	append_gcode(cline);
 	float an = 0.0;
@@ -1093,7 +1083,7 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 		float angle1 = toRad(an);
 		float x1 = r * cos(angle1);
 		float y1 = r * sin(angle1);
-		if (inside == 0) {
+		if (inside == 1) {
 			if (gcmd == 2) {
 				draw_line(last_x, last_y, (float)mill_last_z, (float)x + x1, (float)y + y1, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			} else {
@@ -1342,10 +1332,14 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 			r *= -1;
 		}
 		if (r > PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0) {
-			if (offset == 2) {
+			if (offset == 1) {
 				r -= tool_offset;
 			} else if (offset == 1) {
 				r += tool_offset;
+			}
+			if (mill_start == 0) {
+				mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, depth, lasermode);
+				mill_start = 1;
 			}
 			if (myOBJECTS[object_num].climb == 0) {
 				mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
@@ -1355,6 +1349,11 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 			*next_x = myLINES[lnum].cx - r;
 			*next_y = myLINES[lnum].cy;
 		} else {
+
+			if (mill_start == 0) {
+				mill_move_in(myLINES[lnum].cx, myLINES[lnum].cy, depth, lasermode);
+				mill_start = 1;
+			}
 			mill_drill(myLINES[lnum].cx, myLINES[lnum].cy, depth, PARAMETER[P_M_FEEDRATE].vint, "");
 			*next_x = myLINES[lnum].cx;
 			*next_y = myLINES[lnum].cy;
@@ -2023,16 +2022,16 @@ void init_objects (void) {
 			gtk_list_store_insert_with_values(ListStore[P_O_SELECT], NULL, object_num, 0, NULL, 1, tmp_str, -1);
 		}
 	}
+
+	PARAMETER[P_O_SELECT].vint = -1;
 }
 
 void draw_helplines (void) {
 	char tmp_str[128];
-
 	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
 		GLUquadricObj *quadratic = gluNewQuadric();
 		float radius = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0) + PARAMETER[P_M_DEPTH].vdouble;
 		float radius2 = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0);
-
 		glPushMatrix();
 		glTranslatef(0.0, -radius2 - 10.0, 0.0);
 		float lenX = size_x;
@@ -2356,15 +2355,28 @@ void mainloop (void) {
 		int object_num2 = 0;
 		for (object_num2 = 0; object_num2 < object_last; object_num2++) {
 			int nnum = 0;
-			for (nnum = 0; nnum < line_last; nnum++) {
+			if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
 				if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].inside == 1 && myOBJECTS[object_num2].visited == 0) {
 					int lnum2 = myOBJECTS[object_num2].line[nnum];
-					double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+					double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
 					if (len < shortest_len) {
 						shortest_len = len;
 						shortest_object = object_num2;
 						shortest_line = nnum;
 						flag = 1;
+					}
+				}
+			} else {
+				for (nnum = 0; nnum < line_last; nnum++) {
+					if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].inside == 1 && myOBJECTS[object_num2].visited == 0) {
+						int lnum2 = myOBJECTS[object_num2].line[nnum];
+						double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+						if (len < shortest_len) {
+							shortest_len = len;
+							shortest_object = object_num2;
+							shortest_line = nnum;
+							flag = 1;
+						}
 					}
 				}
 			}
@@ -2396,7 +2408,7 @@ void mainloop (void) {
 			if (flag > 1) {
 				redir_object(shortest_object);
 			}
-			if (myOBJECTS[shortest_object].closed == 1) {
+			if (myOBJECTS[shortest_object].closed == 1 && myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
 				resort_object(shortest_object, shortest_line);
 				object_optimize_dir(shortest_object);
 			}
@@ -2419,10 +2431,10 @@ void mainloop (void) {
 		int object_num2 = 0;
 		for (object_num2 = 0; object_num2 < object_last; object_num2++) {
 			int nnum = 0;
-			for (nnum = 0; nnum < line_last; nnum++) {
+			if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
 				if (myOBJECTS[object_num2].line[nnum] != 0 && (myOBJECTS[object_num2].inside == 0 && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
 					int lnum2 = myOBJECTS[object_num2].line[nnum];
-					double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+					double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
 					if (len < shortest_len) {
 						shortest_len = len;
 						shortest_object = object_num2;
@@ -2430,13 +2442,28 @@ void mainloop (void) {
 						flag = 1;
 					}
 				}
+			} else {
+				for (nnum = 0; nnum < line_last; nnum++) {
+					if (myOBJECTS[object_num2].line[nnum] != 0 && (myOBJECTS[object_num2].inside == 0 && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
+						int lnum2 = myOBJECTS[object_num2].line[nnum];
+						double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+						if (len < shortest_len) {
+							shortest_len = len;
+							shortest_object = object_num2;
+							shortest_line = nnum;
+							flag = 1;
+						}
+					}
+				}
 			}
 		}
 		if (flag == 1) {
 //			printf("##WEIGHT## %i == %f %i\n", shortest_object, shortest_len, flag);
 			myOBJECTS[shortest_object].visited = 1;
-			resort_object(shortest_object, shortest_line);
-			object_optimize_dir(shortest_object);
+			if (myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
+				resort_object(shortest_object, shortest_line);
+				object_optimize_dir(shortest_object);
+			}
 			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
 			} else {
 				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
@@ -2444,8 +2471,6 @@ void mainloop (void) {
 			}
 			last_x = next_x;
 			last_y = next_y;
-
-
 		} else {
 			break;
 		}
@@ -3707,7 +3732,6 @@ int main (int argc, char *argv[]) {
 			ObjectsNum++;
 		}
 	}
-
 
 
 	/* import DXF */
