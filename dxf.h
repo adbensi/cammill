@@ -47,15 +47,14 @@ typedef struct{
 	int closed;
 	int inside;
 	int visited;
-	int selection;
+	int use;
 	int climb;
 	int offset;
 	int force;
 	int overcut;
 	int pocket;
 	int laser;
-	int depth;
-	double object_depth;
+	double depth;
 	char layer[256];
 } _OBJECT;
 

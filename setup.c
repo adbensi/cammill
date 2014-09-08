@@ -12,7 +12,6 @@ PARA PARAMETER[] = {
 	{"ShowOffsets",	"View", 	"-so",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show tool-offsets", 0, 0},
 	{"ShowTool",	"View", 	"-st",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show tool-diameter", 0, 0},
 	{"Textures",	"View", 	"-vt",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show textures", 0, 0},
-	{"NC-Debug",	"View", 	"-nd",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "output objects whithout offsets / for debuging", 0, 0},
 	{"Rotate-X",	"View", 	"-rx",	T_FLOAT	,	0,	0.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate X", 0, 0},
 	{"Rotate-Y",	"View", 	"-rx",	T_FLOAT	,	0,	0.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate Y", 0, 0},
 	{"Rotate-Z",	"View", 	"-rx",	T_FLOAT	,	0,	0.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate Z", 0, 0},
@@ -40,6 +39,7 @@ PARA PARAMETER[] = {
 	{"Tangencial-Mode","Milling",	"-tm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "tangencial-knife cutting, depth=0.0", 0, 0},
 	{"Climb",	"Milling",	"-mr",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "reverse milling direction / climb milling", 0, 0},
 	{"Mill Text",	"Milling",	"-mt",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "mill mtext from dxf-files", 0, 0},
+	{"NC-Debug",	"Milling", 	"-nd",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "output objects whithout offsets / for debuging", 0, 0},
 	{"Use Taps",	"Holding-Tabs",	"-hu",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "using holding-tabs", 0, 0},
 	{"Depth",	"Holding-Tabs",	"-hd",	T_DOUBLE,	0,	0.0,	-7.0,	"",	-40.0,	1.0,	0.01,		"mm", 1, 1, "depth of the holding-tabs", 0, 0},
 	{"Lenght",	"Holding-Tabs",	"-hl",	T_DOUBLE,	0,	0.0,	5.0,	"",	0.1,	0.1,	40.0,		"mm", 1, 1, "lenght of the holding-tabs", 0, 0},
@@ -52,6 +52,14 @@ PARA PARAMETER[] = {
 	{"Select",	"Material",	"-ms",	T_SELECT,	1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0, 1, "material selection to calculate feedrate and spindlespeed", 0, 0},
 	{"Rotary/Diameter","Material",	"-md",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.01,	0.01,	300.0,		"mm", 1, 1, "diameter of the material for the rotary-mode", 0, 0},
 	{"Post-Command","Milling",	"-pc",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, "postcommand to trigger an script after saving the gcode (you can use this to copy the gcode to your cnc-maschine)", 0, 0},
+	{"Select",	"Objects",	"-so",	T_SELECT,	0,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"#", 0, 1, "object selection", 0, 0},
+	{"Use",		"Objects",	"-ou",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
+	{"Overwrite",	"Objects",	"-of",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
+	{"Climb",	"Objects",	"-oc",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
+	{"Offset",	"Objects",	"-oo",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
+	{"Overcut",	"Objects",	"-ov",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
+	{"Laser",	"Objects",	"-ol",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
+	{"Depth",	"Objects",	"-od",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1, 1, "end depth", 0, 0},
 };
 
 

@@ -162,7 +162,7 @@ int point_in_object (int object_num, int object_ex, double testx, double testy) 
 			if (onum == object_ex) {
 				continue;
 			}
-			if (myOBJECTS[onum].closed == 0) {
+			if (myOBJECTS[onum].closed == 0 || myLINES[onum].used == 0) {
 				continue;
 			}
 			for (num = 0; num < line_last; num++) {
@@ -175,7 +175,7 @@ int point_in_object (int object_num, int object_ex, double testx, double testy) 
 			}
 		}
 	} else {
-		if (myOBJECTS[onum].closed == 0) {
+		if (myOBJECTS[onum].closed == 0 || myLINES[onum].used == 0) {
 			return 0;
 		}
 		for (num = 0; num < line_last; num++) {
@@ -1004,107 +1004,12 @@ void object_draw (FILE *fd_out, int object_num) {
 			last = myOBJECTS[object_num].line[num];
 		}
 	}
-/*
-	if (myOBJECTS[object_num].pocket == 1 && myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 1) {
-		double lmx = 0.0;
-		double lmy = 0.0;
-		double fdmx = 0.0;
-		double fdmy = 0.0;
-		double ldx = 0.0;
-		double ldy = 0.0;
-		double pmx = 0.0;
-		double pmy = 0.0;
-		int pipret = 0;
-		int last_ret = 0;
-		float ystep = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
-		float xstep = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
-		for (pmy = -10.0; pmy < 260.0; pmy += ystep) {
-			for (pmx = -10.0; pmx < 220.0; pmx += xstep) {
-				pipret = point_in_object(object_num, -1, pmx, pmy);
-				if (pipret == 0) {
-					pipret = point_in_object(-1, object_num, pmx, pmy);
-					float an = 0;
-					for (an = 0.0; an < 360.0; an += 3.6) {
-						float rangle = toRad(an);
-						float rx = (PARAMETER[P_TOOL_DIAMETER].vdouble / 3.0 * 2.0) * cos(rangle);
-						float ry = (PARAMETER[P_TOOL_DIAMETER].vdouble / 3.0 * 2.0) * sin(rangle);
-						pipret += point_in_object(object_num, -1, pmx + rx, pmy + ry);
-					}
-					if (pipret == 0) {
-						if (last_ret == 0) {
-							fdmx = pmx;
-							fdmy = pmy;
-						}
-						lmx = pmx;
-						lmy = pmy;
-						last_ret = 1;
-					} else {
-						if (last_ret == 1) {
-							draw_line(ldx, ldy, 0.0, fdmx, fdmy, 0.0, 2.0);
-							draw_line(fdmx, fdmy, 0.0, lmx, lmy, 0.0, 2.0);
-							ldx = lmx;
-							ldy = lmy;
-						}
-						last_ret = 0;
-					}
-				} else {
-					if (last_ret == 1) {
-						draw_line(ldx, ldy, 0.0, fdmx, fdmy, 0.0, 2.0);
-						draw_line(fdmx, fdmy, 0.0, lmx, lmy, 0.0, 2.0);
-						ldx = lmx;
-						ldy = lmy;
-					}
-					last_ret = 0;
-				}
-			}
-			pmy += ystep;
-			for (pmx = 220.0; pmx > -10.0; pmx -= xstep) {
-				pipret = point_in_object(object_num, -1, pmx, pmy);
-				if (pipret == 0) {
-					pipret = point_in_object(-1, object_num, pmx, pmy);
-					float an = 0;
-					for (an = 0.0; an < 360.0; an += 3.6) {
-						float rangle = toRad(an);
-						float rx = (PARAMETER[P_TOOL_DIAMETER].vdouble / 3.0 * 2.0) * cos(rangle);
-						float ry = (PARAMETER[P_TOOL_DIAMETER].vdouble / 3.0 * 2.0) * sin(rangle);
-						pipret += point_in_object(object_num, -1, pmx + rx, pmy + ry);
-					}
-					if (pipret == 0) {
-						if (last_ret == 0) {
-							fdmx = pmx;
-							fdmy = pmy;
-						}
-						lmx = pmx;
-						lmy = pmy;
-						last_ret = 1;
-					} else {
-						if (last_ret == 1) {
-							draw_line(ldx, ldy, 0.0, fdmx, fdmy, 0.0, 2.0);
-							draw_line(fdmx, fdmy, 0.0, lmx, lmy, 0.0, 2.0);
-							ldx = lmx;
-							ldy = lmy;
-						}
-						last_ret = 0;
-					}
-				} else {
-					if (last_ret == 1) {
-						draw_line(ldx, ldy, 0.0, fdmx, fdmy, 0.0, 2.0);
-						draw_line(fdmx, fdmy, 0.0, lmx, lmy, 0.0, 2.0);
-						ldx = lmx;
-						ldy = lmy;
-					}
-					last_ret = 0;
-				}
-			}
-		}
-	}
-*/
 
-	if (myOBJECTS[object_num].selection == 0) {
+	if (myOBJECTS[object_num].use == 0) {
 		return;
 	}
 
-	if (PARAMETER[P_V_NCDEBUG].vint == 1) {
+	if (PARAMETER[P_M_NCDEBUG].vint == 1) {
 		append_gcode("\n");
 		sprintf(cline, "(--------------------------------------------------)\n");
 		append_gcode(cline);
@@ -1129,7 +1034,7 @@ void object_draw (FILE *fd_out, int object_num) {
 			if (myOBJECTS[object_num].closed == 0 && (myLINES[lnum].type != TYPE_MTEXT || PARAMETER[P_M_TEXT].vint == 1)) {
 				draw_line2((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, 0.01, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.01, (PARAMETER[P_TOOL_DIAMETER].vdouble));
 			}
-			if (PARAMETER[P_V_NCDEBUG].vint == 11) {
+			if (PARAMETER[P_M_NCDEBUG].vint == 1) {
 				if (num == 0) {
 					if (lasermode == 1) {
 						if (tool_last != 5) {
@@ -1170,7 +1075,11 @@ void object_draw (FILE *fd_out, int object_num) {
 			if (num == 0) {
 				if (myLINES[lnum].type != TYPE_MTEXT || PARAMETER[P_M_TEXT].vint == 1) {
 					if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
-						glColor4f(1.0, 1.0, 1.0, 1.0);
+						if (object_num == PARAMETER[P_O_SELECT].vint) {
+							glColor4f(1.0, 0.0, 0.0, 1.0);
+						} else {
+							glColor4f(1.0, 1.0, 1.0, 1.0);
+						}
 						sprintf(tmp_str, "%i", object_num);
 						output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
 					}
@@ -1589,7 +1498,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		myOBJECTS[object_num].laser = lasermode;
 	}
 	tool_offset = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
-	if (myOBJECTS[object_num].selection == 0) {
+	if (myOBJECTS[object_num].use == 0) {
 		return;
 	}
 
@@ -1827,7 +1736,6 @@ void onExit (void) {
 
 void init_objects (void) {
 	int num2 = 0;
-	int num4b = 0;
 	int num5b = 0;
 	int object_num = 0;
 
@@ -1838,7 +1746,7 @@ void init_objects (void) {
 	}
 	myOBJECTS = malloc(sizeof(_OBJECT) * (line_last + 1));
 	for (object_num = 0; object_num < line_last; object_num++) {
-		myOBJECTS[object_num].selection = 1;
+		myOBJECTS[object_num].use = 1;
 		myOBJECTS[object_num].climb = 0;
 		myOBJECTS[object_num].force = 0;
 		myOBJECTS[object_num].offset = 0;
@@ -1889,6 +1797,26 @@ void init_objects (void) {
 	/* check if object inside or outside */
 	for (num5b = 0; num5b < object_last; num5b++) {
 		int flag = 0;
+
+		int lnum = myOBJECTS[num5b].line[0];
+		if (myLINES[lnum].used == 1) {
+			int pipret = 0;
+			double testx = myLINES[lnum].x1;
+			double testy = myLINES[lnum].y1;
+			pipret = point_in_object(-1, num5b, testx, testy);
+			if (pipret != 0) {
+				flag = 1;
+			}
+			pipret = 0;
+			testx = myLINES[lnum].x2;
+			testy = myLINES[lnum].y2;
+			pipret = point_in_object(-1, num5b, testx, testy);
+			if (pipret != 0) {
+				flag = 1;
+			}
+		}
+/*
+		int num4b = 0;
 		for (num4b = 0; num4b < line_last; num4b++) {
 			if (myOBJECTS[num5b].line[num4b] != 0) {
 				int lnum = myOBJECTS[num5b].line[num4b];
@@ -1910,6 +1838,7 @@ void init_objects (void) {
 				}
 			}
 		}
+*/
 		if (flag > 0) {
 			myOBJECTS[num5b].inside = 1;
 		} else if (myOBJECTS[num5b].line[0] != 0) {
@@ -1918,16 +1847,27 @@ void init_objects (void) {
 	}
 
 	for (object_num = 0; object_num < line_last; object_num++) {
-		if (strncmp(myOBJECTS[object_num].layer, "offset-inside", 13) == 0) {
-			if (myOBJECTS[object_num].inside == 0) {
-				redir_object(object_num);
-				myOBJECTS[object_num].inside = 1;
+		if (myOBJECTS[object_num].line[0] != 0) {
+			if (strncmp(myOBJECTS[object_num].layer, "offset-inside", 13) == 0) {
+				if (myOBJECTS[object_num].inside == 0) {
+					redir_object(object_num);
+					myOBJECTS[object_num].inside = 1;
+				}
+			} else if (strncmp(myOBJECTS[object_num].layer, "offset-outside", 14) == 0) {
+				if (myOBJECTS[object_num].inside == 1) {
+					redir_object(object_num);
+					myOBJECTS[object_num].inside = 0;
+				}
 			}
-		} else if (strncmp(myOBJECTS[object_num].layer, "offset-outside", 14) == 0) {
-			if (myOBJECTS[object_num].inside == 1) {
-				redir_object(object_num);
-				myOBJECTS[object_num].inside = 0;
-			}
+		}
+	}
+	PARAMETER[P_O_SELECT].vint = 0;
+	gtk_list_store_clear(ListStore[P_O_SELECT]);
+	for (object_num = 0; object_num < line_last; object_num++) {
+		if (myOBJECTS[object_num].line[0] != 0) {
+			char tmp_str[128];	
+			sprintf(tmp_str, "Object: #%i (%s)", object_num, myOBJECTS[object_num].layer);
+			gtk_list_store_insert_with_values(ListStore[P_O_SELECT], NULL, object_num, 0, NULL, 1, tmp_str, -1);
 		}
 	}
 }
@@ -3029,6 +2969,29 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 	} else if (PARAMETER[n].type == T_FILE) {
 		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
 	}
+
+	if (n == P_O_SELECT) {
+		int object_num = PARAMETER[P_O_SELECT].vint;
+		printf("select Object #%i\n", object_num);
+		PARAMETER[P_O_USE].vint = myOBJECTS[object_num].use;
+		PARAMETER[P_O_FORCE].vint = myOBJECTS[object_num].force;
+		PARAMETER[P_O_CLIMB].vint = myOBJECTS[object_num].climb;
+		PARAMETER[P_O_OFFSET].vint = myOBJECTS[object_num].offset;
+		PARAMETER[P_O_OVERCUT].vint = myOBJECTS[object_num].pocket;
+		PARAMETER[P_O_LASER].vint = myOBJECTS[object_num].laser;
+		PARAMETER[P_O_DEPTH].vdouble = myOBJECTS[object_num].depth;
+	} else 	if (n > P_O_SELECT) {
+		int object_num = PARAMETER[P_O_SELECT].vint;
+		printf("changed Object #%i\n", object_num);
+		myOBJECTS[object_num].use = PARAMETER[P_O_USE].vint;
+		myOBJECTS[object_num].force = PARAMETER[P_O_FORCE].vint;
+		myOBJECTS[object_num].climb = PARAMETER[P_O_CLIMB].vint;
+		myOBJECTS[object_num].offset = PARAMETER[P_O_OFFSET].vint;
+		myOBJECTS[object_num].pocket = PARAMETER[P_O_OVERCUT].vint;
+		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
+		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
+	}
+
 }
 
 void ParameterUpdate (void) {
@@ -3121,6 +3084,10 @@ GtkTreeModel *create_and_fill_model (void) {
 	gtk_tree_store_append(treestore, &childMaterial, &toplevel);
 	gtk_tree_store_set(treestore, &childMaterial, 0, "Material", -1);
 
+	GtkTreeIter childObjects;
+	gtk_tree_store_append(treestore, &childObjects, &toplevel);
+	gtk_tree_store_set(treestore, &childObjects, 0, "Objects", -1);
+
 	int n = 0;
 	for (n = 0; n < P_LAST; n++) {
 		char name_str[1024];
@@ -3139,6 +3106,8 @@ GtkTreeModel *create_and_fill_model (void) {
 			gtk_tree_store_append(treestore, &value, &childMachine);
 		} else if (strcmp(PARAMETER[n].group, "Material") == 0) {
 			gtk_tree_store_append(treestore, &value, &childMaterial);
+		} else if (strcmp(PARAMETER[n].group, "Objects") == 0) {
+			gtk_tree_store_append(treestore, &value, &childObjects);
 		}
 		if (PARAMETER[n].type == T_FLOAT) {
 			sprintf(tmp_str, "%f", PARAMETER[n].vfloat);
@@ -3192,7 +3161,7 @@ GtkTreeModel *create_and_fill_model (void) {
 					gtk_tree_store_set(treestore, &Object, 0, tmp_str, -1);
 
 					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].selection);
+					sprintf(tmp_str, "%i", myOBJECTS[num2].use);
 					gtk_tree_store_set(treestore, &value, 0, "Selected", 1, tmp_str, -1);
 
 					gtk_tree_store_append(treestore, &value, &Object);
@@ -3216,7 +3185,7 @@ GtkTreeModel *create_and_fill_model (void) {
 					gtk_tree_store_set(treestore, &value, 0, "Laser", 1, tmp_str, -1);
 
 					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].depth);
+					sprintf(tmp_str, "%f", myOBJECTS[num2].depth);
 					gtk_tree_store_set(treestore, &value, 0, "Depth", 1, tmp_str, -1);
 				}
 			}
@@ -3288,18 +3257,6 @@ int main (int argc, char *argv[]) {
 	SetupLoad();
 	ArgsRead(argc, argv);
 	SetupShow();
-
-	/* import DXF */
-	if (PARAMETER[P_V_DXF].vstr[0] != 0) {
-		dxf_read(PARAMETER[P_V_DXF].vstr);
-	}
-
-	init_objects();
-	DrawCheckSize();
-	DrawSetZero();
-//	LayerLoadList();
-
-
 
 	GtkWidget *hbox;
 	GtkWidget *vbox;
@@ -3447,6 +3404,11 @@ int main (int argc, char *argv[]) {
 	GtkWidget *MaterialBox = gtk_vbox_new(0, 0);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MaterialBox, MaterialLabel);
 
+	int ObjectsNum = 0;
+	GtkWidget *ObjectsLabel = gtk_label_new("Objects");
+	GtkWidget *ObjectsBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), ObjectsBox, ObjectsLabel);
+
 
 	int n = 0;
 	for (n = 0; n < P_LAST; n++) {
@@ -3552,15 +3514,32 @@ int main (int argc, char *argv[]) {
 			PARAMETER[n].l1 = 5;
 			PARAMETER[n].l2 = MaterialNum;
 			MaterialNum++;
+		} else if (strcmp(PARAMETER[n].group, "Objects") == 0) {
+			gtk_box_pack_start(GTK_BOX(ObjectsBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 6;
+			PARAMETER[n].l2 = ObjectsNum;
+			ObjectsNum++;
 		}
 	}
 
 
-	GtkWidget *TreeLabel = gtk_label_new("Objects");
+
+	/* import DXF */
+	if (PARAMETER[P_V_DXF].vstr[0] != 0) {
+		dxf_read(PARAMETER[P_V_DXF].vstr);
+	}
+	init_objects();
+	DrawCheckSize();
+	DrawSetZero();
+//	LayerLoadList();
+
+
+	GtkWidget *TreeLabel = gtk_label_new("Tree");
 	GtkWidget *TreeBox = gtk_vbox_new(0, 0);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), TreeBox, TreeLabel);
 	GtkWidget *TreeView = create_view_and_model();
 	gtk_box_pack_start(GTK_BOX(TreeBox), TreeView, 1, 1, 0);
+
 
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "A", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "B", -1);
@@ -3574,11 +3553,8 @@ int main (int argc, char *argv[]) {
 	g_signal_connect(G_OBJECT(ParamButton[P_TOOL_TABLE]), "clicked", GTK_SIGNAL_FUNC(handler_load_tooltable), NULL);
 	g_signal_connect(G_OBJECT(ParamButton[P_V_DXF]), "clicked", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
-
-
 	MaterialLoadList();
 	ToolLoadTable();
-
 
 	ParameterUpdate();
 	for (n = 0; n < P_LAST; n++) {
@@ -3669,6 +3645,7 @@ int main (int argc, char *argv[]) {
 	gtk_container_add (GTK_CONTAINER(window), vbox);
 
 	gtk_widget_show_all(window);
+
 
 	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
 	gtk_main ();

@@ -35,7 +35,6 @@ enum {
 	P_V_OFFSETS,
 	P_V_HELPDIA,
 	P_V_TEXTURES,
-	P_V_NCDEBUG,
 	P_V_ROTX,
 	P_V_ROTY,
 	P_V_ROTZ,
@@ -63,6 +62,7 @@ enum {
 	P_M_KNIFEMODE,
 	P_M_CLIMB,
 	P_M_TEXT,
+	P_M_NCDEBUG,
 	P_T_USE,
 	P_T_DEPTH,
 	P_T_LEN,
@@ -75,7 +75,15 @@ enum {
 	P_MAT_SELECT,
 	P_MAT_DIAMETER,
 	P_POST_CMD,
-	P_LAST
+	P_O_SELECT,
+	P_O_USE,
+	P_O_FORCE,
+	P_O_CLIMB,
+	P_O_OFFSET,
+	P_O_OVERCUT,
+	P_O_LASER,
+	P_O_DEPTH,
+	P_LAST,
 };
 
 extern PARA PARAMETER[];
