@@ -1056,8 +1056,8 @@ void mill_drill (double x, double y, double depth, int feed, char *comment) {
 		append_gcode(cline);
 	}
 	mill_z(1, depth);
-	mill_z(0, 0.0);
 	draw_line(x, y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+	mill_z(0, 0.0);
 }
 
 void mill_circle (int gcmd, double x, double y, double r, double depth, int feed, int inside, char *comment) {
@@ -1084,13 +1084,13 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 		float x1 = r * cos(angle1);
 		float y1 = r * sin(angle1);
 		if (inside == 1) {
-			if (gcmd == 2) {
+			if (gcmd == 3) {
 				draw_line(last_x, last_y, (float)mill_last_z, (float)x + x1, (float)y + y1, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			} else {
 				draw_line((float)x + x1, (float)y + y1, (float)mill_last_z, last_x, last_y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			}
 		} else {
-			if (gcmd == 3) {
+			if (gcmd == 2) {
 				draw_line(last_x, last_y, (float)mill_last_z, (float)x + x1, (float)y + y1, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			} else {
 				draw_line((float)x + x1, (float)y + y1, (float)mill_last_z, last_x, last_y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
@@ -1342,9 +1342,9 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 				mill_start = 1;
 			}
 			if (myOBJECTS[object_num].climb == 0) {
-				mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
-			} else {
 				mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+			} else {
+				mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
 			}
 			*next_x = myLINES[lnum].cx - r;
 			*next_y = myLINES[lnum].cy;
