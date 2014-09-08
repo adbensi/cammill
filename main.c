@@ -332,7 +332,7 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 			double testx = myLINES[lnum].x1;
 			double testy = myLINES[lnum].y1;
 			pipret = point_in_object(object_num, -1, testx, testy);
-			if (pipret == 0) {
+			if (pipret == 1) {
 				gluNextContour(tobj, GLU_INTERIOR);
 				for (num = 0; num < line_last; num++) {
 					if (myOBJECTS[num5].line[num] != 0) {
