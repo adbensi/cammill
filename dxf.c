@@ -315,11 +315,15 @@ void dxf_read (char *file) {
 						} else {
 							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
 						}
+
+
 					} else if (strcmp(last_0, "ELLIPSE") == 0) {
-						double c_x = atof(dxf_options[10]);
-						double c_y = atof(dxf_options[20]);
+						double p_x1 = atof(dxf_options[10]);
+						double p_y1 = atof(dxf_options[20]);
 						double e_x = atof(dxf_options[11]);
 						double e_y = atof(dxf_options[21]);
+						double p_a1 = 0.0;
+						double p_a2 = 360.0;
 						double ratio = atof(dxf_options[40]);
 						double r = e_x;
 						if (e_x < 0) {
@@ -332,38 +336,27 @@ void dxf_read (char *file) {
 							r = e_y * ratio;
 							ratio = 1.0 / ratio;
 						}
-//						printf("ELLIPSE: %f %f  %f %f  %f  %f\n", c_x, c_y, e_x, e_y, ratio, r);
-						double p_x1 = c_x;
-						double p_y1 = c_y;
-						double p_a1 = 0.0;
-						double p_a2 = 360.0;
+						if (p_a1 > p_a2) {
+							p_a2 += 360.0;
+						}
 						double angle2 = toRad(p_a1);
 						double x2 = r * cos(angle2);
 						double y2 = r * ratio * sin(angle2);
 						double last_x = (p_x1 + x2);
 						double last_y = (p_y1 + y2);
+						double first_x = last_x;
+						double first_y = last_y;
 						double an = 0;
-						double p_rast = (p_a2 - p_a1) / 20.0;
+						double p_rast = (p_a2 - p_a1) / 18.0;
 						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
 							double angle1 = toRad(an);
 							double x1 = r * cos(angle1);
 							double y1 = r * ratio * sin(angle1);
-							if (strcmp(last_0, "CIRCLE") == 0) {
-								add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r);
-							} else {
-								add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r);
-							}
+							add_line(TYPE_ELLIPSE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, 0.0);
 							last_x = p_x1 + x1;
 							last_y = p_y1 + y1;
 						}
-						double angle3 = toRad(p_a2);
-						double x3 = r * cos(angle3);
-						double y3 = r * sin(angle3);
-						if (strcmp(last_0, "CIRCLE") == 0) {
-							add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
-						} else {
-							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
-						}
+						add_line(TYPE_ELLIPSE, dxf_options[8], last_x, last_y, first_x, first_y, 0.0);
 					} else if (strcmp(last_0, "MTEXT") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
 						double p_y1 = atof(dxf_options[OPTION_MTEXT_Y]);
