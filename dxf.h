@@ -67,6 +67,8 @@ typedef struct{
 	double y1;
 	double x2;
 	double y2;
+	double cx;
+	double cy;
 	double opt;
 	int in_object;
 	int blockdata;
@@ -83,5 +85,5 @@ extern int line_last;
 
 void dxf_read (char *file);
 size_t trimline (char *out, size_t len, const char *str);
-void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt);
+void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt, double cx, double cy);
 

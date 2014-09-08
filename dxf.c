@@ -53,7 +53,7 @@ char dxf_typename[TYPE_LAST][16];
 int line_n = 1;
 int line_last = 0;
 
-void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt) {
+void add_line (int type, char *layer, double x1, double y1, double x2, double y2, double opt, double cx, double cy) {
 //	printf("## ADD_LINE (%i %i): %f,%f -> %f,%f (%s / %f)\n", line_n, line_last, x1, y1, x2, y2, layer, opt);
 	if (x1 > 10000.0 || y1 > 10000.0 || x2 > 10000.0 || y2 > 10000.0) {
 		printf("###### LINE TO BIG; %f %f -> %f %f ######\n", x1, y1, x2, y2);
@@ -90,6 +90,8 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		myLINES[line_n].y1 = y1;
 		myLINES[line_n].x2 = x2;
 		myLINES[line_n].y2 = y2;
+		myLINES[line_n].cx = cx;
+		myLINES[line_n].cy = cy;
 		myLINES[line_n].opt = opt;
 		myLINES[line_n].in_object = -1;
 		strcpy(myLINES[line_n].block, block_name);
@@ -211,7 +213,7 @@ void dxf_read (char *file) {
 						int last = line_last;
 						for (num = 0; num < last - 1; num++) {
 							if (myLINES[num].blockdata == 1 && myLINES[num].block[0] != 0 && strcmp(myLINES[num].block, block_name) == 0) {
-								add_line(myLINES[num].type, dxf_options[OPTION_LAYERNAME], myLINES[num].x1 * scale_x + block_x, myLINES[num].y1 * scale_y + block_y, myLINES[num].x2 * scale_x + block_x, myLINES[num].y2 * scale_y + block_y, myLINES[num].opt);
+								add_line(myLINES[num].type, dxf_options[OPTION_LAYERNAME], myLINES[num].x1 * scale_x + block_x, myLINES[num].y1 * scale_y + block_y, myLINES[num].x2 * scale_x + block_x, myLINES[num].y2 * scale_y + block_y, myLINES[num].opt, myLINES[num].cx * scale_x + block_x, myLINES[num].cy * scale_y + block_y);
 							}
 						}
 					} else if (strcmp(last_0, "LINE") == 0) {
@@ -219,7 +221,7 @@ void dxf_read (char *file) {
 						double p_y1 = atof(dxf_options[OPTION_LINE_Y1]);
 						double p_x2 = atof(dxf_options[OPTION_LINE_X2]);
 						double p_y2 = atof(dxf_options[OPTION_LINE_Y2]);
-						add_line(TYPE_LINE, dxf_options[8], p_x1, p_y1, p_x2, p_y2, 0.0);
+						add_line(TYPE_LINE, dxf_options[8], p_x1, p_y1, p_x2, p_y2, 0.0, 0.0, 0.0);
 					} else if (strcmp(last_0, "VERTEX") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_LINE_X1]);
 						double p_y1 = atof(dxf_options[OPTION_LINE_Y1]);
@@ -236,9 +238,9 @@ void dxf_read (char *file) {
 								if (radius * 2 < len) {
 									radius *= 2.0;
 								}
-								add_line(TYPE_ARC, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, radius);
+								add_line(TYPE_ARC, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, radius, 0.0, 0.0);
 							} else {
-								add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, 0.0);
+								add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, 0.0, 0.0, 0.0);
 							}
 						}
 						pl_last_x = p_x1;
@@ -246,7 +248,7 @@ void dxf_read (char *file) {
 						pl_flag = 1;
 					} else if (strcmp(last_0, "SEQEND") == 0) {
 						if (pl_closed == 1) {
-							add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, pl_first_x, pl_first_y, 0.0);
+							add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, pl_first_x, pl_first_y, 0.0, 0.0, 0.0);
 						}
 						pl_flag = 0;
 						pl_closed = 0;
@@ -262,7 +264,7 @@ void dxf_read (char *file) {
 						pl_last_y = p_y1;
 						dxf_options[42][0] = 0;
 						if (pl_closed == 1) {
-							add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, pl_first_x, pl_first_y, p_r1);
+							add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, pl_first_x, pl_first_y, p_r1, 0.0, 0.0);
 						}
 						lwpl_flag = 0;
 						pl_closed = 0;
@@ -272,7 +274,7 @@ void dxf_read (char *file) {
 						double p_y1 = atof(dxf_options[OPTION_POINT_Y]);
 						double p_x2 = atof(dxf_options[OPTION_POINT_X]);
 						double p_y2 = atof(dxf_options[OPTION_POINT_Y]);
-						add_line(TYPE_POINT, dxf_options[8], p_x1, p_y1, p_x2, p_y2, 0.0);
+						add_line(TYPE_POINT, dxf_options[8], p_x1, p_y1, p_x2, p_y2, 0.0, 0.0, 0.0);
 					} else if (strcmp(last_0, "SPLINE") == 0) {
 					} else if (strcmp(last_0, "ARC") == 0 || strcmp(last_0, "CIRCLE") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_ARC_X]);
@@ -300,9 +302,9 @@ void dxf_read (char *file) {
 							double x1 = r * cos(angle1);
 							double y1 = r * sin(angle1);
 							if (strcmp(last_0, "CIRCLE") == 0) {
-								add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r);
+								add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r, p_x1, p_y1);
 							} else {
-								add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r);
+								add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, r, p_x1, p_y1);
 							}
 							last_x = p_x1 + x1;
 							last_y = p_y1 + y1;
@@ -311,12 +313,10 @@ void dxf_read (char *file) {
 						double x3 = r * cos(angle3);
 						double y3 = r * sin(angle3);
 						if (strcmp(last_0, "CIRCLE") == 0) {
-							add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
+							add_line(TYPE_CIRCLE, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r, p_x1, p_y1);
 						} else {
-							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r);
+							add_line(TYPE_ARC, dxf_options[8], last_x, last_y, p_x1 + x3, p_y1 + y3, r, p_x1, p_y1);
 						}
-
-
 					} else if (strcmp(last_0, "ELLIPSE") == 0) {
 						double p_x1 = atof(dxf_options[10]);
 						double p_y1 = atof(dxf_options[20]);
@@ -352,11 +352,11 @@ void dxf_read (char *file) {
 							double angle1 = toRad(an);
 							double x1 = r * cos(angle1);
 							double y1 = r * ratio * sin(angle1);
-							add_line(TYPE_ELLIPSE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, 0.0);
+							add_line(TYPE_ELLIPSE, dxf_options[8], last_x, last_y, p_x1 + x1, p_y1 + y1, 0.0, 0.0, 0.0);
 							last_x = p_x1 + x1;
 							last_y = p_y1 + y1;
 						}
-						add_line(TYPE_ELLIPSE, dxf_options[8], last_x, last_y, first_x, first_y, 0.0);
+						add_line(TYPE_ELLIPSE, dxf_options[8], last_x, last_y, first_x, first_y, 0.0, 0.0, 0.0);
 					} else if (strcmp(last_0, "MTEXT") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_MTEXT_X]);
 						double p_y1 = atof(dxf_options[OPTION_MTEXT_Y]);
@@ -382,7 +382,7 @@ void dxf_read (char *file) {
 						double p_r1 = atof(dxf_options[42]);
 						if (lwpl_flag > 0) {
 							if (dxf_options[42][0] == 0) {
-								add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, 0.0);
+								add_line(TYPE_LINE, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, 0.0, 0.0, 0.0);
 							} else {
 								double chord = sqrt(pow(abs(pl_last_x - p_x1), 2.0) + pow(abs(pl_last_y - p_y1), 2.0));
 								double s = chord / 2.0 * p_r1;
@@ -391,7 +391,7 @@ void dxf_read (char *file) {
 								if (radius * 2 < len) {
 									radius *= 2.0;
 								}
-								add_line(TYPE_ARC, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, radius);
+								add_line(TYPE_ARC, dxf_options[8], pl_last_x, pl_last_y, p_x1, p_y1, radius, 0.0, 0.0);
 							}
 						} else {
 							pl_first_x = p_x1;

@@ -148,40 +148,36 @@ void line_invert (int num) {
 	myLINES[num].opt *= -1;
 }
 
+
 int point_in_object (int object_num, int object_ex, double testx, double testy) {
 	int num = 0;
-	int c = 0;
+	int c = 1;
 	int onum = object_num;
-
-	/* Workaround, set minimal offset so i hope no line is on the same level */
-	testx += 0.000123;
-	testy += 0.000123;
-
 	if (object_num == -1) {
 		for (onum = 0; onum < object_last; onum++) {
 			if (onum == object_ex) {
 				continue;
 			}
-			if (myOBJECTS[onum].closed == 0 || myLINES[onum].used == 0) {
+			if (myOBJECTS[onum].closed == 0) {
 				continue;
 			}
 			for (num = 0; num < line_last; num++) {
 				if (myOBJECTS[onum].line[num] != 0) {
 					int lnum = myOBJECTS[onum].line[num];
-					if (((myLINES[lnum].y2 > testy) != (myLINES[lnum].y1 > testy)) && (testx < (myLINES[lnum].x1 - myLINES[lnum].x2) * (testy - myLINES[lnum].y2) / (myLINES[lnum].y1 - myLINES[lnum].y2) + myLINES[lnum].x2)) {
+					if (((myLINES[lnum].y2 >= testy) != (myLINES[lnum].y1 >= testy)) && (testx <= (myLINES[lnum].x1 - myLINES[lnum].x2) * (testy - myLINES[lnum].y2) / (myLINES[lnum].y1 - myLINES[lnum].y2) + myLINES[lnum].x2)) {
 						c = !c;
 					}
 				}
 			}
 		}
 	} else {
-		if (myOBJECTS[onum].closed == 0 || myLINES[onum].used == 0) {
+		if (myOBJECTS[onum].closed == 0) {
 			return 0;
 		}
 		for (num = 0; num < line_last; num++) {
 			if (myOBJECTS[onum].line[num] != 0) {
 				int lnum = myOBJECTS[onum].line[num];
-				if (((myLINES[lnum].y2 > testy) != (myLINES[lnum].y1 > testy)) && (testx < (myLINES[lnum].x1 - myLINES[lnum].x2) * (testy - myLINES[lnum].y2) / (myLINES[lnum].y1 - myLINES[lnum].y2) + myLINES[lnum].x2)) {
+				if (((myLINES[lnum].y2 >= testy) != (myLINES[lnum].y1 >= testy)) && (testx <= (myLINES[lnum].x1 - myLINES[lnum].x2) * (testy - myLINES[lnum].y2) / (myLINES[lnum].y1 - myLINES[lnum].y2) + myLINES[lnum].x2)) {
 					c = !c;
 				}
 			}
@@ -304,24 +300,54 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 		}
 	}
 	gluTessNormal(tobj, 0, 0, 1);
-
 	gluTessBeginContour(tobj);
-	for (num = 0; num < line_last; num++) {
-		if (myOBJECTS[object_num].line[num] != 0) {
-			int lnum = myOBJECTS[object_num].line[num];
-			rect2[nverts][0] = (GLdouble)myLINES[lnum].x1;
-			rect2[nverts][1] = (GLdouble)myLINES[lnum].y1;
+	if (myLINES[myOBJECTS[object_num].line[0]].type == TYPE_CIRCLE) {
+		gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+		int lnum = myOBJECTS[object_num].line[0];
+		float an = 0.0;
+		float r = myLINES[lnum].opt;
+		float x = myLINES[lnum].cx;
+		float y = myLINES[lnum].cy;
+		float last_x = x + r;
+		float last_y = y;
+		for (an = 0.0; an < 360.0; an += 9.0) {
+			float angle1 = toRad(an);
+			float x1 = r * cos(angle1);
+			float y1 = r * sin(angle1);
+			rect2[nverts][0] = (GLdouble)x + x1;
+			rect2[nverts][1] = (GLdouble)y + y1;
 			rect2[nverts][2] = (GLdouble)depth;
 			gluTessVertex(tobj, rect2[nverts], rect2[nverts]);
 			if (depth != depth2) {
 				glBegin(GL_QUADS);
-				glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth);
-				glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth);
-				glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth2);
-				glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth2);
+				glVertex3f((float)last_x, (float)last_y, depth);
+				glVertex3f((float)x + x1, (float)y + y1, depth);
+				glVertex3f((float)x + x1, (float)y + y1, depth2);
+				glVertex3f((float)last_x, (float)last_y, depth2);
 				glEnd();
 			}
+			last_x = (float)x + x1;
+			last_y = (float)y + y1;
 			nverts++;
+		}
+	} else {
+		for (num = 0; num < line_last; num++) {
+			if (myOBJECTS[object_num].line[num] != 0) {
+				int lnum = myOBJECTS[object_num].line[num];
+				rect2[nverts][0] = (GLdouble)myLINES[lnum].x1;
+				rect2[nverts][1] = (GLdouble)myLINES[lnum].y1;
+				rect2[nverts][2] = (GLdouble)depth;
+				gluTessVertex(tobj, rect2[nverts], rect2[nverts]);
+				if (depth != depth2) {
+					glBegin(GL_QUADS);
+					glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth);
+					glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth);
+					glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth2);
+					glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth2);
+					glEnd();
+				}
+				nverts++;
+			}
 		}
 	}
 	int num5 = 0;
@@ -334,22 +360,77 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 			pipret = point_in_object(object_num, -1, testx, testy);
 			if (pipret == 1) {
 				gluNextContour(tobj, GLU_INTERIOR);
-				for (num = 0; num < line_last; num++) {
-					if (myOBJECTS[num5].line[num] != 0) {
-						int lnum = myOBJECTS[num5].line[num];
-						rect2[nverts][0] = (GLdouble)myLINES[lnum].x1;
-						rect2[nverts][1] = (GLdouble)myLINES[lnum].y1;
-						rect2[nverts][2] = (GLdouble)depth;
-						gluTessVertex(tobj, rect2[nverts], rect2[nverts]);
-						if (depth != depth2) {
-							glBegin(GL_QUADS);
-							glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth);
-							glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth);
-							glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth2);
-							glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth2);
-							glEnd();
+
+				if (myLINES[lnum].type == TYPE_CIRCLE) {
+					float an = 0.0;
+					float r = myLINES[lnum].opt;
+					float x = myLINES[lnum].cx;
+					float y = myLINES[lnum].cy;
+					float last_x = x + r;
+					float last_y = y;
+					if (myOBJECTS[object_num].climb == 1) {
+						for (an = 0.0; an < 360.0; an += 9.0) {
+	//					for (an = 360.0; an > 0.0; an -= 9.0) {
+							float angle1 = toRad(an);
+							float x1 = r * cos(angle1);
+							float y1 = r * sin(angle1);
+							rect2[nverts][0] = (GLdouble)x + x1;
+							rect2[nverts][1] = (GLdouble)y + y1;
+							rect2[nverts][2] = (GLdouble)depth;
+							gluTessVertex(tobj, rect2[nverts], rect2[nverts]);
+							if (depth != depth2) {
+								glBegin(GL_QUADS);
+								glVertex3f((float)last_x, (float)last_y, depth);
+								glVertex3f((float)x + x1, (float)y + y1, depth);
+								glVertex3f((float)x + x1, (float)y + y1, depth2);
+								glVertex3f((float)last_x, (float)last_y, depth2);
+								glEnd();
+							}
+							last_x = (float)x + x1;
+							last_y = (float)y + y1;
+							nverts++;
 						}
-						nverts++;
+					} else {
+	//					for (an = 0.0; an < 360.0; an += 9.0) {
+						for (an = 360.0; an > 0.0; an -= 9.0) {
+							float angle1 = toRad(an);
+							float x1 = r * cos(angle1);
+							float y1 = r * sin(angle1);
+							rect2[nverts][0] = (GLdouble)x + x1;
+							rect2[nverts][1] = (GLdouble)y + y1;
+							rect2[nverts][2] = (GLdouble)depth;
+							gluTessVertex(tobj, rect2[nverts], rect2[nverts]);
+							if (depth != depth2) {
+								glBegin(GL_QUADS);
+								glVertex3f((float)last_x, (float)last_y, depth);
+								glVertex3f((float)x + x1, (float)y + y1, depth);
+								glVertex3f((float)x + x1, (float)y + y1, depth2);
+								glVertex3f((float)last_x, (float)last_y, depth2);
+								glEnd();
+							}
+							last_x = (float)x + x1;
+							last_y = (float)y + y1;
+							nverts++;
+						}
+					}
+				} else {
+					for (num = 0; num < line_last; num++) {
+						if (myOBJECTS[num5].line[num] != 0) {
+							int lnum = myOBJECTS[num5].line[num];
+							rect2[nverts][0] = (GLdouble)myLINES[lnum].x1;
+							rect2[nverts][1] = (GLdouble)myLINES[lnum].y1;
+							rect2[nverts][2] = (GLdouble)depth;
+							gluTessVertex(tobj, rect2[nverts], rect2[nverts]);
+							if (depth != depth2) {
+								glBegin(GL_QUADS);
+								glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth);
+								glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth);
+								glVertex3f((float)myLINES[lnum].x2, (float)myLINES[lnum].y2, depth2);
+								glVertex3f((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, depth2);
+								glEnd();
+							}
+							nverts++;
+						}
 					}
 				}
 			}
@@ -497,9 +578,14 @@ void object_optimize_dir (int object_num) {
 				add_angle_offset(&check_x, &check_y, 0.01, alpha + 90);
 			}
 			pipret = point_in_object(object_num, -1, check_x, check_y);
-			if ((pipret == 1 && myOBJECTS[object_num].inside == 0) || (pipret == 0 && myOBJECTS[object_num].inside == 1)) {
-				redir_object(object_num);
+			if (myOBJECTS[object_num].force == 1) {
+				if ((pipret == 1 && myOBJECTS[object_num].offset == 2) || (pipret == 0 && myOBJECTS[object_num].offset == 1)) {
+					redir_object(object_num);
+				}
 			} else {
+				if ((pipret == 1 && myOBJECTS[object_num].inside == 0) || (pipret == 0 && myOBJECTS[object_num].inside == 1)) {
+					redir_object(object_num);
+				}
 			}
 		}
 	}
@@ -967,36 +1053,61 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 	mill_last_y = y;
 }
 
+void mill_circle (int gcmd, double x, double y, double r, double depth, int feed, int inside, char *comment) {
+	char tx_str[128];
+	char ty_str[128];
+	if (comment[0] != 0) {
+		sprintf(cline, "(%s)\n", comment);
+		append_gcode(cline);
+	}
+
+	mill_start = 1;
+
+	translateAxisX(x - r, tx_str);
+	translateAxisY(y, ty_str);
+	mill_xy(0, x - r, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+	mill_z(0, depth);
+	translateAxisX(x + r, tx_str);
+	sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+	append_gcode(cline);
+	translateAxisX(x - r, tx_str);
+	sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+	append_gcode(cline);
+
+	float an = 0.0;
+	float last_x = x + r;
+	float last_y = y;
+	for (an = 0.0; an <= 360.0; an += 18.0) {
+		float angle1 = toRad(an);
+		float x1 = r * cos(angle1);
+		float y1 = r * sin(angle1);
+		if (inside == 0) {
+			if (gcmd == 2) {
+				draw_line(last_x, last_y, (float)mill_last_z, (float)x + x1, (float)y + y1, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+			} else {
+				draw_line((float)x + x1, (float)y + y1, (float)mill_last_z, last_x, last_y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+			}
+		} else {
+			if (gcmd == 3) {
+				draw_line(last_x, last_y, (float)mill_last_z, (float)x + x1, (float)y + y1, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+			} else {
+				draw_line((float)x + x1, (float)y + y1, (float)mill_last_z, last_x, last_y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+			}
+		}
+		last_x = (float)x + x1;
+		last_y = (float)y + y1;
+	}
+}
+
 void object_draw (FILE *fd_out, int object_num) {
 	int num = 0;
-	int num2 = 0;
 	int last = 0;
 	int lasermode = 0;
+	double mill_depth_real = 0.0;
 	char tmp_str[1024];
-	// real milling depth
-	double mill_depth_real = PARAMETER[P_M_DEPTH].vdouble;
-	if (strncmp(myOBJECTS[object_num].layer, "depth-", 6) == 0) {
-		mill_depth_real = atof(myOBJECTS[object_num].layer + 5);
-	}
-	if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
-		lasermode = 1;
-	} else {
-		lasermode = myOBJECTS[object_num].laser;
-	}
-	for (num2 = 1; num2 < 100; num2++) {
-//		if (strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
-//			if (layer_force[num2] == 0) {
-//				layer_depth[num2] = mill_depth_real;
-//			} else {
-//				mill_depth_real = layer_depth[num2];
-//			}
-//		}
-	}
-	if (myOBJECTS[object_num].force == 1) {
-		mill_depth_real = myOBJECTS[object_num].depth;
-	} else {
-		myOBJECTS[object_num].depth = mill_depth_real;
-	}
+
+	lasermode = myOBJECTS[object_num].laser;
+	mill_depth_real = myOBJECTS[object_num].depth;
 
 	/* find last line in object */
 	for (num = 0; num < line_last; num++) {
@@ -1026,6 +1137,47 @@ void object_draw (FILE *fd_out, int object_num) {
 		append_gcode("(--------------------------------------------------)\n");
 		append_gcode("\n");
 	}
+
+/*
+	if (myLINES[myOBJECTS[object_num].line[0]].type == TYPE_CIRCLE) {
+		int lnum = myOBJECTS[object_num].line[0];
+		double an = 0.0;
+		double r = (float)myLINES[lnum].opt;
+		double x = (float)myLINES[lnum].cx;
+		double y = (float)myLINES[lnum].cy;
+
+		double last_x = x + r;
+		double last_y = y;
+		for (an = 0.0; an <= 360.0; an += 9.0) {
+			double angle1 = toRad(an);
+			double x1 = r * cos(angle1);
+			double y1 = r * sin(angle1);
+
+			glColor4f(0.0, 1.0, 0.0, 1.0);
+			draw_oline(last_x, last_y, (float)x + x1, (float)y + y1, mill_depth_real);
+
+			last_x = (float)x + x1;
+			last_y = (float)y + y1;
+		}
+		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+			if (object_num == PARAMETER[P_O_SELECT].vint) {
+				glColor4f(1.0, 0.0, 0.0, 1.0);
+			} else {
+				glColor4f(1.0, 1.0, 1.0, 1.0);
+			}
+			sprintf(tmp_str, "%i", object_num);
+			output_text_gl_center(tmp_str, (float)x + (float)r, (float)y, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
+			if (PARAMETER[P_V_HELPLINES].vint == 1) {
+				if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 0) {
+					object2poly(object_num, 0.0, mill_depth_real, 0);
+				} else if (myOBJECTS[object_num].inside == 1 && mill_depth_real > PARAMETER[P_M_DEPTH].vdouble) {
+					object2poly(object_num, mill_depth_real - 0.001, mill_depth_real - 0.001, 1);
+				}
+			}
+		}
+		return;
+	}
+*/
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			int lnum = myOBJECTS[object_num].line[num];
@@ -1095,8 +1247,6 @@ void object_draw (FILE *fd_out, int object_num) {
 	gluCylinder(quadratic, 0.0, 5.0, 5.0, 32, 1);
 	glPopMatrix();
 */
-
-
 
 	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
@@ -1172,6 +1322,29 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 	if (myLINES[last].type == TYPE_MTEXT && PARAMETER[P_M_TEXT].vint == 0) {
 		return;
 	}
+
+/*
+	if (myLINES[myOBJECTS[object_num].line[0]].type == TYPE_CIRCLE) {
+		int lnum = myOBJECTS[object_num].line[0];
+		double r = myLINES[lnum].opt;
+		if (r < 0.0) {
+			r *= -1;
+		}
+		if (offset == 1) {
+			r -= tool_offset;
+		} else if (offset == 2) {
+			r += tool_offset;
+		}
+		if (myOBJECTS[object_num].climb == 0) {
+			mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+		} else {
+			mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+		}
+		*next_x = myLINES[lnum].cx - r;
+		*next_y = myLINES[lnum].cy;
+		return;
+	}
+*/
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			if (num == 0) {
@@ -1435,16 +1608,13 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 
 
 void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *next_y) {
-	int num2 = 0;
 	double depth = 0.0;
 	double tool_offset = 0.0;
 	int overcut = 0;
 	int lasermode = 0;
 	int tangencialmode = 0;
 	int offset = 0;
-	if (PARAMETER[P_M_OVERCUT].vint == 1) {
-		overcut = 1;
-	}
+	double mill_depth_real = 0.0;
 	if (PARAMETER[P_M_LASERMODE].vint == 1) {
 		lasermode = 1;
 		PARAMETER[P_M_KNIFEMODE].vint = 0;
@@ -1453,50 +1623,15 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		tangencialmode = 1;
 	}
 
-	// real milling depth
-	double mill_depth_real = PARAMETER[P_M_DEPTH].vdouble;
-	if (strncmp(myOBJECTS[object_num].layer, "depth-", 6) == 0) {
-		mill_depth_real = atof(myOBJECTS[object_num].layer + 5);
-	}
-	if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
-		lasermode = 1;
-	}
 	if (strncmp(myOBJECTS[object_num].layer, "knife", 5) == 0) {
 		tangencialmode = 1;
 	}
-	for (num2 = 1; num2 < 100; num2++) {
-//		if (shapeEV[num2].Label != NULL && strcmp(shapeEV[num2].Label, myOBJECTS[object_num].layer) == 0) {
-//			if (layer_force[num2] == 0) {
-//				layer_depth[num2] = mill_depth_real;
-//			} else {
-//				mill_depth_real = layer_depth[num2];
-//			}
-//		}
-	}
 
-	if (myOBJECTS[object_num].closed == 1) {
-		if (myOBJECTS[object_num].inside == 1) {
-			offset = 1;
-		} else {
-			offset = 2;
-		}
-	} else {
-		offset = 0;
-	}
-	if (myOBJECTS[object_num].force == 1) {
-		mill_depth_real = myOBJECTS[object_num].depth;
-		if (myOBJECTS[object_num].offset == 1) {
-			redir_object(object_num);
-		} else if (myOBJECTS[object_num].offset == 2) {
-			offset = 0;
-		}
-		overcut = myOBJECTS[object_num].overcut;
-		lasermode = myOBJECTS[object_num].laser;
-	} else {
-		myOBJECTS[object_num].depth = mill_depth_real;
-		myOBJECTS[object_num].overcut = overcut;
-		myOBJECTS[object_num].laser = lasermode;
-	}
+	offset = myOBJECTS[object_num].offset;
+	mill_depth_real = myOBJECTS[object_num].depth;
+	overcut = myOBJECTS[object_num].overcut;
+	lasermode = myOBJECTS[object_num].laser;
+
 	tool_offset = PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0;
 	if (myOBJECTS[object_num].use == 0) {
 		return;
@@ -1797,7 +1932,7 @@ void init_objects (void) {
 	/* check if object inside or outside */
 	for (num5b = 0; num5b < object_last; num5b++) {
 		int flag = 0;
-
+/*
 		int lnum = myOBJECTS[num5b].line[0];
 		if (myLINES[lnum].used == 1) {
 			int pipret = 0;
@@ -1815,7 +1950,7 @@ void init_objects (void) {
 				flag = 1;
 			}
 		}
-/*
+*/
 		int num4b = 0;
 		for (num4b = 0; num4b < line_last; num4b++) {
 			if (myOBJECTS[num5b].line[num4b] != 0) {
@@ -1838,7 +1973,7 @@ void init_objects (void) {
 				}
 			}
 		}
-*/
+
 		if (flag > 0) {
 			myOBJECTS[num5b].inside = 1;
 		} else if (myOBJECTS[num5b].line[0] != 0) {
@@ -1861,6 +1996,7 @@ void init_objects (void) {
 			}
 		}
 	}
+
 	PARAMETER[P_O_SELECT].vint = 0;
 	gtk_list_store_clear(ListStore[P_O_SELECT]);
 	for (object_num = 0; object_num < line_last; object_num++) {
@@ -2160,10 +2296,28 @@ void mainloop (void) {
 
 	for (object_num = 0; object_num < object_last; object_num++) {
 		if (myOBJECTS[object_num].force == 0) {
-			myOBJECTS[object_num].depth = PARAMETER[P_T_DEPTH].vdouble;
+			myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;
 			myOBJECTS[object_num].overcut = PARAMETER[P_M_OVERCUT].vint;
 			myOBJECTS[object_num].laser = PARAMETER[P_M_LASERMODE].vint;
 			myOBJECTS[object_num].climb = PARAMETER[P_M_CLIMB].vint;
+			if (PARAMETER[P_M_LASERMODE].vint == 1) {
+				myOBJECTS[object_num].laser = 1;
+			}
+			if (strncmp(myOBJECTS[object_num].layer, "depth-", 6) == 0) {
+				myOBJECTS[object_num].depth = atof(myOBJECTS[object_num].layer + 5);
+			}
+			if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
+				myOBJECTS[object_num].laser = 1;
+			}
+			if (myOBJECTS[object_num].closed == 1) {
+				if (myOBJECTS[object_num].inside == 1) {
+					myOBJECTS[object_num].offset = 1; // INSIDE
+				} else {
+					myOBJECTS[object_num].offset = 2; // OUTSIDE
+				}
+			} else {
+				myOBJECTS[object_num].offset = 0; // NONE
+			}
 		}
 	}
 
@@ -2486,6 +2640,12 @@ void DrawCheckSize (void) {
 			if (max_y < myLINES[num2].y2) {
 				max_y = myLINES[num2].y2;
 			}
+			if (myLINES[num2].type == TYPE_CIRCLE && max_y < myLINES[num2].cy + myLINES[num2].opt) {
+				max_y = myLINES[num2].cy;
+			}
+			if (myLINES[num2].type == TYPE_CIRCLE && max_y < myLINES[num2].cy + myLINES[num2].opt) {
+				max_y = myLINES[num2].cy;
+			}
 			if (min_x > myLINES[num2].x1) {
 				min_x = myLINES[num2].x1;
 			}
@@ -2497,6 +2657,12 @@ void DrawCheckSize (void) {
 			}
 			if (min_y > myLINES[num2].y2) {
 				min_y = myLINES[num2].y2;
+			}
+			if (myLINES[num2].type == TYPE_CIRCLE && min_y > myLINES[num2].cy - myLINES[num2].opt) {
+				min_y = myLINES[num2].cy;
+			}
+			if (myLINES[num2].type == TYPE_CIRCLE && min_y > myLINES[num2].cy - myLINES[num2].opt) {
+				min_y = myLINES[num2].cy;
 			}
 		}
 	}
@@ -2511,6 +2677,8 @@ void DrawSetZero (void) {
 			myLINES[num].y1 -= min_y;
 			myLINES[num].x2 -= min_x;
 			myLINES[num].y2 -= min_y;
+			myLINES[num].cx -= min_x;
+			myLINES[num].cy -= min_y;
 		}
 	}
 }
@@ -2586,6 +2754,9 @@ void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
 			tmp = myLINES[num].x2;
 			myLINES[num].x2 = myLINES[num].y2;
 			myLINES[num].y2 = size_x - tmp;
+			tmp = myLINES[num].cx;
+			myLINES[num].cx = myLINES[num].cy;
+			myLINES[num].cy = size_x - tmp;
 		}
 	}
 	init_objects();
@@ -2969,29 +3140,27 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 	} else if (PARAMETER[n].type == T_FILE) {
 		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
 	}
-
 	if (n == P_O_SELECT) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
-		printf("select Object #%i\n", object_num);
 		PARAMETER[P_O_USE].vint = myOBJECTS[object_num].use;
 		PARAMETER[P_O_FORCE].vint = myOBJECTS[object_num].force;
 		PARAMETER[P_O_CLIMB].vint = myOBJECTS[object_num].climb;
 		PARAMETER[P_O_OFFSET].vint = myOBJECTS[object_num].offset;
-		PARAMETER[P_O_OVERCUT].vint = myOBJECTS[object_num].pocket;
+		PARAMETER[P_O_OVERCUT].vint = myOBJECTS[object_num].overcut;
+		PARAMETER[P_O_POCKET].vint = myOBJECTS[object_num].pocket;
 		PARAMETER[P_O_LASER].vint = myOBJECTS[object_num].laser;
 		PARAMETER[P_O_DEPTH].vdouble = myOBJECTS[object_num].depth;
-	} else 	if (n > P_O_SELECT) {
+	} else if (n > P_O_SELECT) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
-		printf("changed Object #%i\n", object_num);
 		myOBJECTS[object_num].use = PARAMETER[P_O_USE].vint;
 		myOBJECTS[object_num].force = PARAMETER[P_O_FORCE].vint;
 		myOBJECTS[object_num].climb = PARAMETER[P_O_CLIMB].vint;
 		myOBJECTS[object_num].offset = PARAMETER[P_O_OFFSET].vint;
-		myOBJECTS[object_num].pocket = PARAMETER[P_O_OVERCUT].vint;
+		myOBJECTS[object_num].overcut = PARAMETER[P_O_OVERCUT].vint;
+		myOBJECTS[object_num].pocket = PARAMETER[P_O_POCKET].vint;
 		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
 	}
-
 }
 
 void ParameterUpdate (void) {
@@ -3540,6 +3709,9 @@ int main (int argc, char *argv[]) {
 	GtkWidget *TreeView = create_view_and_model();
 	gtk_box_pack_start(GTK_BOX(TreeBox), TreeView, 1, 1, 0);
 
+	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "None", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Inside", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Outside", -1);
 
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "A", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "B", -1);

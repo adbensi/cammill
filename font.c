@@ -652,7 +652,7 @@ float output_char_dxf (char c, float x, float y, float z, float s) {
 			px = simplex[n][pn];
 			py = simplex[n][pn + 1];
 			if (pn != 2 && px != -1 && last_px != -1) {
-				add_line(TYPE_MTEXT, "text", x + (float)last_px * s, y + (float)last_py * s, x + (float)px * s, y + (float)py * s, 0);
+				add_line(TYPE_MTEXT, "text", x + (float)last_px * s, y + (float)last_py * s, x + (float)px * s, y + (float)py * s, 0, 0.0, 0.0);
 			}
 			last_px = px;
 			last_py = py;

@@ -81,6 +81,7 @@ enum {
 	P_O_CLIMB,
 	P_O_OFFSET,
 	P_O_OVERCUT,
+	P_O_POCKET,
 	P_O_LASER,
 	P_O_DEPTH,
 	P_LAST,
