@@ -1038,7 +1038,6 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		sprintf(cline, "G00 %s %s\n", tx_str, ty_str);
 		append_gcode(cline);
 	}
-
 	if (gcmd == 0) {
 		move_distance_xy += set_positive(get_len(mill_last_x, mill_last_y, x, y));
 	} else {
@@ -1099,6 +1098,7 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 		last_x = (float)x + x1;
 		last_y = (float)y + y1;
 	}
+	mill_distance_xy += set_positive(r * 2 * PI);
 }
 
 void object_draw (FILE *fd_out, int object_num) {
