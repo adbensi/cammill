@@ -40,6 +40,8 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtkgl.h>
+#include <gtksourceview/gtksourceview.h>
+#include <gtksourceview/gtksourcelanguagemanager.h>
 #include <libgen.h>
 #include <math.h>
 #include <stdio.h>
@@ -3791,7 +3793,15 @@ int main (int argc, char *argv[]) {
 
 	StatusBar = gtk_statusbar_new();
 
-	gCodeView = gtk_text_view_new();
+//	gCodeView = gtk_text_view_new();
+	gCodeView = gtk_source_view_new();
+	gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(gCodeView), TRUE);
+	gtk_source_view_set_highlight_current_line(GTK_SOURCE_VIEW(gCodeView), TRUE);
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(gCodeView), TRUE);
+	gtk_source_view_set_right_margin_position(GTK_SOURCE_VIEW(gCodeView), 80);
+	gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(gCodeView), TRUE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(gCodeView), GTK_WRAP_WORD_CHAR);
+
 	GtkWidget *textWidget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(textWidget), gCodeView);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(textWidget), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
@@ -3800,6 +3810,24 @@ int main (int argc, char *argv[]) {
 	const gchar *text = "Hallo Text";
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
 	gtk_text_buffer_set_text(buffer, text, -1);
+
+
+	GtkSourceLanguageManager *manager = gtk_source_language_manager_get_default();
+	const gchar * const *current;
+	int i;
+	current = gtk_source_language_manager_get_search_path(manager);
+	for (i = 0; current[i] != NULL; i++) {}
+	gchar **lang_dirs;
+	lang_dirs = g_new0(gchar *, i + 2);
+	for (i = 0; current[i] != NULL; i++) {
+		lang_dirs[i] = g_build_filename(current[i], NULL);
+	}
+	lang_dirs[i] = g_build_filename(".", NULL);
+	gtk_source_language_manager_set_search_path(manager, lang_dirs);
+	g_strfreev(lang_dirs);
+	GtkSourceLanguage *ngclang = gtk_source_language_manager_get_language(manager, ".ngc");
+	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), ngclang);
+
 
 
 	GtkWidget *NbBox2 = gtk_table_new(2, 2, FALSE);
