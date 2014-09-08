@@ -1053,6 +1053,21 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 	mill_last_y = y;
 }
 
+void mill_drill (double x, double y, double depth, int feed, char *comment) {
+	char tx_str[128];
+	char ty_str[128];
+	if (comment[0] != 0) {
+		sprintf(cline, "(%s)\n", comment);
+		append_gcode(cline);
+	}
+	mill_start = 1;
+	translateAxisX(x, tx_str);
+	translateAxisY(y, ty_str);
+	mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+	mill_z(0, depth);
+	draw_line(x, y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+}
+
 void mill_circle (int gcmd, double x, double y, double r, double depth, int feed, int inside, char *comment) {
 	char tx_str[128];
 	char ty_str[128];
@@ -1060,11 +1075,10 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 		sprintf(cline, "(%s)\n", comment);
 		append_gcode(cline);
 	}
-
 	mill_start = 1;
-
 	translateAxisX(x - r, tx_str);
 	translateAxisY(y, ty_str);
+
 	mill_xy(0, x - r, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 	mill_z(0, depth);
 	translateAxisX(x + r, tx_str);
@@ -1073,7 +1087,6 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	translateAxisX(x - r, tx_str);
 	sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
 	append_gcode(cline);
-
 	float an = 0.0;
 	float last_x = x + r;
 	float last_y = y;
@@ -1329,18 +1342,24 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 		if (r < 0.0) {
 			r *= -1;
 		}
-		if (offset == 2) {
-			r -= tool_offset;
-		} else if (offset == 1) {
-			r += tool_offset;
-		}
-		if (myOBJECTS[object_num].climb == 0) {
-			mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+		if (r > PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0) {
+			if (offset == 2) {
+				r -= tool_offset;
+			} else if (offset == 1) {
+				r += tool_offset;
+			}
+			if (myOBJECTS[object_num].climb == 0) {
+				mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+			} else {
+				mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+			}
+			*next_x = myLINES[lnum].cx - r;
+			*next_y = myLINES[lnum].cy;
 		} else {
-			mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+			mill_drill(myLINES[lnum].cx, myLINES[lnum].cy, depth, PARAMETER[P_M_FEEDRATE].vint, "");
+			*next_x = myLINES[lnum].cx;
+			*next_y = myLINES[lnum].cy;
 		}
-		*next_x = myLINES[lnum].cx - r;
-		*next_y = myLINES[lnum].cy;
 		return;
 	}
 
