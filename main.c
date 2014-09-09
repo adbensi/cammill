@@ -55,6 +55,8 @@
 #include <dxf.h>
 #include <font.h>
 #include <setup.h>
+#include <postprocessor.h>
+
 
 void texture_init (void);
 GLuint texture_load (char *filename);
@@ -128,7 +130,26 @@ double move_distance_z = 0.0;
 GtkWidget *window;
 GtkWidget *dialog;
 
+
+
+
+
 void append_gcode (char *text) {
+#ifdef USE_POSTCAM
+	return;
+#endif
+	if (gcode_buffer == NULL) {
+		int len = strlen(text) + 1;
+		gcode_buffer = malloc(len);
+		gcode_buffer[0] = 0;
+	} else {
+		int len = strlen(gcode_buffer) + strlen(text) + 1;
+		gcode_buffer = realloc(gcode_buffer, len);
+	}
+	strcat(gcode_buffer, text);
+}
+
+void append_gcode_new (char *text) {
 	if (gcode_buffer == NULL) {
 		int len = strlen(text) + 1;
 		gcode_buffer = malloc(len);
@@ -1025,9 +1046,44 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 			if (gcmd == 1) {
 				sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
 				append_gcode(cline);
+#ifdef USE_POSTCAM
+				postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+				postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+				postcam_var_push_double("currentX", mill_last_x);
+				postcam_var_push_double("currentY", mill_last_y);
+				postcam_var_push_double("currentZ", mill_last_z);
+				postcam_var_push_double("endX", x);
+				postcam_var_push_double("endY", y);
+				postcam_var_push_double("endZ", mill_last_z);
+				postcam_call_function("OnMove");
+#endif
 			} else if (gcmd == 2 || gcmd == 3) {
 				sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
 				append_gcode(cline);
+#ifdef USE_POSTCAM
+				postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+				postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+				postcam_var_push_double("currentX", mill_last_x);
+				postcam_var_push_double("currentY", mill_last_y);
+				postcam_var_push_double("currentZ", mill_last_z);
+				postcam_var_push_double("endX", x);
+				postcam_var_push_double("endY", y);
+				postcam_var_push_double("endZ", mill_last_z);
+				if (gcmd == 2) {
+					postcam_var_push_double("arcAngle", 1.0);
+				} else {
+					postcam_var_push_double("arcAngle", -1.0);
+				}
+				double e = x - mill_last_x;
+				double f = y - mill_last_y;
+				double p = sqrt(e*e + f*f);
+				double k = (p*p + r*r - r*r) / (2 * p);
+				double c1x = mill_last_x + e * k/p + (f/p) * sqrt(r * r - k * k);
+				double c1y = mill_last_y + f * k/p - (e/p) * sqrt(r * r - k * k);
+				postcam_var_push_double("arcCentreX", c1x);
+				postcam_var_push_double("arcCentreY", c1y);
+				postcam_call_function("OnArc");
+#endif
 			}
 		}
 	} else {
@@ -1039,6 +1095,15 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		translateAxisY(y, ty_str);
 		sprintf(cline, "G00 %s %s\n", tx_str, ty_str);
 		append_gcode(cline);
+#ifdef USE_POSTCAM
+		postcam_var_push_double("currentX", mill_last_x);
+		postcam_var_push_double("currentY", mill_last_y);
+		postcam_var_push_double("currentZ", mill_last_z);
+		postcam_var_push_double("endX", x);
+		postcam_var_push_double("endY", y);
+		postcam_var_push_double("endZ", mill_last_z);
+		postcam_call_function("OnRapid");
+#endif
 	}
 	if (gcmd == 0) {
 		move_distance_xy += set_positive(get_len(mill_last_x, mill_last_y, x, y));
@@ -1281,11 +1346,23 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
 			sprintf(cline, "M06 T%i (Change-Tool)\n", PARAMETER[P_TOOL_NUM].vint);
 			append_gcode(cline);
+#ifdef USE_POSTCAM
+			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
+			char tmp_str[1024];
+			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
+			postcam_var_push_string("toolName", tmp_str);
+			postcam_var_push_double("endZ", mill_last_z);
+			postcam_call_function("OnToolChange");
+#endif
 		}
 		tool_last = PARAMETER[P_TOOL_NUM].vint;
-		sprintf(cline, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED_MAX].vint);
+		sprintf(cline, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED].vint);
 		append_gcode(cline);
 		append_gcode("\n");
+
+#ifdef USE_POSTCAM
+		postcam_call_function("OnSpindleCW");
+#endif
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 	}
@@ -2312,6 +2389,17 @@ void mainloop (void) {
 	append_gcode(cline);
 	append_gcode("\n");
 
+
+#ifdef USE_POSTCAM
+	postcam_var_push_string("fileName", "/tmp/dd");
+	postcam_var_push_string("postName", "EMC");
+	postcam_var_push_string("date", "now");
+	postcam_var_push_double("metric", 1.0);
+	postcam_call_function("OnInit");
+	postcam_var_push_string("commentText", "cam post test");
+	postcam_call_function("OnComment");
+#endif
+
 	for (object_num = 0; object_num < object_last; object_num++) {
 		if (myOBJECTS[object_num].force == 0) {
 			myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;
@@ -2487,6 +2575,13 @@ void mainloop (void) {
 	/* exit gcode */
 	append_gcode("M05 (Spindle-/Laser-Off)\n");
 	append_gcode("M02 (Programm-End)\n");
+
+#ifdef USE_POSTCAM
+	postcam_call_function("OnSpindleOff");
+	postcam_call_function("OnFinish");
+#endif
+
+
 	GtkTextIter start, end;
 	GtkTextBuffer *buffer;
 
@@ -2509,7 +2604,9 @@ void mainloop (void) {
 			fprintf(stderr, "Can not open file: %s\n", PARAMETER[P_MFILE].vstr);
 			exit(0);
 		}
+#ifndef USE_POSTCAM
 		SetupShowGcode(fd_out);
+#endif
 		fprintf(fd_out, "%s", gcode_buffer);
 		fclose(fd_out);
 
@@ -3764,6 +3861,8 @@ int main (int argc, char *argv[]) {
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "B", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
 
+	gtk_list_store_insert_with_values(ListStore[P_H_POST], NULL, -1, 0, NULL, 1, "EMC", -1);
+
 /*
 	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "astrology", -1);
 	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cursive", -1);
@@ -3921,11 +4020,16 @@ int main (int argc, char *argv[]) {
 
 	gtk_widget_show_all(window);
 
+#ifdef USE_POSTCAM
+	postcam_init_lua();
+#endif
 
 	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
 	gtk_main ();
 
-
+#ifdef USE_POSTCAM
+	postcam_exit_lua();
+#endif
 
 	return 0;
 }

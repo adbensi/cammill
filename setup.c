@@ -49,6 +49,7 @@ PARA PARAMETER[] = {
 	{"Tangencial-Axis","Machine",	"-ta",	T_SELECT,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 1, "axis that used as tangencial axis", 0, 0},
 	{"Tangencial-MaxAngle","Machine", "-tm",T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1, 1, "maximum angle before push up the knife", 0, 0},
 	{"Fastmove-Speed","Machine",	 "-fs",	T_INT,		1000,	0.0,	0.0,	"",	0.0,	1.0,	10000.0,	"mm/min", 1, 0, "fast-move speed of the maschine, to calculate the milling-time", 0, 0},
+	{"Post",	"Machine",	"-mp",	T_SELECT,	0,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0, 1, "post-processor selection", 0, 0},
 	{"Output-File",	"Milling",	"-o",	T_FILE,		0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, "gcode-output filename", 0, 0},
 	{"Select",	"Material",	"-ms",	T_SELECT,	1,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0, 1, "material selection to calculate feedrate and spindlespeed", 0, 0},
 	{"Rotary/Diameter","Material",	"-md",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.01,	0.01,	300.0,		"mm", 1, 1, "diameter of the material for the rotary-mode", 0, 0},

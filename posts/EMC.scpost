@@ -1,0 +1,78 @@
+
+function OnAbout(event)
+	ctrl = event:GetTextCtrl()
+	ctrl:AppendText("EMC post processor\n")
+end
+
+function OnInit()
+	post.Text("G21\n")
+	post.Text("G40 G90\n")
+	post.ModalNumber("F", feedRate)
+	post.Eol()
+end
+
+function OnFinish()
+	post.Text("M02\n")
+end
+
+function OnRapid()
+	post.ModalText("G00")
+	post.ModalNumber(" X", endX)
+	post.ModalNumber(" Y", endY)
+	post.ModalNumber(" Z", endZ)
+	post.Eol()
+end
+
+function OnMove()
+	post.ModalText("G01")
+	post.ModalNumber(" X", endX)
+	post.ModalNumber(" Y", endY)
+	post.ModalNumber(" Z", endZ)
+	post.Eol()
+end
+
+function OnArc()
+	if(arcAngle <0) then
+		post.ModalText("G03")
+	else
+		post.ModalText("G02")
+	end
+	post.NonModalNumber(" X", endX)
+	post.NonModalNumber(" Y", endY)
+	post.ModalNumber(" Z", endZ)
+	post.Text(" I")
+	post.Number((arcCentreX - currentX))
+	post.Text(" J")
+	post.Number((arcCentreY - currentY))
+	post.Eol()
+end
+
+function OnSpindleCW()
+	post.Text("M03")
+	post.ModalNumber(" S", spindleSpeed)
+	post.Eol()
+end
+
+function OnSpindleCCW()
+	post.Text("M04")
+	post.ModalNumber(" S", spindleSpeed)
+	post.Eol()
+end
+
+function OnSpindleOff()
+	post.Text("M05")
+	post.Eol()
+end
+
+function OnNewOperation()
+end
+
+function OnComment()
+end
+
+function OnToolChange()
+	post.ModalNumber("M6 T", tool)
+	post.Eol()
+	post.ModalNumber("G43 H", tool)
+	post.Eol()
+end
