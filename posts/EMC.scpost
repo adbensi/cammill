@@ -39,11 +39,8 @@ function OnArc()
 	end
 	post.NonModalNumber(" X", endX)
 	post.NonModalNumber(" Y", endY)
+	post.ModalNumber(" R", arcRadius)
 	post.ModalNumber(" Z", endZ)
-	post.Text(" I")
-	post.Number((arcCentreX - currentX))
-	post.Text(" J")
-	post.Number((arcCentreY - currentY))
 	post.Eol()
 end
 

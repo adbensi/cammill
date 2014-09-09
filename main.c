@@ -47,6 +47,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
@@ -856,10 +858,26 @@ void mill_z (int gcmd, double z) {
 			glEnd();
 		}
 	}
+#ifdef USE_POSTCAM
+	postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+	postcam_var_push_double("currentX", mill_last_x);
+	postcam_var_push_double("currentY", mill_last_y);
+	postcam_var_push_double("currentZ", mill_last_z);
+	postcam_var_push_double("endX", mill_last_x);
+	postcam_var_push_double("endY", mill_last_y);
+	postcam_var_push_double("endZ", z);
+#endif
 	if (gcmd == 0) {
 		move_distance_z += set_positive(z - mill_last_z);
+#ifdef USE_POSTCAM
+		postcam_call_function("OnRapid");
+#endif
 	} else {
 		mill_distance_z += set_positive(z - mill_last_z);
+#ifdef USE_POSTCAM
+		postcam_call_function("OnMove");
+#endif
 	}
 	mill_last_z = z;
 }
@@ -1074,6 +1092,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 				} else {
 					postcam_var_push_double("arcAngle", -1.0);
 				}
+				postcam_var_push_double("arcRadius", r);
 				double e = x - mill_last_x;
 				double f = y - mill_last_y;
 				double p = sqrt(e*e + f*f);
@@ -1142,6 +1161,32 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	translateAxisY(y, ty_str);
 	sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
 	append_gcode(cline);
+
+
+#ifdef USE_POSTCAM
+				postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+				postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+				postcam_var_push_double("currentX", mill_last_x);
+				postcam_var_push_double("currentY", mill_last_y);
+				postcam_var_push_double("currentZ", mill_last_z);
+				postcam_var_push_double("endX", x + r);
+				postcam_var_push_double("endY", y);
+				postcam_var_push_double("endZ", mill_last_z);
+				if (gcmd == 2) {
+					postcam_var_push_double("arcAngle", 1.0);
+				} else {
+					postcam_var_push_double("arcAngle", -1.0);
+				}
+				postcam_var_push_double("arcRadius", r);
+				postcam_call_function("OnArc");
+
+				postcam_var_push_double("endX", x - r);
+				postcam_call_function("OnArc");
+
+#endif
+
+
+
 	float an = 0.0;
 	float last_x = x + r;
 	float last_y = y;
@@ -3861,42 +3906,34 @@ int main (int argc, char *argv[]) {
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "B", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
 
-	gtk_list_store_insert_with_values(ListStore[P_H_POST], NULL, -1, 0, NULL, 1, "EMC", -1);
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir("posts/")) != NULL) {
+		while ((ent = readdir(dir)) != NULL) {
+			if (ent->d_name[0] != '.') {
+				char *pname = suffix_remove(ent->d_name);
+				gtk_list_store_insert_with_values(ListStore[P_H_POST], NULL, -1, 0, NULL, 1, pname, -1);
+				free(pname);
+			}
+		}
+		closedir (dir);
+	} else {
+		fprintf(stderr, "postprocessor directory not found: posts/\n");
+	}
 
 /*
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "astrology", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cursive", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cyrilc_1", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "cyrillic", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "futural", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "futuram", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothgbt", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothgrt", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothiceng", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothicger", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothicita", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "gothitt", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "greek", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "greekc", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "greeks", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "hershey", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "japanese", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "markers", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "mathlow", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "mathupp", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "meteorology", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "music", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "rowmand", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "rowmans", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "rowmant", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "scriptc", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "scripts", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "symbolic", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesg", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesi", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesib", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesr", -1);
-	gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, "timesrb", -1);
+	if ((dir = opendir("fonts/")) != NULL) {
+		while ((ent = readdir(dir)) != NULL) {
+			if (ent->d_name[0] != '.') {
+				char *pname = suffix_remove(ent->d_name);
+				gtk_list_store_insert_with_values(ListStore[P_M_FONT], NULL, -1, 0, NULL, 1, pname, -1);
+				free(pname);
+			}
+		}
+		closedir (dir);
+	} else {
+		fprintf(stderr, "fonts directory not found: fonts/\n");
+	}
 */
 
 	g_signal_connect(G_OBJECT(ParamButton[P_MFILE]), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
