@@ -117,6 +117,8 @@ int last_mouse_state = 0;
 void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
 
+GtkWidget *gCodeViewLabel;
+GtkWidget *gCodeViewLabelLua;
 GtkWidget *OutputInfoLabel;
 GtkWidget *OutputErrorLabel;
 GtkWidget *SizeInfoLabel;
@@ -2516,6 +2518,8 @@ void mainloop (void) {
 		postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
 		postcam_plugin = PARAMETER[P_H_POST].vint;
 		gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
+		sprintf(tmp_str, "Output (%s)", output_extension);
+		gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
 		postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 	}
 	postcam_var_push_string("fileName", PARAMETER[P_V_DXF].vstr);
@@ -4158,10 +4162,11 @@ int main (int argc, char *argv[]) {
 	GtkWidget *glCanvasLabel = gtk_label_new("3D-View");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), glCanvas, glCanvasLabel);
 
-	GtkWidget *gCodeViewLabel = gtk_label_new("G-Code");
+	gCodeViewLabel = gtk_label_new("Output");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidget, gCodeViewLabel);
+	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
 
-	GtkWidget *gCodeViewLabelLua = gtk_label_new("PostProcessor");
+	gCodeViewLabelLua = gtk_label_new("PostProcessor");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidgetLuaBox, gCodeViewLabelLua);
 
 
@@ -4216,6 +4221,9 @@ int main (int argc, char *argv[]) {
 	postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
 	postcam_plugin = PARAMETER[P_H_POST].vint;
 	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
+	char tmp_str[1024];
+	sprintf(tmp_str, "Output (%s)", output_extension);
+	gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
 	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif
 
