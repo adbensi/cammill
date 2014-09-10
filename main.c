@@ -2495,6 +2495,7 @@ void mainloop (void) {
 	postcam_var_push_double("toolOffset", 0.0);
 	postcam_var_push_int("tool", -1);
 	postcam_var_push_int("lastinst", 0);
+//	SetupShowGcode(fd_out);
 	postcam_call_function("OnInit");
 #endif
 
@@ -2702,12 +2703,8 @@ void mainloop (void) {
 			fprintf(stderr, "Can not open file: %s\n", PARAMETER[P_MFILE].vstr);
 			exit(0);
 		}
-#ifndef USE_POSTCAM
-		SetupShowGcode(fd_out);
-#endif
 		fprintf(fd_out, "%s", gcode_buffer);
 		fclose(fd_out);
-
 		if (PARAMETER[P_POST_CMD].vstr[0] != 0) {
 			char cmd_str[2048];
 			sprintf(cmd_str, PARAMETER[P_POST_CMD].vstr, PARAMETER[P_MFILE].vstr);
