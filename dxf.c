@@ -97,6 +97,12 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		strcpy(myLINES[line_n].block, block_name);
 		myLINES[line_n].blockdata = block;
 		line_n++;
+
+		myLINES[line_n].used = 0;
+		myLINES[line_n + 1].used = 0;
+		myLINES[line_n].type = -1;
+		myLINES[line_n + 1].type = -1;
+
 		line_last = line_n;
 	} else {
 		printf("### TO MANY LINES ##\n");

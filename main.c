@@ -107,6 +107,7 @@ int postcam_plugin = -1;
 char *gcode_buffer = NULL;
 char output_extension[128];
 char output_info[1024];
+char output_error[1024];
 
 int last_mouse_x = 0;
 int last_mouse_y = 0;
@@ -117,6 +118,7 @@ void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
 
 GtkWidget *OutputInfoLabel;
+GtkWidget *OutputErrorLabel;
 GtkWidget *SizeInfoLabel;
 GtkWidget *StatusBar;
 GtkTreeStore *treestore;
@@ -125,6 +127,7 @@ GtkWidget *ParamValue[P_LAST];
 GtkWidget *ParamButton[P_LAST];
 GtkWidget *glCanvas;
 GtkWidget *gCodeView;
+GtkWidget *gCodeViewLua;
 int width = 800;
 int height = 600;
 int need_init = 1;
@@ -618,7 +621,6 @@ void object_optimize_dir (int object_num) {
 	}
 }
 
-
 int intersect_check (double p0_x, double p0_y, double p1_x, double p1_y, double p2_x, double p2_y, double p3_x, double p3_y, double *i_x, double *i_y) {
 	double s02_x, s02_y, s10_x, s10_y, s32_x, s32_y, s_numer, t_numer, denom, t;
 	s10_x = p1_x - p0_x;
@@ -660,6 +662,38 @@ void intersect (double l1x1, double l1y1, double l1x2, double l1y2, double l2x1,
 	*x = l1x1 + t * a1;
 	*y = l1y1 + t * a2;
 	return;
+}
+
+void postcam_load_source (char *plugin) {
+	char tmp_str[1024];
+	sprintf(tmp_str, "posts/%s.scpost", plugin);
+	GtkTextBuffer *bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
+	gchar *file_buffer;
+	GError *error;
+	gboolean read_file_status = g_file_get_contents(tmp_str, &file_buffer, NULL, &error);
+	if (read_file_status == FALSE) {
+		g_error("error opening file: %s\n",error && error->message ? error->message : "No Detail");
+		return;
+	}
+
+	gtk_text_buffer_set_text(bufferLua, file_buffer, -1);
+	free(file_buffer);
+}
+
+void postcam_save_source (char *plugin) {
+	char tmp_str[1024];
+	sprintf(tmp_str, "posts/%s.scpost", plugin);
+	FILE *fp = fopen(tmp_str, "w");
+	if (fp != NULL) {
+		GtkTextIter start, end;
+		GtkTextBuffer *bufferLua;
+		bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
+		gtk_text_buffer_get_bounds(bufferLua, &start, &end);
+		char *luacode = gtk_text_buffer_get_text(bufferLua, &start, &end, TRUE);
+		fprintf(fp, "%s", luacode);
+		fclose(fp);
+		free(luacode);
+	}
 }
 
 void DrawLine (float x1, float y1, float x2, float y2, float z, float w) {
@@ -2059,6 +2093,7 @@ void init_objects (void) {
 	myOBJECTS = malloc(sizeof(_OBJECT) * (line_last + 1));
 	for (object_num = 0; object_num < line_last; object_num++) {
 		myOBJECTS[object_num].use = 1;
+		myOBJECTS[object_num].closed = 0;
 		myOBJECTS[object_num].climb = 0;
 		myOBJECTS[object_num].force = 0;
 		myOBJECTS[object_num].offset = 0;
@@ -2066,6 +2101,8 @@ void init_objects (void) {
 		myOBJECTS[object_num].pocket = 0;
 		myOBJECTS[object_num].laser = 0;
 		myOBJECTS[object_num].visited = 0;
+		myOBJECTS[object_num].depth = 0.0;
+		myOBJECTS[object_num].layer[0] = 0;
 		for (num2 = 0; num2 < line_last; num2++) {
 			myOBJECTS[object_num].line[num2] = 0;
 		}
@@ -2479,6 +2516,7 @@ void mainloop (void) {
 		postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
 		postcam_plugin = PARAMETER[P_H_POST].vint;
 		gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
+		postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 	}
 	postcam_var_push_string("fileName", PARAMETER[P_V_DXF].vstr);
 	postcam_var_push_string("postName", postcam_plugins[PARAMETER[P_H_POST].vint]);
@@ -2678,20 +2716,30 @@ void mainloop (void) {
 #ifdef USE_POSTCAM
 	postcam_call_function("OnSpindleOff");
 	postcam_call_function("OnFinish");
+	gtk_label_set_text(GTK_LABEL(OutputErrorLabel), output_error);
 #endif
 
+	GtkTextIter startLua, endLua;
+	GtkTextBuffer *bufferLua;
+	bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
+	gtk_text_buffer_get_bounds(bufferLua, &startLua, &endLua);
 
 	GtkTextIter start, end;
 	GtkTextBuffer *buffer;
-
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
 	gtk_text_buffer_get_bounds(buffer, &start, &end);
 	char *gcode_check = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
 	if (gcode_check != NULL) {
-		if (strcmp(gcode_check, gcode_buffer) != 0) {
-			gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+		if (gcode_buffer != NULL) {
+			if (strcmp(gcode_check, gcode_buffer) != 0) {
+				gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+			}
+		} else {
+			gtk_text_buffer_set_text(buffer, "", -1);
 		}
 		free(gcode_check);
+	} else {
+		gtk_text_buffer_set_text(buffer, "", -1);
 	}
 	if (save_gcode == 1) {
 		if (strcmp(PARAMETER[P_MFILE].vstr, "-") == 0) {
@@ -3122,6 +3170,13 @@ char *suffix_remove (char *mystr) {
 	return retstr;
 }
 
+void handler_save_lua (GtkWidget *widget, gpointer data) {
+	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving lua..."), "saving lua...");
+	postcam_save_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
+	postcam_plugin = -1;
+	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving lua...done"), "saving lua...done");
+}
+
 void handler_save_gcode (GtkWidget *widget, gpointer data) {
 	char ext_str[1024];
 	GtkWidget *dialog;
@@ -3208,7 +3263,7 @@ void handler_load_tooltable (GtkWidget *widget, gpointer data) {
 }
 
 void handler_save_setup (GtkWidget *widget, gpointer data) {
-	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving setup...done"), "saving setup...done");
+	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving setup..."), "saving setup...");
 	SetupSave();
 	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving setup...done"), "saving setup...done");
 }
@@ -3929,7 +3984,6 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-
 	OutputInfoLabel = gtk_label_new("-- OutputInfo --");
 	gtk_box_pack_start(GTK_BOX(MachineBox), OutputInfoLabel, 0, 0, 0);
 
@@ -4023,7 +4077,42 @@ int main (int argc, char *argv[]) {
 
 	StatusBar = gtk_statusbar_new();
 
-//	gCodeView = gtk_text_view_new();
+	gCodeViewLua = gtk_source_view_new();
+	gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(gCodeViewLua), TRUE);
+	gtk_source_view_set_highlight_current_line(GTK_SOURCE_VIEW(gCodeViewLua), TRUE);
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(gCodeViewLua), TRUE);
+	gtk_source_view_set_right_margin_position(GTK_SOURCE_VIEW(gCodeViewLua), 80);
+	gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(gCodeViewLua), TRUE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(gCodeViewLua), GTK_WRAP_WORD_CHAR);
+
+	GtkWidget *textWidgetLua = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(textWidgetLua), gCodeViewLua);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(textWidgetLua), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
+
+	GtkWidget *LuaToolBar = gtk_toolbar_new();
+	gtk_toolbar_set_style(GTK_TOOLBAR(LuaToolBar), GTK_TOOLBAR_ICONS);
+
+	GtkToolItem *LuaToolItemSaveGcode = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
+	gtk_tool_item_set_tooltip_text(LuaToolItemSaveGcode, "Save Output");
+	gtk_toolbar_insert(GTK_TOOLBAR(LuaToolBar), LuaToolItemSaveGcode, -1);
+	g_signal_connect(G_OBJECT(LuaToolItemSaveGcode), "clicked", GTK_SIGNAL_FUNC(handler_save_lua), NULL);
+
+	GtkToolItem *LuaToolItemSep = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(LuaToolBar), LuaToolItemSep, -1); 
+
+	OutputErrorLabel = gtk_label_new("-- OutputErrors --");
+
+	GtkWidget *textWidgetLuaBox = gtk_vbox_new(0, 0);
+	gtk_box_pack_start(GTK_BOX(textWidgetLuaBox), LuaToolBar, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(textWidgetLuaBox), textWidgetLua, 1, 1, 0);
+	gtk_box_pack_start(GTK_BOX(textWidgetLuaBox), OutputErrorLabel, 0, 0, 0);
+
+	GtkTextBuffer *bufferLua;
+	const gchar *textLua = "Hallo Lua";
+	bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
+	gtk_text_buffer_set_text(bufferLua, textLua, -1);
+
 	gCodeView = gtk_source_view_new();
 	gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(gCodeView), TRUE);
 	gtk_source_view_set_highlight_current_line(GTK_SOURCE_VIEW(gCodeView), TRUE);
@@ -4057,6 +4146,10 @@ int main (int argc, char *argv[]) {
 	GtkSourceLanguage *ngclang = gtk_source_language_manager_get_language(manager, ".ngc");
 	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), ngclang);
 
+	GtkSourceLanguage *langLua = gtk_source_language_manager_get_language(manager, "lua");
+	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(bufferLua), langLua);
+
+
 	GtkWidget *NbBox2 = gtk_table_new(2, 2, FALSE);
 	GtkWidget *notebook2 = gtk_notebook_new();
 	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook2), GTK_POS_TOP);
@@ -4067,6 +4160,9 @@ int main (int argc, char *argv[]) {
 
 	GtkWidget *gCodeViewLabel = gtk_label_new("G-Code");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidget, gCodeViewLabel);
+
+	GtkWidget *gCodeViewLabelLua = gtk_label_new("PostProcessor");
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidgetLuaBox, gCodeViewLabelLua);
 
 
 //	hbox = gtk_hbox_new(0, 0);
@@ -4120,6 +4216,7 @@ int main (int argc, char *argv[]) {
 	postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
 	postcam_plugin = PARAMETER[P_H_POST].vint;
 	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
+	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif
 
 	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
