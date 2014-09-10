@@ -2928,11 +2928,11 @@ void DrawCheckSize (void) {
 			if (max_y < myLINES[num2].y2) {
 				max_y = myLINES[num2].y2;
 			}
-			if (myLINES[num2].type == TYPE_CIRCLE && max_y < myLINES[num2].cy + myLINES[num2].opt) {
-				max_y = myLINES[num2].cy;
+			if (myLINES[num2].type == TYPE_CIRCLE && max_x < myLINES[num2].cx + myLINES[num2].opt) {
+				max_y = myLINES[num2].cx + myLINES[num2].opt;
 			}
 			if (myLINES[num2].type == TYPE_CIRCLE && max_y < myLINES[num2].cy + myLINES[num2].opt) {
-				max_y = myLINES[num2].cy;
+				max_y = myLINES[num2].cy + myLINES[num2].opt;
 			}
 			if (min_x > myLINES[num2].x1) {
 				min_x = myLINES[num2].x1;
@@ -2946,11 +2946,11 @@ void DrawCheckSize (void) {
 			if (min_y > myLINES[num2].y2) {
 				min_y = myLINES[num2].y2;
 			}
-			if (myLINES[num2].type == TYPE_CIRCLE && min_y > myLINES[num2].cy - myLINES[num2].opt) {
-				min_y = myLINES[num2].cy;
+			if (myLINES[num2].type == TYPE_CIRCLE && min_x > myLINES[num2].cx - myLINES[num2].opt) {
+				min_x = myLINES[num2].cx - myLINES[num2].opt;
 			}
 			if (myLINES[num2].type == TYPE_CIRCLE && min_y > myLINES[num2].cy - myLINES[num2].opt) {
-				min_y = myLINES[num2].cy;
+				min_y = myLINES[num2].cy - myLINES[num2].opt;
 			}
 		}
 	}
