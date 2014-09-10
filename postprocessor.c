@@ -2,11 +2,15 @@
 #define _GNU_SOURCE 1
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 #include <dxf.h>
 #include <setup.h>
+
+extern char output_extension[128];
+extern char output_info[1024];
 
 
 lua_State *L;
@@ -299,24 +303,33 @@ static int append_output (lua_State *L) {
 	return 1;
 }
 
-int luaopen_append_output(lua_State *L){
-	lua_register(L, "append_output", append_output);  
-	return 0;
+static int set_extension (lua_State *L) {
+	const char *str = lua_tostring(L, -1);
+	strcpy(output_extension, (char *)str);
+	return 1;
 }
 
-void postcam_init_lua (void) {
+static int set_output_info (lua_State *L) {
+	const char *str = lua_tostring(L, -1);
+	strcpy(output_info, (char *)str);
+	return 1;
+}
+
+void postcam_init_lua (char *plugin) {
 	L = luaL_newstate();
 	luaL_openlibs(L);
 
 	luaopen_mathx(L);
-	luaopen_append_output(L);
+	lua_register(L, "output_info", set_output_info);  
+	lua_register(L, "append_output", append_output);  
+	lua_register(L, "set_extension", set_extension);  
 	postcam_var_push_double("endX", 10.02);
 	postcam_var_push_double("endY", 10.0);
 	postcam_var_push_double("endZ", -4.0);
 	postcam_var_push_double("currentX", 0.0);
 	postcam_var_push_double("currentY", 0.0);
 	postcam_var_push_double("currentZ", 0.0);
-	postcam_var_push_double("toolOffset", 1.5);
+	postcam_var_push_double("toolOffset", 0.0);
 	postcam_var_push_double("scale", 1.0);
 	postcam_var_push_double("arcCentreX", 1.0);
 	postcam_var_push_double("arcCentreY", 1.0);
@@ -339,10 +352,10 @@ void postcam_init_lua (void) {
 		fprintf(stderr, "\n2FATAL ERROR:\n %s\n\n", lua_tostring(L, -1));
 	}
 
-//P_H_POST
-	postcam_var_push_string("postfile", "posts/EMC.scpost");
+	char tmp_str[1024];
+	sprintf(tmp_str, "posts/%s.scpost", plugin);
+	postcam_var_push_string("postfile", tmp_str);
 	postcam_call_function("load_post");
-
 
 	lua_getglobal(L, "OnAbout");
 	lua_getglobal(L, "event");

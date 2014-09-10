@@ -5,9 +5,10 @@ function OnAbout(event)
 end
 
 function OnInit()
-	post.Text("G21\n")
-	post.Text("G40 G90\n")
-	post.ModalNumber("F", feedRate)
+	post.Text("G21 (Metric)\n")
+	post.Text("G40 (No Offsets)\n")
+	post.Text("G90 (Absolute-Mode)\n")
+	post.ModalNumber("F", feedRate, "0")
 	post.Eol()
 end
 
@@ -33,26 +34,31 @@ end
 
 function OnArc()
 	if(arcAngle <0) then
-		post.ModalText("G03")
+		post.ModalText (" G03")
 	else
-		post.ModalText("G02")
+		post.ModalText (" G02")
 	end
-	post.NonModalNumber(" X", endX)
-	post.NonModalNumber(" Y", endY)
-	post.ModalNumber(" R", arcRadius)
-	post.ModalNumber(" Z", endZ)
+	post.NonModalNumber (" X", endX)
+	post.NonModalNumber (" Y", endY)
+	post.ModalNumber (" Z", endZ)
+	post.Text (" I")
+	post.Number ((arcCentreX - currentX))
+	post.Text (" J")
+	post.Number ((arcCentreY - currentY))
+	post.ModalNumber (" F", feedRate, "0")
+	post.ModalNumber (" S", spindleSpeed, "0")
 	post.Eol()
 end
 
 function OnSpindleCW()
 	post.Text("M03")
-	post.ModalNumber(" S", spindleSpeed)
+	post.ModalNumber(" S", spindleSpeed, "0")
 	post.Eol()
 end
 
 function OnSpindleCCW()
 	post.Text("M04")
-	post.ModalNumber(" S", spindleSpeed)
+	post.ModalNumber(" S", spindleSpeed, "0")
 	post.Eol()
 end
 
@@ -68,8 +74,8 @@ function OnComment()
 end
 
 function OnToolChange()
-	post.ModalNumber("M6 T", tool)
+	post.ModalNumber("M6 T", tool, "0")
 	post.Eol()
-	post.ModalNumber("G43 H", tool)
+	post.ModalNumber("G43 H", tool, "0")
 	post.Eol()
 end

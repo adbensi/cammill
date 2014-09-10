@@ -102,7 +102,11 @@ int material_vc[100];
 float material_fz[100][3];
 char *rotary_axis[3] = {"A", "B", "C"};
 char cline[1024];
+char postcam_plugins[100][1024];
+int postcam_plugin = -1;
 char *gcode_buffer = NULL;
+char output_extension[128];
+char output_info[1024];
 
 int last_mouse_x = 0;
 int last_mouse_y = 0;
@@ -112,6 +116,7 @@ int last_mouse_state = 0;
 void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
 
+GtkWidget *OutputInfoLabel;
 GtkWidget *SizeInfoLabel;
 GtkWidget *StatusBar;
 GtkTreeStore *treestore;
@@ -1087,20 +1092,52 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 				postcam_var_push_double("endX", x);
 				postcam_var_push_double("endY", y);
 				postcam_var_push_double("endZ", mill_last_z);
-				if (gcmd == 2) {
-					postcam_var_push_double("arcAngle", 1.0);
-				} else {
-					postcam_var_push_double("arcAngle", -1.0);
-				}
-				postcam_var_push_double("arcRadius", r);
 				double e = x - mill_last_x;
 				double f = y - mill_last_y;
 				double p = sqrt(e*e + f*f);
 				double k = (p*p + r*r - r*r) / (2 * p);
-				double c1x = mill_last_x + e * k/p + (f/p) * sqrt(r * r - k * k);
-				double c1y = mill_last_y + f * k/p - (e/p) * sqrt(r * r - k * k);
-				postcam_var_push_double("arcCentreX", c1x);
-				postcam_var_push_double("arcCentreY", c1y);
+				if (gcmd == 2) {
+					double cx = mill_last_x + e * k/p + (f/p) * sqrt(r * r - k * k);
+					double cy = mill_last_y + f * k/p - (e/p) * sqrt(r * r - k * k);
+					double dx1 = cx - mill_last_x;
+					double dy1 = cy - mill_last_y;
+					double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
+					double dx2 = cx - x;
+					double dy2 = cy - y;
+					double alpha2 = toDeg(atan2(dx2, dy2)) + 180.0;
+					double alpha = alpha2 - alpha1;
+					if (alpha >= 360.0) {
+						alpha -= 360.0;
+					}
+					if (alpha < 0.0) {
+						alpha += 360.0;
+					}
+					postcam_var_push_double("arcCentreX", cx);
+					postcam_var_push_double("arcCentreY", cy);
+					postcam_var_push_double("arcAngle", toRad(alpha));
+				} else {
+					double cx = mill_last_x + e * k/p - (f/p) * sqrt(r * r - k * k);
+					double cy = mill_last_y + f * k/p + (e/p) * sqrt(r * r - k * k);
+
+					double dx1 = cx - mill_last_x;
+					double dy1 = cy - mill_last_y;
+					double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
+					double dx2 = cx - x;
+					double dy2 = cy - y;
+					double alpha2 = toDeg(atan2(dx2, dy2)) + 180.0;
+					double alpha = alpha2 - alpha1;
+					if (alpha <= -360.0) {
+						alpha += 360.0;
+					}
+					if (alpha > 0.0) {
+						alpha -= 360.0;
+					}
+					postcam_var_push_double("arcCentreX", cx);
+					postcam_var_push_double("arcCentreY", cy);
+					postcam_var_push_double("arcAngle", toRad(alpha));
+				}
+
+				postcam_var_push_double("arcRadius", r);
 				postcam_call_function("OnArc");
 #endif
 			}
@@ -1164,25 +1201,27 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 
 
 #ifdef USE_POSTCAM
-				postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
-				postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
-				postcam_var_push_double("currentX", mill_last_x);
-				postcam_var_push_double("currentY", mill_last_y);
-				postcam_var_push_double("currentZ", mill_last_z);
-				postcam_var_push_double("endX", x + r);
-				postcam_var_push_double("endY", y);
-				postcam_var_push_double("endZ", mill_last_z);
-				if (gcmd == 2) {
-					postcam_var_push_double("arcAngle", 1.0);
-				} else {
-					postcam_var_push_double("arcAngle", -1.0);
-				}
-				postcam_var_push_double("arcRadius", r);
-				postcam_call_function("OnArc");
+	postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+	postcam_var_push_double("currentX", mill_last_x);
+	postcam_var_push_double("currentY", mill_last_y);
+	postcam_var_push_double("currentZ", mill_last_z);
+	postcam_var_push_double("endX", x + r);
+	postcam_var_push_double("endY", y);
+	postcam_var_push_double("endZ", mill_last_z);
+	postcam_var_push_double("arcRadius", r);
+	postcam_var_push_double("arcCentreX", x);
+	postcam_var_push_double("arcCentreY", y);
+	if (gcmd == 2) {
+		postcam_var_push_double("arcAngle", 360.0);
+	} else {
+		postcam_var_push_double("arcAngle", -360.0);
+	}
+	postcam_call_function("OnArc");
 
-				postcam_var_push_double("endX", x - r);
-				postcam_call_function("OnArc");
-
+	postcam_var_push_double("currentX", x + r);
+	postcam_var_push_double("endX", x - r);
+	postcam_call_function("OnArc");
 #endif
 
 
@@ -1391,23 +1430,21 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
 			sprintf(cline, "M06 T%i (Change-Tool)\n", PARAMETER[P_TOOL_NUM].vint);
 			append_gcode(cline);
+			sprintf(cline, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED].vint);
+			append_gcode(cline);
+			append_gcode("\n");
 #ifdef USE_POSTCAM
 			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
 			char tmp_str[1024];
 			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
 			postcam_var_push_string("toolName", tmp_str);
 			postcam_var_push_double("endZ", mill_last_z);
+			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 			postcam_call_function("OnToolChange");
+			postcam_call_function("OnSpindleCW");
 #endif
 		}
 		tool_last = PARAMETER[P_TOOL_NUM].vint;
-		sprintf(cline, "M03 S%i (Spindle-On / CW)\n", PARAMETER[P_TOOL_SPEED].vint);
-		append_gcode(cline);
-		append_gcode("\n");
-
-#ifdef USE_POSTCAM
-		postcam_call_function("OnSpindleCW");
-#endif
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 	}
@@ -2434,11 +2471,18 @@ void mainloop (void) {
 	append_gcode(cline);
 	append_gcode("\n");
 
-
 #ifdef USE_POSTCAM
-	postcam_var_push_string("fileName", "/tmp/dd");
-	postcam_var_push_string("postName", "EMC");
-	postcam_var_push_string("date", "now");
+	if (postcam_plugin != PARAMETER[P_H_POST].vint) {
+		postcam_exit_lua();
+		strcpy(output_extension, "ngc");
+		strcpy(output_info, "");
+		postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
+		postcam_plugin = PARAMETER[P_H_POST].vint;
+		gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
+	}
+	postcam_var_push_string("fileName", PARAMETER[P_V_DXF].vstr);
+	postcam_var_push_string("postName", postcam_plugins[PARAMETER[P_H_POST].vint]);
+	postcam_var_push_string("date", "---");
 	postcam_var_push_double("metric", 1.0);
 	postcam_call_function("OnInit");
 	postcam_var_push_string("commentText", "cam post test");
@@ -3084,10 +3128,11 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 
 	GtkFileFilter *ffilter;
 	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, "G-Code");
-	gtk_file_filter_add_pattern(ffilter, "*.ngc");
+	char ext_str[1024];
+	gtk_file_filter_set_name(ffilter, output_extension);
+	sprintf(ext_str, "*.%s", output_extension);
+	gtk_file_filter_add_pattern(ffilter, ext_str);
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
-
 	if (PARAMETER[P_MFILE].vstr[0] == 0) {
 		char dir[2048];
 		strcpy(dir, PARAMETER[P_V_DXF].vstr);
@@ -3096,8 +3141,8 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 		strcpy(file, basename(PARAMETER[P_V_DXF].vstr));
 		char *file_nosuffix = suffix_remove(file);
 		file_nosuffix = realloc(file_nosuffix, strlen(file_nosuffix) + 5);
-		strcat(file_nosuffix, ".ngc");
-
+		strcat(file_nosuffix, ".");
+		strcat(file_nosuffix, output_extension);
 		if (strstr(PARAMETER[P_V_DXF].vstr, "/") > 0) {
 			gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), dir);
 		} else {
@@ -3878,6 +3923,9 @@ int main (int argc, char *argv[]) {
 	}
 
 
+	OutputInfoLabel = gtk_label_new("-- OutputInfo --");
+	gtk_box_pack_start(GTK_BOX(MachineBox), OutputInfoLabel, 0, 0, 0);
+
 	/* import DXF */
 	if (PARAMETER[P_V_DXF].vstr[0] != 0) {
 		dxf_read(PARAMETER[P_V_DXF].vstr);
@@ -3907,12 +3955,15 @@ int main (int argc, char *argv[]) {
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
 
 	DIR *dir;
+	n = 0;
 	struct dirent *ent;
 	if ((dir = opendir("posts/")) != NULL) {
 		while ((ent = readdir(dir)) != NULL) {
 			if (ent->d_name[0] != '.') {
 				char *pname = suffix_remove(ent->d_name);
 				gtk_list_store_insert_with_values(ListStore[P_H_POST], NULL, -1, 0, NULL, 1, pname, -1);
+				strcpy(postcam_plugins[n++], pname);
+				postcam_plugins[n][0] = 0;
 				free(pname);
 			}
 		}
@@ -4058,7 +4109,11 @@ int main (int argc, char *argv[]) {
 	gtk_widget_show_all(window);
 
 #ifdef USE_POSTCAM
-	postcam_init_lua();
+	strcpy(output_extension, "ngc");
+	strcpy(output_info, "");
+	postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
+	postcam_plugin = PARAMETER[P_H_POST].vint;
+	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
 #endif
 
 	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
