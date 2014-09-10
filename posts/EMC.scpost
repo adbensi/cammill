@@ -1,7 +1,9 @@
+post.ForceExtension("ngc")
 
 function OnAbout(event)
 	ctrl = event:GetTextCtrl()
 	ctrl:AppendText("EMC post processor\n")
+	ctrl:AppendText("(LinuxCNC)\n")
 end
 
 function OnInit()
@@ -29,24 +31,24 @@ function OnMove()
 	post.ModalNumber(" X", endX)
 	post.ModalNumber(" Y", endY)
 	post.ModalNumber(" Z", endZ)
+	post.ModalNumber(" F", feedRate, "0")
 	post.Eol()
 end
 
 function OnArc()
 	if(arcAngle <0) then
-		post.ModalText (" G03")
+		post.ModalText("G03")
 	else
-		post.ModalText (" G02")
+		post.ModalText("G02")
 	end
-	post.NonModalNumber (" X", endX)
-	post.NonModalNumber (" Y", endY)
-	post.ModalNumber (" Z", endZ)
-	post.Text (" I")
-	post.Number ((arcCentreX - currentX))
-	post.Text (" J")
-	post.Number ((arcCentreY - currentY))
-	post.ModalNumber (" F", feedRate, "0")
-	post.ModalNumber (" S", spindleSpeed, "0")
+	post.ModalNumber(" X", endX)
+	post.ModalNumber(" Y", endY)
+	post.ModalNumber(" Z", endZ)
+	post.Text(" I")
+	post.Number((arcCentreX - currentX))
+	post.Text(" J")
+	post.Number((arcCentreY - currentY))
+	post.ModalNumber(" F", feedRate, "0")
 	post.Eol()
 end
 
@@ -71,11 +73,10 @@ function OnNewOperation()
 end
 
 function OnComment()
+	post.Text(" (",commentText,")\n")
 end
 
 function OnToolChange()
 	post.ModalNumber("M6 T", tool, "0")
-	post.Eol()
-	post.ModalNumber("G43 H", tool, "0")
 	post.Eol()
 end

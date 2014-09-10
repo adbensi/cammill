@@ -288,6 +288,9 @@ void postcam_var_push_string (char *name, char *value) {
 }
 
 void postcam_call_function (char *name) {
+	if (strcmp(name, "OnInit") == 0) {
+		postcam_call_function("reset_modal");
+	}
 	lua_getglobal(L, name);
 	int type = lua_type(L, -1);
 	if (type != LUA_TNIL && type == LUA_TFUNCTION) {
@@ -295,6 +298,12 @@ void postcam_call_function (char *name) {
 			fprintf(stderr, "\n3FATAL ERROR (call: %s):\n %s\n\n", name, lua_tostring(L, -1));
 		}
 	}
+}
+
+void postcam_comment (char *value) {
+	lua_pushstring(L, value);
+	lua_setglobal(L, "commentText");
+	postcam_call_function("OnComment");
 }
 
 static int append_output (lua_State *L) {
@@ -311,7 +320,7 @@ static int set_extension (lua_State *L) {
 
 static int set_output_info (lua_State *L) {
 	const char *str = lua_tostring(L, -1);
-	strcpy(output_info, (char *)str);
+	sprintf(output_info, "\n%s", (char *)str);
 	return 1;
 }
 
@@ -323,19 +332,19 @@ void postcam_init_lua (char *plugin) {
 	lua_register(L, "output_info", set_output_info);  
 	lua_register(L, "append_output", append_output);  
 	lua_register(L, "set_extension", set_extension);  
-	postcam_var_push_double("endX", 10.02);
-	postcam_var_push_double("endY", 10.0);
-	postcam_var_push_double("endZ", -4.0);
+	postcam_var_push_double("endX", 0.0);
+	postcam_var_push_double("endY", 0.0);
+	postcam_var_push_double("endZ", 0.0);
 	postcam_var_push_double("currentX", 0.0);
 	postcam_var_push_double("currentY", 0.0);
 	postcam_var_push_double("currentZ", 0.0);
 	postcam_var_push_double("toolOffset", 0.0);
 	postcam_var_push_double("scale", 1.0);
-	postcam_var_push_double("arcCentreX", 1.0);
-	postcam_var_push_double("arcCentreY", 1.0);
-	postcam_var_push_double("arcAngle", 1.0);
+	postcam_var_push_double("arcCentreX", 0.0);
+	postcam_var_push_double("arcCentreY", 0.0);
+	postcam_var_push_double("arcAngle", 0.0);
 	postcam_var_push_int("plungeRate", 200);
-	postcam_var_push_int("feedRate", 3200);
+	postcam_var_push_int("feedRate", 2000);
 	postcam_var_push_int("spindleSpeed", 10000);
 	postcam_var_push_int("metric", 1);
 	postcam_var_push_int("tool", 1);
@@ -363,7 +372,6 @@ void postcam_init_lua (char *plugin) {
 		fprintf(stderr, "\n0FATAL ERROR:\n %s\n\n", lua_tostring(L, -1));
 	}
 	lua_pop(L,1);
-	printf("\n\n");
 }
 
 

@@ -864,7 +864,7 @@ void mill_z (int gcmd, double z) {
 		}
 	}
 #ifdef USE_POSTCAM
-	postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+	postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
 	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 	postcam_var_push_double("currentX", mill_last_x);
 	postcam_var_push_double("currentY", mill_last_y);
@@ -1152,6 +1152,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		sprintf(cline, "G00 %s %s\n", tx_str, ty_str);
 		append_gcode(cline);
 #ifdef USE_POSTCAM
+		postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
 		postcam_var_push_double("currentX", mill_last_x);
 		postcam_var_push_double("currentY", mill_last_y);
 		postcam_var_push_double("currentZ", mill_last_z);
@@ -1223,8 +1224,6 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	postcam_var_push_double("endX", x - r);
 	postcam_call_function("OnArc");
 #endif
-
-
 
 	float an = 0.0;
 	float last_x = x + r;
@@ -1298,7 +1297,6 @@ void object_draw (FILE *fd_out, int object_num) {
 		double r = (float)myLINES[lnum].opt;
 		double x = (float)myLINES[lnum].cx;
 		double y = (float)myLINES[lnum].cy;
-
 		double last_x = x + r;
 		double last_y = y;
 		for (an = 0.0; an <= 360.0; an += 9.0) {
@@ -1814,32 +1812,34 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 		return;
 	}
 
-	append_gcode("\n");
-	append_gcode("(--------------------------------------------------)\n");
-	sprintf(cline, "(Object: #%i)\n", object_num);
-	append_gcode(cline);
-	sprintf(cline, "(Layer: %s)\n", myOBJECTS[object_num].layer);
-	append_gcode(cline);
-	sprintf(cline, "(Overcut: %i)\n",  overcut);
-	append_gcode(cline);
+#ifdef USE_POSTCAM
+	postcam_comment("--------------------------------------------------");
+	sprintf(cline, "Object: #%i", object_num);
+	postcam_var_push_string("partName", cline);
+	postcam_comment(cline);
+	sprintf(cline, "Layer: %s", myOBJECTS[object_num].layer);
+	postcam_comment(cline);
+	sprintf(cline, "Overcut: %i",  overcut);
+	postcam_comment(cline);
 	if (tangencialmode == 1) {
-		sprintf(cline, "(Tangencial-Mode: On)\n");
+		sprintf(cline, "Tangencial-Mode: On");
 	} else if (lasermode == 1) {
-		sprintf(cline, "(Laser-Mode: On)\n");
+		sprintf(cline, "Laser-Mode: On");
 	} else { 
-		sprintf(cline, "(Depth: %f)\n", mill_depth_real);
+		sprintf(cline, "Depth: %f", mill_depth_real);
 	}
-	append_gcode(cline);
+	postcam_comment(cline);
 	if (offset == 0) {
-		sprintf(cline, "(Offset: None)\n");
+		sprintf(cline, "Offset: None");
 	} else if (offset == 1) {
-		sprintf(cline, "(Offset: Inside)\n");
+		sprintf(cline, "Offset: Inside");
 	} else {
-		sprintf(cline, "(Offset: Outside)\n");
+		sprintf(cline, "Offset: Outside");
 	}
-	append_gcode(cline);
-	append_gcode("(--------------------------------------------------)\n");
-	append_gcode("\n");
+	postcam_comment(cline);
+	postcam_comment("--------------------------------------------------");
+	postcam_call_function("OnNewPart");
+#endif
 
 	mill_start = 0;
 
@@ -2484,9 +2484,18 @@ void mainloop (void) {
 	postcam_var_push_string("postName", postcam_plugins[PARAMETER[P_H_POST].vint]);
 	postcam_var_push_string("date", "---");
 	postcam_var_push_double("metric", 1.0);
+	postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
+	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+	postcam_var_push_double("currentX", 0.0);
+	postcam_var_push_double("currentY", 0.0);
+	postcam_var_push_double("currentZ", 0.0);
+	postcam_var_push_double("endX", 0.0);
+	postcam_var_push_double("endY", 0.0);
+	postcam_var_push_double("endZ", 0.0);
+	postcam_var_push_double("toolOffset", 0.0);
+	postcam_var_push_int("tool", -1);
+	postcam_var_push_int("lastinst", 0);
 	postcam_call_function("OnInit");
-	postcam_var_push_string("commentText", "cam post test");
-	postcam_call_function("OnComment");
 #endif
 
 	for (object_num = 0; object_num < object_last; object_num++) {
@@ -2997,7 +3006,7 @@ void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
 
 void handler_load_dxf (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Load DXF-Drawing",
+	dialog = gtk_file_chooser_dialog_new ("Load Drawing",
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -3046,7 +3055,7 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 
 void handler_load_preset (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Load DXF-Drawing",
+	dialog = gtk_file_chooser_dialog_new ("Load preset",
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -3073,7 +3082,7 @@ void handler_load_preset (GtkWidget *widget, gpointer data) {
 
 void handler_save_preset (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Save G-Code File",
+	dialog = gtk_file_chooser_dialog_new ("Save preset",
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_SAVE,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -3117,8 +3126,10 @@ char *suffix_remove (char *mystr) {
 }
 
 void handler_save_gcode (GtkWidget *widget, gpointer data) {
+	char ext_str[1024];
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Save G-Code File",
+	sprintf(ext_str, "Save Output (.%s)", output_extension);
+	dialog = gtk_file_chooser_dialog_new (ext_str,
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_SAVE,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -3128,7 +3139,6 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 
 	GtkFileFilter *ffilter;
 	ffilter = gtk_file_filter_new();
-	char ext_str[1024];
 	gtk_file_filter_set_name(ffilter, output_extension);
 	sprintf(ext_str, "*.%s", output_extension);
 	gtk_file_filter_add_pattern(ffilter, ext_str);
@@ -3691,7 +3701,7 @@ int main (int argc, char *argv[]) {
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_preset), NULL);
 
-		MenuItem = gtk_menu_item_new_with_label("Save G-Code");
+		MenuItem = gtk_menu_item_new_with_label("Save Output");
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 
@@ -3727,7 +3737,7 @@ int main (int argc, char *argv[]) {
 	g_signal_connect(G_OBJECT(ToolItemLoadDXF), "clicked", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
 	GtkToolItem *ToolItemSaveGcode = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
-	gtk_tool_item_set_tooltip_text(ToolItemSaveGcode, "Save G-Code");
+	gtk_tool_item_set_tooltip_text(ToolItemSaveGcode, "Save Output");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveGcode, -1);
 	g_signal_connect(G_OBJECT(ToolItemSaveGcode), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 
@@ -4049,7 +4059,6 @@ int main (int argc, char *argv[]) {
 	g_strfreev(lang_dirs);
 	GtkSourceLanguage *ngclang = gtk_source_language_manager_get_language(manager, ".ngc");
 	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(buffer), ngclang);
-
 
 	GtkWidget *NbBox2 = gtk_table_new(2, 2, FALSE);
 	GtkWidget *notebook2 = gtk_notebook_new();

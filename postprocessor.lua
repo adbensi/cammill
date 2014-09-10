@@ -2,14 +2,27 @@ require("math")
 
 about_text = ""
 
+
+ModalTable = {}
+
+function trim(s)
+	return s:find'^%s*$' and '' or s:match'^%s*(.*%S)'
+end
+ 
 post = {}
 post.Text = function (...)
-	out = string.format("%s", select(1,...))
-	append_output(out)
+	for i,v in ipairs(arg) do
+		out = string.format("%s", v)
+		append_output(out)
+	end
 end
 
 post.ModalText = function (str)
-	append_output(str)
+---	if (ModalTable.txt == str) then
+---	else
+		append_output(str)
+---	end
+---	ModalTable.txt = str
 end
 
 post.Number = function (val, nformat)
@@ -61,9 +74,14 @@ post.Number = function (val, nformat)
 end
 
 post.ModalNumber = function (str, val, nformat)
-	out = string.format("%s", str)
-	append_output(out)
-	post.Number(val, nformat)
+	mstr = trim(str)
+	if (ModalTable[mstr] == val) then
+	else
+		out = string.format("%s", str)
+		append_output(out)
+		post.Number(val, nformat)
+	end
+	ModalTable[mstr] = val
 end
 
 post.NonModalNumber = function (str, val, nformat)
@@ -85,13 +103,11 @@ post.SetCommentChars = function (str)
 end
 
 post.ForceExtension = function (str)
-	io.write("(force EXTENSION: ", str, ")\n")
 	set_extension(str)
 end
 
 post.ArcAsMoves = function (str)
 end
-
 
 event = {}
 function event:GetTextCtrl ()
@@ -99,6 +115,8 @@ function event:GetTextCtrl ()
 	setmetatable(res, self)
 	self.__index = self
 	about_text = ""
+	ModalTable = nil
+	ModalTable = {}
 	return res
 end
 
@@ -110,6 +128,11 @@ end
 function load_post ()
 	dofile(postfile)
 end
+function reset_modal ()
+	ModalTable = nil
+	ModalTable = {}
+end
+
 
 
 
