@@ -1553,7 +1553,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 		if (r > PARAMETER[P_TOOL_DIAMETER].vdouble / 2.0) {
 			if (offset == 1) {
 				r -= tool_offset;
-			} else if (offset == 1) {
+			} else if (offset == 2) {
 				r += tool_offset;
 			}
 			if (mill_start == 0) {
