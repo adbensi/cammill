@@ -16,13 +16,13 @@ LIBS += `pkg-config lua5.1 --libs` `pkg-config lua5.1 --cflags`
 CFLAGS+="-DHERSHEY_FONTS_DIR=\"./\""
 CFLAGS+="-DUSE_POSTCAM"
 
-all: opencam2d
+all: cammill
 
-opencam2d: main.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
-	clang -Wall -O3 -o opencam2d main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} -DOSX
+cammill: main.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
+	clang -Wall -O3 -o cammill main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} -DOSX
 
 clean:
-	rm -rf opencam2d
+	rm -rf cammill
 
 
 

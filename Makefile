@@ -12,18 +12,18 @@ CFLAGS+="-DGSEAL_ENABLE"
 CFLAGS+="-DHERSHEY_FONTS_DIR=\"./\""
 CFLAGS+="-DUSE_POSTCAM"
 
-all: opencam2d
+all: cammill
 
-opencam2d: main.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
-	clang -ggdb -Wall -O3 -o opencam2d main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+cammill: main.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
+	clang -ggdb -Wall -O3 -o cammill main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
 
 gprof:
-	gcc -pg -ggdb -Wall -O3 -o opencam2d main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
-	@echo "./opencam2d"
-	@echo "gprof opencam2d gmon.out"
+	gcc -pg -ggdb -Wall -O3 -o cammill main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+	@echo "./cammill"
+	@echo "gprof cammill gmon.out"
 
 clean:
-	rm -rf opencam2d
+	rm -rf cammill
 
 
 

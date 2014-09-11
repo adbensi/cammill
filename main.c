@@ -1351,7 +1351,7 @@ void object_draw (FILE *fd_out, int object_num) {
 							glColor4f(1.0, 1.0, 1.0, 1.0);
 						}
 						sprintf(tmp_str, "%i", object_num);
-						output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
+//						output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
 					}
 				}
 			}
@@ -3203,7 +3203,7 @@ void handler_about (GtkWidget *widget, gpointer data) {
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
 	gtk_window_set_title(GTK_WINDOW(dialog), "About");
 	gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_QUIT, 1);
-	GtkWidget *label = gtk_label_new("OpenCAM 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <mcules@fpv-club.de>");
+	GtkWidget *label = gtk_label_new("CAMmill 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <mcules@fpv-club.de>");
 	gtk_widget_modify_font(label, pango_font_description_from_string("Tahoma 18"));
 	GtkWidget *image = gtk_image_new_from_file("icons/logo.png");
 	GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -3383,7 +3383,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
 	}
-	if (strcmp(PARAMETER[n].group, "View") != 0) {
+	if (strncmp(PARAMETER[n].name, "Translate", 9) != 0 && strncmp(PARAMETER[n].name, "Rotate", 6) != 0 && strncmp(PARAMETER[n].name, "Zoom", 4) != 0) {
 		update_post = 1;
 	}
 }
@@ -4131,7 +4131,7 @@ int main (int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(vbox), StatusBar, 0, 0, 0);
 
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(window), "OpenCAM 2D");
+	gtk_window_set_title(GTK_WINDOW(window), "CAMmill 2D");
 
 
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
