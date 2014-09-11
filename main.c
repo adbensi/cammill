@@ -900,7 +900,6 @@ void draw_line3 (float x1, float y1, float z1, float x2, float y2, float z2) {
 
 void mill_z (int gcmd, double z) {
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 	postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
 	postcam_var_push_double("currentX", _X(mill_last_x));
 	postcam_var_push_double("currentY", _Y(mill_last_y));
@@ -915,7 +914,6 @@ if (update_post == 1) {
 		mill_distance_z += set_positive(z - mill_last_z);
 		postcam_call_function("OnMove");
 	}
-}
 #else
 	char tz_str[128];
 	translateAxisZ(z, tz_str);
@@ -963,7 +961,6 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 			draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			if (gcmd == 1) {
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 				postcam_var_push_int("feedRate", feed);
 				postcam_var_push_double("currentX", _X(mill_last_x));
 				postcam_var_push_double("currentY", _Y(mill_last_y));
@@ -972,7 +969,6 @@ if (update_post == 1) {
 				postcam_var_push_double("endY", _Y(y));
 				postcam_var_push_double("endZ", _Z(mill_last_z));
 				postcam_call_function("OnMove");
-}
 #else
 				translateAxisX(x, tx_str);
 				translateAxisY(y, ty_str);
@@ -981,7 +977,6 @@ if (update_post == 1) {
 #endif
 			} else if (gcmd == 2 || gcmd == 3) {
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 				postcam_var_push_int("feedRate", feed);
 				postcam_var_push_double("currentX", _X(mill_last_x));
 				postcam_var_push_double("currentY", _Y(mill_last_y));
@@ -1034,7 +1029,6 @@ if (update_post == 1) {
 				}
 				postcam_var_push_double("arcRadius", r);
 				postcam_call_function("OnArc");
-}
 #else
 				translateAxisX(x, tx_str);
 				translateAxisY(y, ty_str);
@@ -1049,7 +1043,6 @@ if (update_post == 1) {
 			draw_line3((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z);
 		}
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 		postcam_var_push_int("feedRate", feed);
 		postcam_var_push_double("currentX", _X(mill_last_x));
 		postcam_var_push_double("currentY", _Y(mill_last_y));
@@ -1058,7 +1051,6 @@ if (update_post == 1) {
 		postcam_var_push_double("endY", _Y(y));
 		postcam_var_push_double("endZ", _Z(mill_last_z));
 		postcam_call_function("OnRapid");
-}
 #else
 		translateAxisX(x, tx_str);
 		translateAxisY(y, ty_str);
@@ -1098,7 +1090,6 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	}
 	mill_z(1, depth);
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 	postcam_var_push_int("feedRate", feed);
 	postcam_var_push_double("currentX", _X(mill_last_x));
 	postcam_var_push_double("currentY", _Y(mill_last_y));
@@ -1118,7 +1109,6 @@ if (update_post == 1) {
 	postcam_var_push_double("currentX", _X(x + r));
 	postcam_var_push_double("endX", _X(x - r));
 	postcam_call_function("OnArc");
-}
 #else
 	translateAxisX(x + r, tx_str);
 	translateAxisY(y, ty_str);
@@ -1160,14 +1150,12 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 	if (lasermode == 1) {
 		if (tool_last != 5) {
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
 			char tmp_str[1024];
 			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
 			postcam_var_push_string("toolName", tmp_str);
 			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 			postcam_call_function("OnToolChange");
-}
 #else
 			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
 			append_gcode(cline);
@@ -1177,9 +1165,7 @@ if (update_post == 1) {
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 		mill_z(0, 0.0);
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 		postcam_call_function("OnSpindleCW");
-}
 #else
 		sprintf(cline, "M03 (Laser-On)\n");
 		append_gcode(cline);
@@ -1187,7 +1173,6 @@ if (update_post == 1) {
 	} else {
 		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
 			char tmp_str[1024];
 			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
@@ -1196,7 +1181,6 @@ if (update_post == 1) {
 			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 			postcam_call_function("OnToolChange");
 			postcam_call_function("OnSpindleCW");
-}
 #else
 			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
 			append_gcode(cline);
@@ -1215,9 +1199,7 @@ void mill_move_out (int lasermode) {
 	// move out
 	if (lasermode == 1) {
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 		postcam_call_function("OnSpindleOff");
-}
 #else
 		sprintf(cline, "M05 (Laser-Off)\n");
 		append_gcode(cline);
@@ -1737,7 +1719,6 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	}
 
 #ifdef USE_POSTCAM
-if (update_post == 1) {
 	postcam_comment("--------------------------------------------------");
 	sprintf(cline, "Object: #%i", object_num);
 	postcam_var_push_string("partName", cline);
@@ -1764,7 +1745,6 @@ if (update_post == 1) {
 	postcam_comment(cline);
 	postcam_comment("--------------------------------------------------");
 	postcam_call_function("OnNewPart");
-}
 #endif
 
 	mill_start = 0;
@@ -2386,169 +2366,133 @@ void mainloop (void) {
 		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][2] * (float)PARAMETER[P_TOOL_W].vint);
 	}
 
-	if (batchmode == 0) {
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearDepth(1.0);
-		glEnable(GL_DEPTH_TEST);
-		glDisable(GL_CULL_FACE);
-		glEnable(GL_NORMALIZE);
-		glDepthFunc(GL_LEQUAL);
-		glDepthMask(GL_TRUE);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glPushMatrix();
-		glScalef(PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat);
-		glScalef(scale, scale, scale);
-		glTranslatef(PARAMETER[P_V_TRANSX].vint, PARAMETER[P_V_TRANSY].vint, 0.0);
-		glRotatef(PARAMETER[P_V_ROTZ].vfloat, 0.0, 0.0, 1.0);
-		glRotatef(PARAMETER[P_V_ROTY].vfloat, 0.0, 1.0, 0.0);
-		glRotatef(PARAMETER[P_V_ROTX].vfloat, 1.0, 0.0, 0.0);
-		glTranslatef(-size_x / 2.0, 0.0, 0.0);
-		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
-			glTranslatef(0.0, -size_y / 2.0, 0.0);
-		}
+	if (update_post == 1) {
+		glDeleteLists(1, 1);
+		glNewList(1, GL_COMPILE);
+
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
 			if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 				draw_helplines();
 			}
 		}
-	} else {
-		PARAMETER[P_V_HELPLINES].vint = 0;
-		save_gcode = 1;
-	}
 
-	// init output
-	mill_start_all = 0;
-	tool_last = -1;
-	mill_distance_xy = 0.0;
-	mill_distance_z = 0.0;
-	move_distance_xy = 0.0;
-	move_distance_z = 0.0;
-	mill_last_x = 0.0;
-	mill_last_y = 0.0;
-	mill_last_z = PARAMETER[P_CUT_SAVE].vdouble;
-	if (gcode_buffer != NULL) {
-		free(gcode_buffer);
-		gcode_buffer = NULL;
-	}
+		// init output
+		mill_start_all = 0;
+		tool_last = -1;
+		mill_distance_xy = 0.0;
+		mill_distance_z = 0.0;
+		move_distance_xy = 0.0;
+		move_distance_z = 0.0;
+		mill_last_x = 0.0;
+		mill_last_y = 0.0;
+		mill_last_z = PARAMETER[P_CUT_SAVE].vdouble;
+		if (gcode_buffer != NULL) {
+			free(gcode_buffer);
+			gcode_buffer = NULL;
+		}
 #ifdef USE_POSTCAM
-if (update_post == 1) {
-	if (postcam_plugin != PARAMETER[P_H_POST].vint) {
-		postcam_exit_lua();
-		strcpy(output_extension, "ngc");
-		strcpy(output_info, "");
-		postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
-		postcam_plugin = PARAMETER[P_H_POST].vint;
-		gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
-		sprintf(tmp_str, "Output (%s)", output_extension);
-		gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
-		postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
-	}
-	postcam_var_push_string("fileName", PARAMETER[P_V_DXF].vstr);
-	postcam_var_push_string("postName", postcam_plugins[PARAMETER[P_H_POST].vint]);
-	postcam_var_push_string("date", "---");
-	postcam_var_push_double("metric", 1.0);
-	postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
-	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
-	postcam_var_push_double("currentX", _X(0.0));
-	postcam_var_push_double("currentY", _Y(0.0));
-	postcam_var_push_double("currentZ", _Z(0.0));
-	postcam_var_push_double("endX", _X(0.0));
-	postcam_var_push_double("endY", _Y(0.0));
-	postcam_var_push_double("endZ", _Z(0.0));
-	postcam_var_push_double("toolOffset", 0.0);
-	postcam_var_push_int("tool", -1);
-	postcam_var_push_int("lastinst", 0);
-//	SetupShowGcode(fd_out);
-	postcam_call_function("OnInit");
-	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
-		if (PARAMETER[P_H_ROTARYAXIS].vint == 1) {
-			postcam_var_push_string("axisX", "B");
+		if (postcam_plugin != PARAMETER[P_H_POST].vint) {
+			postcam_exit_lua();
+			strcpy(output_extension, "ngc");
+			strcpy(output_info, "");
+			postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
+			postcam_plugin = PARAMETER[P_H_POST].vint;
+			gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
+			sprintf(tmp_str, "Output (%s)", output_extension);
+			gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
+			postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
+		}
+		postcam_var_push_string("fileName", PARAMETER[P_V_DXF].vstr);
+		postcam_var_push_string("postName", postcam_plugins[PARAMETER[P_H_POST].vint]);
+		postcam_var_push_string("date", "---");
+		postcam_var_push_double("metric", 1.0);
+		postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
+		postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+		postcam_var_push_double("currentX", _X(0.0));
+		postcam_var_push_double("currentY", _Y(0.0));
+		postcam_var_push_double("currentZ", _Z(0.0));
+		postcam_var_push_double("endX", _X(0.0));
+		postcam_var_push_double("endY", _Y(0.0));
+		postcam_var_push_double("endZ", _Z(0.0));
+		postcam_var_push_double("toolOffset", 0.0);
+		postcam_var_push_int("tool", -1);
+		postcam_var_push_int("lastinst", 0);
+	//	SetupShowGcode(fd_out);
+		postcam_call_function("OnInit");
+		if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
+			if (PARAMETER[P_H_ROTARYAXIS].vint == 1) {
+				postcam_var_push_string("axisX", "B");
+			} else {
+				postcam_var_push_string("axisX", "X");
+			}
+			if (PARAMETER[P_H_ROTARYAXIS].vint == 0) {
+				postcam_var_push_string("axisY", "A");
+			} else {
+				postcam_var_push_string("axisY", "Y");
+			}
 		} else {
 			postcam_var_push_string("axisX", "X");
-		}
-		if (PARAMETER[P_H_ROTARYAXIS].vint == 0) {
-			postcam_var_push_string("axisY", "A");
-		} else {
 			postcam_var_push_string("axisY", "Y");
 		}
-	} else {
-		postcam_var_push_string("axisX", "X");
-		postcam_var_push_string("axisY", "Y");
-	}
-	postcam_var_push_string("axisZ", "Z");
-}
+		postcam_var_push_string("axisZ", "Z");
 #else
-	append_gcode("G21 (Metric)\n");
-	append_gcode("G40 (No Offsets)\n");
-	append_gcode("G90 (Absolute-Mode)\n");
-	sprintf(cline, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
-	append_gcode(cline);
+		append_gcode("G21 (Metric)\n");
+		append_gcode("G40 (No Offsets)\n");
+		append_gcode("G90 (Absolute-Mode)\n");
+		sprintf(cline, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
+		append_gcode(cline);
 #endif
 
-	// update Object-Data
-	for (object_num = 0; object_num < object_last; object_num++) {
-		if (myOBJECTS[object_num].force == 0) {
-			myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;
-			myOBJECTS[object_num].overcut = PARAMETER[P_M_OVERCUT].vint;
-			myOBJECTS[object_num].laser = PARAMETER[P_M_LASERMODE].vint;
-			myOBJECTS[object_num].climb = PARAMETER[P_M_CLIMB].vint;
-			if (PARAMETER[P_M_LASERMODE].vint == 1) {
-				myOBJECTS[object_num].laser = 1;
-			}
-			if (strncmp(myOBJECTS[object_num].layer, "depth-", 6) == 0) {
-				myOBJECTS[object_num].depth = atof(myOBJECTS[object_num].layer + 5);
-			}
-			if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
-				myOBJECTS[object_num].laser = 1;
-			}
-			if (myOBJECTS[object_num].closed == 1) {
-				if (myOBJECTS[object_num].inside == 1) {
-					myOBJECTS[object_num].offset = 1; // INSIDE
-				} else {
-					myOBJECTS[object_num].offset = 2; // OUTSIDE
+		// update Object-Data
+		for (object_num = 0; object_num < object_last; object_num++) {
+			if (myOBJECTS[object_num].force == 0) {
+				myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;
+				myOBJECTS[object_num].overcut = PARAMETER[P_M_OVERCUT].vint;
+				myOBJECTS[object_num].laser = PARAMETER[P_M_LASERMODE].vint;
+				myOBJECTS[object_num].climb = PARAMETER[P_M_CLIMB].vint;
+				if (PARAMETER[P_M_LASERMODE].vint == 1) {
+					myOBJECTS[object_num].laser = 1;
 				}
-			} else {
-				myOBJECTS[object_num].offset = 0; // NONE
+				if (strncmp(myOBJECTS[object_num].layer, "depth-", 6) == 0) {
+					myOBJECTS[object_num].depth = atof(myOBJECTS[object_num].layer + 5);
+				}
+				if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
+					myOBJECTS[object_num].laser = 1;
+				}
+				if (myOBJECTS[object_num].closed == 1) {
+					if (myOBJECTS[object_num].inside == 1) {
+						myOBJECTS[object_num].offset = 1; // INSIDE
+					} else {
+						myOBJECTS[object_num].offset = 2; // OUTSIDE
+					}
+				} else {
+					myOBJECTS[object_num].offset = 0; // NONE
+				}
 			}
 		}
-	}
 
-	/* 'shortest' path / first inside than outside objects */ 
-	double last_x = 0.0;
-	double last_y = 0.0;
-	double next_x = 0.0;
-	double next_y = 0.0;
-	for (object_num = 0; object_num < object_last; object_num++) {
-		myOBJECTS[object_num].visited = 0;
-	}
+		/* 'shortest' path / first inside than outside objects */ 
+		double last_x = 0.0;
+		double last_y = 0.0;
+		double next_x = 0.0;
+		double next_y = 0.0;
+		for (object_num = 0; object_num < object_last; object_num++) {
+			myOBJECTS[object_num].visited = 0;
+		}
 
-	/* inside and open objects */
-	for (object_num = 0; object_num < object_last; object_num++) {
-		double shortest_len = 9999999.0;
-		int shortest_object = -1;
-		int shortest_line = -1;
-		int flag = 0;
-		int object_num2 = 0;
-		for (object_num2 = 0; object_num2 < object_last; object_num2++) {
-			int nnum = 0;
-			if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
-				if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].inside == 1 && myOBJECTS[object_num2].visited == 0) {
-					int lnum2 = myOBJECTS[object_num2].line[nnum];
-					double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
-					if (len < shortest_len) {
-						shortest_len = len;
-						shortest_object = object_num2;
-						shortest_line = nnum;
-						flag = 1;
-					}
-				}
-			} else {
-				for (nnum = 0; nnum < line_last; nnum++) {
+		/* inside and open objects */
+		for (object_num = 0; object_num < object_last; object_num++) {
+			double shortest_len = 9999999.0;
+			int shortest_object = -1;
+			int shortest_line = -1;
+			int flag = 0;
+			int object_num2 = 0;
+			for (object_num2 = 0; object_num2 < object_last; object_num2++) {
+				int nnum = 0;
+				if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
 					if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].inside == 1 && myOBJECTS[object_num2].visited == 0) {
 						int lnum2 = myOBJECTS[object_num2].line[nnum];
-						double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+						double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
 						if (len < shortest_len) {
 							shortest_len = len;
 							shortest_object = object_num2;
@@ -2556,63 +2500,24 @@ if (update_post == 1) {
 							flag = 1;
 						}
 					}
+				} else {
+					for (nnum = 0; nnum < line_last; nnum++) {
+						if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].inside == 1 && myOBJECTS[object_num2].visited == 0) {
+							int lnum2 = myOBJECTS[object_num2].line[nnum];
+							double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+							if (len < shortest_len) {
+								shortest_len = len;
+								shortest_object = object_num2;
+								shortest_line = nnum;
+								flag = 1;
+							}
+						}
+					}
 				}
-			}
-			nnum = 0;
-			if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].closed == 0 && myOBJECTS[object_num2].visited == 0) {
-				int lnum2 = myOBJECTS[object_num2].line[nnum];
-				double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
-				if (len < shortest_len) {
-					shortest_len = len;
-					shortest_object = object_num2;
-					shortest_line = nnum;
-					flag = 1;
-				}
-			}
-			nnum = object_line_last(object_num2);
-			if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].closed == 0 && myOBJECTS[object_num2].visited == 0) {
-				int lnum2 = myOBJECTS[object_num2].line[nnum];
-				double len = get_len(last_x, last_y, myLINES[lnum2].x2, myLINES[lnum2].y2);
-				if (len < shortest_len) {
-					shortest_len = len;
-					shortest_object = object_num2;
-					shortest_line = nnum;
-					flag = 2;
-				}
-			}
-		}
-		if (flag > 0) {
-			myOBJECTS[shortest_object].visited = 1;
-			if (flag > 1) {
-				redir_object(shortest_object);
-			}
-			if (myOBJECTS[shortest_object].closed == 1 && myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
-				resort_object(shortest_object, shortest_line);
-				object_optimize_dir(shortest_object);
-			}
-			object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-			object_draw(fd_out, shortest_object);
-			last_x = next_x;
-			last_y = next_y;
-
-		} else {
-			break;
-		}
-	}
-
-	/* outside objects */
-	for (object_num = 0; object_num < object_last; object_num++) {
-		double shortest_len = 9999999.0;
-		int shortest_object = -1;
-		int shortest_line = -1;
-		int flag = 0;
-		int object_num2 = 0;
-		for (object_num2 = 0; object_num2 < object_last; object_num2++) {
-			int nnum = 0;
-			if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
-				if (myOBJECTS[object_num2].line[nnum] != 0 && (myOBJECTS[object_num2].inside == 0 && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
+				nnum = 0;
+				if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].closed == 0 && myOBJECTS[object_num2].visited == 0) {
 					int lnum2 = myOBJECTS[object_num2].line[nnum];
-					double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
+					double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
 					if (len < shortest_len) {
 						shortest_len = len;
 						shortest_object = object_num2;
@@ -2620,11 +2525,50 @@ if (update_post == 1) {
 						flag = 1;
 					}
 				}
+				nnum = object_line_last(object_num2);
+				if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].closed == 0 && myOBJECTS[object_num2].visited == 0) {
+					int lnum2 = myOBJECTS[object_num2].line[nnum];
+					double len = get_len(last_x, last_y, myLINES[lnum2].x2, myLINES[lnum2].y2);
+					if (len < shortest_len) {
+						shortest_len = len;
+						shortest_object = object_num2;
+						shortest_line = nnum;
+						flag = 2;
+					}
+				}
+			}
+			if (flag > 0) {
+				myOBJECTS[shortest_object].visited = 1;
+				if (flag > 1) {
+					redir_object(shortest_object);
+				}
+				if (myOBJECTS[shortest_object].closed == 1 && myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
+					resort_object(shortest_object, shortest_line);
+					object_optimize_dir(shortest_object);
+				}
+				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+				object_draw(fd_out, shortest_object);
+				last_x = next_x;
+				last_y = next_y;
+	
 			} else {
-				for (nnum = 0; nnum < line_last; nnum++) {
+				break;
+			}
+		}
+
+		/* outside objects */
+		for (object_num = 0; object_num < object_last; object_num++) {
+			double shortest_len = 9999999.0;
+			int shortest_object = -1;
+			int shortest_line = -1;
+			int flag = 0;
+			int object_num2 = 0;
+			for (object_num2 = 0; object_num2 < object_last; object_num2++) {
+				int nnum = 0;
+				if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
 					if (myOBJECTS[object_num2].line[nnum] != 0 && (myOBJECTS[object_num2].inside == 0 && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
 						int lnum2 = myOBJECTS[object_num2].line[nnum];
-						double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+						double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
 						if (len < shortest_len) {
 							shortest_len = len;
 							shortest_object = object_num2;
@@ -2632,80 +2576,82 @@ if (update_post == 1) {
 							flag = 1;
 						}
 					}
+				} else {
+					for (nnum = 0; nnum < line_last; nnum++) {
+						if (myOBJECTS[object_num2].line[nnum] != 0 && (myOBJECTS[object_num2].inside == 0 && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
+							int lnum2 = myOBJECTS[object_num2].line[nnum];
+							double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+							if (len < shortest_len) {
+								shortest_len = len;
+								shortest_object = object_num2;
+								shortest_line = nnum;
+								flag = 1;
+							}
+						}
+					}
 				}
 			}
-		}
-		if (flag == 1) {
-//			printf("##WEIGHT## %i == %f %i\n", shortest_object, shortest_len, flag);
-			myOBJECTS[shortest_object].visited = 1;
-			if (myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
-				resort_object(shortest_object, shortest_line);
-				object_optimize_dir(shortest_object);
-			}
-			if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
+			if (flag == 1) {
+				myOBJECTS[shortest_object].visited = 1;
+				if (myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
+					resort_object(shortest_object, shortest_line);
+					object_optimize_dir(shortest_object);
+				}
+				if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
+				} else {
+					object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+					object_draw(fd_out, shortest_object);
+				}
+				last_x = next_x;
+				last_y = next_y;
 			} else {
-				object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
-				object_draw(fd_out, shortest_object);
+				break;
 			}
-			last_x = next_x;
-			last_y = next_y;
-		} else {
-			break;
 		}
-	}
-
-	 // draw helplines
-	if (PARAMETER[P_V_HELPLINES].vint == 1) {
-		if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
-			draw_helplines();
-		}
-	}
 
 	/* exit output */
 #ifdef USE_POSTCAM
-if (update_post == 1) {
-	postcam_call_function("OnSpindleOff");
-	postcam_call_function("OnFinish");
-	gtk_label_set_text(GTK_LABEL(OutputErrorLabel), output_error);
-}
+		postcam_call_function("OnSpindleOff");
+		postcam_call_function("OnFinish");
+		gtk_label_set_text(GTK_LABEL(OutputErrorLabel), output_error);
 #else
-	append_gcode("M05 (Spindle-/Laser-Off)\n");
-	append_gcode("M02 (Programm-End)\n");
+		append_gcode("M05 (Spindle-/Laser-Off)\n");
+		append_gcode("M02 (Programm-End)\n");
 #endif
 
-	// update GUI
-	GtkTextIter startLua, endLua;
-	GtkTextBuffer *bufferLua;
-	bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
-	gtk_text_buffer_get_bounds(bufferLua, &startLua, &endLua);
+		// update GUI
+		GtkTextIter startLua, endLua;
+		GtkTextBuffer *bufferLua;
+		bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
+		gtk_text_buffer_get_bounds(bufferLua, &startLua, &endLua);
 
-if (update_post == 1) {
-	update_post = 0;
-	GtkTextIter start, end;
-	GtkTextBuffer *buffer;
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
-	gtk_text_buffer_get_bounds(buffer, &start, &end);
-	char *gcode_check = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
-	if (gcode_check != NULL) {
-		if (gcode_buffer != NULL) {
-			if (strcmp(gcode_check, gcode_buffer) != 0) {
-				gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+		update_post = 0;
+		GtkTextIter start, end;
+		GtkTextBuffer *buffer;
+		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
+		gtk_text_buffer_get_bounds(buffer, &start, &end);
+		char *gcode_check = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+		if (gcode_check != NULL) {
+			if (gcode_buffer != NULL) {
+				if (strcmp(gcode_check, gcode_buffer) != 0) {
+					gtk_text_buffer_set_text(buffer, gcode_buffer, -1);
+				}
+			} else {
+				gtk_text_buffer_set_text(buffer, "", -1);
 			}
+			free(gcode_check);
 		} else {
 			gtk_text_buffer_set_text(buffer, "", -1);
 		}
-		free(gcode_check);
-	} else {
-		gtk_text_buffer_set_text(buffer, "", -1);
+		double milltime = mill_distance_xy / PARAMETER[P_M_FEEDRATE].vint;
+		milltime += mill_distance_z / PARAMETER[P_M_PLUNGE_SPEED].vint;
+		milltime += (move_distance_xy + move_distance_z) / PARAMETER[P_H_FEEDRATE_FAST].vint;
+		sprintf(tmp_str, "Distance: Mill-XY=%0.2fmm/Z=%0.2fmm / Move-XY=%0.2fmm/Z=%0.2fmm / Time>%0.1fmin", mill_distance_xy, mill_distance_z, move_distance_xy, move_distance_z, milltime);
+		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), tmp_str), tmp_str);
+		sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm", size_x, size_y);
+		gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
+		glEndList();
 	}
-}
-	double milltime = mill_distance_xy / PARAMETER[P_M_FEEDRATE].vint;
-	milltime += mill_distance_z / PARAMETER[P_M_PLUNGE_SPEED].vint;
-	milltime += (move_distance_xy + move_distance_z) / PARAMETER[P_H_FEEDRATE_FAST].vint;
-	sprintf(tmp_str, "Distance: Mill-XY=%0.2fmm/Z=%0.2fmm / Move-XY=%0.2fmm/Z=%0.2fmm / Time>%0.1fmin", mill_distance_xy, mill_distance_z, move_distance_xy, move_distance_z, milltime);
-	gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), tmp_str), tmp_str);
-	sprintf(tmp_str, "Width=%0.1fmm / Height=%0.1fmm", size_x, size_y);
-	gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
 
 	// save output
 	if (save_gcode == 1) {
@@ -2729,10 +2675,33 @@ if (update_post == 1) {
 		save_gcode = 0;
 	}
 
+
 	if (batchmode == 1) {
 		onExit();
 		exit(0);
 	} else {
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearDepth(1.0);
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
+		glEnable(GL_NORMALIZE);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glPushMatrix();
+		glScalef(PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat, PARAMETER[P_V_ZOOM].vfloat);
+		glScalef(scale, scale, scale);
+		glTranslatef(PARAMETER[P_V_TRANSX].vint, PARAMETER[P_V_TRANSY].vint, 0.0);
+		glRotatef(PARAMETER[P_V_ROTZ].vfloat, 0.0, 0.0, 1.0);
+		glRotatef(PARAMETER[P_V_ROTY].vfloat, 0.0, 1.0, 0.0);
+		glRotatef(PARAMETER[P_V_ROTX].vfloat, 1.0, 0.0, 0.0);
+		glTranslatef(-size_x / 2.0, 0.0, 0.0);
+		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+			glTranslatef(0.0, -size_y / 2.0, 0.0);
+		}
+		glCallList(1);
 		glPopMatrix();
 	}
 	return;
