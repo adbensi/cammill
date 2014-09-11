@@ -1314,6 +1314,70 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	mill_distance_xy += set_positive(r * 2 * PI);
 }
 
+void mill_move_in (double x, double y, double depth, int lasermode) {
+	// move to
+	if (lasermode == 1) {
+		if (tool_last != 5) {
+#ifdef USE_POSTCAM
+			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
+			char tmp_str[1024];
+			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
+			postcam_var_push_string("toolName", tmp_str);
+			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+			postcam_call_function("OnToolChange");
+#else
+			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
+			append_gcode(cline);
+#endif
+		}
+		tool_last = PARAMETER[P_TOOL_NUM].vint;
+		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+		mill_z(0, 0.0);
+#ifdef USE_POSTCAM
+		postcam_call_function("OnSpindleCW");
+#else
+		sprintf(cline, "M03 (Laser-On)\n");
+		append_gcode(cline);
+#endif
+	} else {
+		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
+#ifdef USE_POSTCAM
+			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
+			char tmp_str[1024];
+			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
+			postcam_var_push_string("toolName", tmp_str);
+			postcam_var_push_double("endZ", _Z(mill_last_z));
+			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+			postcam_call_function("OnToolChange");
+			postcam_call_function("OnSpindleCW");
+#else
+			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
+			append_gcode(cline);
+			sprintf(cline, "M03 S%i", PARAMETER[P_TOOL_SPEED].vint);
+			append_gcode(cline);
+#endif
+		}
+		tool_last = PARAMETER[P_TOOL_NUM].vint;
+		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
+		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+	}
+}
+
+
+void mill_move_out (int lasermode) {
+	// move out
+	if (lasermode == 1) {
+#ifdef USE_POSTCAM
+		postcam_call_function("OnSpindleOff");
+#else
+		sprintf(cline, "M05 (Laser-Off)\n");
+		append_gcode(cline);
+#endif
+	} else {
+		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
+	}
+}
+
 void object_draw (FILE *fd_out, int object_num) {
 	int num = 0;
 	int last = 0;
@@ -1333,6 +1397,17 @@ void object_draw (FILE *fd_out, int object_num) {
 	if (myOBJECTS[object_num].use == 0) {
 		return;
 	}
+
+/*
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(myOBJECTS[object_num].min_x, myOBJECTS[object_num].min_y, 0.0);
+	glVertex3f(myOBJECTS[object_num].max_x, myOBJECTS[object_num].min_y, 0.0);
+	glVertex3f(myOBJECTS[object_num].max_x, myOBJECTS[object_num].max_y, 0.0);
+	glVertex3f(myOBJECTS[object_num].min_x, myOBJECTS[object_num].max_y, 0.0);
+	glVertex3f(myOBJECTS[object_num].min_x, myOBJECTS[object_num].min_y, 0.0);
+	glEnd();
+*/
+
 	if (PARAMETER[P_M_NCDEBUG].vint == 1) {
 		append_gcode("\n");
 		sprintf(cline, "(--------------------------------------------------)\n");
@@ -1358,6 +1433,11 @@ void object_draw (FILE *fd_out, int object_num) {
 		double y = (float)myLINES[lnum].cy;
 		double last_x = x + r;
 		double last_y = y;
+
+		if (PARAMETER[P_M_NCDEBUG].vint == 1) {
+			mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, 0.0, lasermode);
+			mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, 0.0, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+		}
 		for (an = 0.0; an <= 360.0; an += 9.0) {
 			double angle1 = toRad(an);
 			double x1 = r * cos(angle1);
@@ -1456,71 +1536,6 @@ void object_draw (FILE *fd_out, int object_num) {
 		}
 	}
 }
-
-void mill_move_in (double x, double y, double depth, int lasermode) {
-	// move to
-	if (lasermode == 1) {
-		if (tool_last != 5) {
-#ifdef USE_POSTCAM
-			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
-			char tmp_str[1024];
-			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
-			postcam_var_push_string("toolName", tmp_str);
-			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
-			postcam_call_function("OnToolChange");
-#else
-			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
-			append_gcode(cline);
-#endif
-		}
-		tool_last = PARAMETER[P_TOOL_NUM].vint;
-		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-		mill_z(0, 0.0);
-#ifdef USE_POSTCAM
-		postcam_call_function("OnSpindleCW");
-#else
-		sprintf(cline, "M03 (Laser-On)\n");
-		append_gcode(cline);
-#endif
-	} else {
-		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
-#ifdef USE_POSTCAM
-			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
-			char tmp_str[1024];
-			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
-			postcam_var_push_string("toolName", tmp_str);
-			postcam_var_push_double("endZ", _Z(mill_last_z));
-			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
-			postcam_call_function("OnToolChange");
-			postcam_call_function("OnSpindleCW");
-#else
-			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
-			append_gcode(cline);
-			sprintf(cline, "M03 S%i", PARAMETER[P_TOOL_SPEED].vint);
-			append_gcode(cline);
-#endif
-		}
-		tool_last = PARAMETER[P_TOOL_NUM].vint;
-		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
-		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-	}
-}
-
-
-void mill_move_out (int lasermode) {
-	// move out
-	if (lasermode == 1) {
-#ifdef USE_POSTCAM
-		postcam_call_function("OnSpindleOff");
-#else
-		sprintf(cline, "M05 (Laser-Off)\n");
-		append_gcode(cline);
-#endif
-	} else {
-		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
-	}
-}
-
 
 void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, double *next_x, double *next_y, double tool_offset, int overcut, int lasermode, int offset) {
 	int error = 0;
@@ -2129,6 +2144,10 @@ void init_objects (void) {
 		myOBJECTS[object_num].visited = 0;
 		myOBJECTS[object_num].depth = 0.0;
 		myOBJECTS[object_num].layer[0] = 0;
+		myOBJECTS[object_num].min_x = 999999.0;
+		myOBJECTS[object_num].min_y = 999999.0;
+		myOBJECTS[object_num].max_x = -999999.0;
+		myOBJECTS[object_num].max_y = -999999.0;
 		for (num2 = 0; num2 < line_last; num2++) {
 			myOBJECTS[object_num].line[num2] = 0;
 		}
@@ -2232,6 +2251,58 @@ void init_objects (void) {
 				if (myOBJECTS[object_num].inside == 1) {
 					redir_object(object_num);
 					myOBJECTS[object_num].inside = 0;
+				}
+			}
+		}
+	}
+
+	// object-boundingbox
+	for (num5b = 0; num5b < object_last; num5b++) {
+		if (myLINES[myOBJECTS[num5b].line[0]].type == TYPE_CIRCLE) {
+			int lnum = myOBJECTS[num5b].line[0];
+			if (myOBJECTS[num5b].min_x > myLINES[lnum].cx - myLINES[lnum].opt) {
+				myOBJECTS[num5b].min_x = myLINES[lnum].cx - myLINES[lnum].opt;
+			}
+			if (myOBJECTS[num5b].min_y > myLINES[lnum].cy - myLINES[lnum].opt) {
+				myOBJECTS[num5b].min_y = myLINES[lnum].cy - myLINES[lnum].opt;
+			}
+			if (myOBJECTS[num5b].max_x < myLINES[lnum].cx + myLINES[lnum].opt) {
+				myOBJECTS[num5b].max_x = myLINES[lnum].cx + myLINES[lnum].opt;
+			}
+			if (myOBJECTS[num5b].max_y < myLINES[lnum].cy + myLINES[lnum].opt) {
+				myOBJECTS[num5b].max_y = myLINES[lnum].cy + myLINES[lnum].opt;
+			}
+
+
+		} else {
+			int num4b = 0;
+			for (num4b = 0; num4b < line_last; num4b++) {
+				int lnum = myOBJECTS[num5b].line[num4b];
+				if (myLINES[lnum].used == 1) {
+					if (myOBJECTS[num5b].min_x > myLINES[lnum].x1) {
+						myOBJECTS[num5b].min_x = myLINES[lnum].x1;
+					}
+					if (myOBJECTS[num5b].min_y > myLINES[lnum].y1) {
+						myOBJECTS[num5b].min_y = myLINES[lnum].y1;
+					}
+					if (myOBJECTS[num5b].min_x > myLINES[lnum].x2) {
+						myOBJECTS[num5b].min_x = myLINES[lnum].x2;
+					}
+					if (myOBJECTS[num5b].min_y > myLINES[lnum].y2) {
+						myOBJECTS[num5b].min_y = myLINES[lnum].y2;
+					}
+					if (myOBJECTS[num5b].max_x < myLINES[lnum].x1) {
+						myOBJECTS[num5b].max_x = myLINES[lnum].x1;
+					}
+					if (myOBJECTS[num5b].max_y < myLINES[lnum].y1) {
+						myOBJECTS[num5b].max_y = myLINES[lnum].y1;
+					}
+					if (myOBJECTS[num5b].max_x < myLINES[lnum].x2) {
+						myOBJECTS[num5b].max_x = myLINES[lnum].x2;
+					}
+					if (myOBJECTS[num5b].max_y < myLINES[lnum].y2) {
+						myOBJECTS[num5b].max_y = myLINES[lnum].y2;
+					}
 				}
 			}
 		}
@@ -2563,7 +2634,7 @@ void mainloop (void) {
 	append_gcode(cline);
 #endif
 
-	// update Object-Setup
+	// update Object-Data
 	for (object_num = 0; object_num < object_last; object_num++) {
 		if (myOBJECTS[object_num].force == 0) {
 			myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;

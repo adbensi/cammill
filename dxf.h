@@ -55,6 +55,10 @@ typedef struct{
 	int pocket;
 	int laser;
 	double depth;
+	double min_x;
+	double min_y;
+	double max_x;
+	double max_y;
 	char layer[256];
 } _OBJECT;
 
