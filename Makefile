@@ -18,9 +18,9 @@ opencam2d: main.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.
 	clang -ggdb -Wall -O3 -o opencam2d main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
 
 gprof:
-	gcc -pg -Wall -O3 -o opencam2d main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
-	echo "./opencam2d"
-	echo "gprof opencam2d gmon.out"
+	gcc -pg -ggdb -Wall -O3 -o opencam2d main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+	@echo "./opencam2d"
+	@echo "gprof opencam2d gmon.out"
 
 clean:
 	rm -rf opencam2d
