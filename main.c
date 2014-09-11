@@ -104,6 +104,7 @@ char *rotary_axis[3] = {"A", "B", "C"};
 char cline[1024];
 char postcam_plugins[100][1024];
 int postcam_plugin = -1;
+int update_post = 1;
 char *gcode_buffer = NULL;
 char output_extension[128];
 char output_info[1024];
@@ -141,8 +142,6 @@ double move_distance_z = 0.0;
 
 GtkWidget *window;
 GtkWidget *dialog;
-
-
 
 
 
@@ -901,8 +900,8 @@ void draw_line3 (float x1, float y1, float z1, float x2, float y2, float z2) {
 
 void mill_z (int gcmd, double z) {
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 	postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
-	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 	postcam_var_push_double("currentX", _X(mill_last_x));
 	postcam_var_push_double("currentY", _Y(mill_last_y));
 	postcam_var_push_double("currentZ", _Z(mill_last_z));
@@ -916,6 +915,7 @@ void mill_z (int gcmd, double z) {
 		mill_distance_z += set_positive(z - mill_last_z);
 		postcam_call_function("OnMove");
 	}
+}
 #else
 	char tz_str[128];
 	translateAxisZ(z, tz_str);
@@ -958,176 +958,13 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 	}
 
 	if (gcmd != 0) {
-/*
-		if (mill_start_all != 0) {
-			if (gcmd == 2 || gcmd == 3) {
-				double e = x - mill_last_x;
-				double f = y - mill_last_y;
-				double p = sqrt(e*e + f*f);
-				double k = (p*p + r*r - r*r) / (2 * p);
-				double c1x = mill_last_x + e * k/p + (f/p) * sqrt(r * r - k * k);
-				double c1y = mill_last_y + f * k/p - (e/p) * sqrt(r * r - k * k);
-				double c2x = mill_last_x + e * k/p - (f/p) * sqrt(r * r - k * k);
-				double c2y = mill_last_y + f * k/p + (e/p) * sqrt(r * r - k * k);
-				if (gcmd == 2) {
-					double dx = mill_last_x - c1x;
-					double dy = mill_last_y - c1y;
-					double alpha = toDeg(atan(dy / dx));
-					if (dx < 0 && dy >= 0) {
-						alpha = alpha + 180;
-					} else if (dx < 0 && dy < 0) {
-						alpha = alpha - 180;
-					}
-					if (alpha < 0.0) {
-						alpha += 360.0;
-					}
-					dx = x - c1x;
-					dy = y - c1y;
-					double alpha2 = toDeg(atan(dy / dx));
-					if (dx < 0 && dy >= 0) {
-						alpha2 = alpha2 + 180;
-					} else if (dx < 0 && dy < 0) {
-						alpha2 = alpha2 - 180;
-					}
-					if (alpha2 > 360.0) {
-						alpha2 -= 360.0;
-					}
-
-					if (alpha - alpha2 > 360.0) {
-						alpha -= 360.0;
-					}
-					double lx = x;
-					double ly = y;
-					float an = 0;
-					for (an = alpha2; an < alpha; an += 36.0) {
-						float rangle = toRad(an);
-						float rx = r * cos(rangle);
-						float ry = r * sin(rangle);
-						draw_line((float)c1x + rx, (float)c1y + ry, (float)mill_last_z, (float)lx, (float)ly, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-					}
-					draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)lx, (float)ly, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-				}
-				if (gcmd == 3) {
-					double dx = mill_last_x - c2x;
-					double dy = mill_last_y - c2y;
-					double alpha = toDeg(atan(dy / dx));
-					if (dx < 0 && dy >= 0) {
-						alpha = alpha + 180;
-					} else if (dx < 0 && dy < 0) {
-						alpha = alpha - 180;
-					}
-					if (alpha < 0.0) {
-						alpha += 360.0;
-					}
-					dx = x - c2x;
-					dy = y - c2y;
-					double alpha2 = toDeg(atan(dy / dx));
-					if (dx < 0 && dy >= 0) {
-						alpha2 = alpha2 + 180;
-					} else if (dx < 0 && dy < 0) {
-						alpha2 = alpha2 - 180;
-					}
-					if (alpha2 > 360.0) {
-						alpha2 -= 360.0;
-					}
-					if (alpha2 - alpha > 360.0) {
-						alpha2 -= 360.0;
-					}
-					if (alpha2 < alpha) {
-						alpha2 += 360.0;
-					}
-					double lx = mill_last_x;
-					double ly = mill_last_y;
-					float an = 0;
-					for (an = alpha; an < alpha2; an += 36.0) {
-						float rangle = toRad(an);
-						float rx = r * cos(rangle);
-						float ry = r * sin(rangle);
-						draw_line((float)lx, (float)ly, (float)mill_last_z, (float)c2x + rx, (float)c2y + ry, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-					}
-					draw_line((float)lx, (float)ly, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-				}
-			} else {
-				draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-			}
-		}
-*/
 		int hflag = 0;
-/*
-		double i_x = 0.0;
-		double i_y = 0.0;
-		int num = 0;
-		if (PARAMETER[P_T_USE].vint == 1) {
-			for (num = 0; num < line_last; num++) {
-				if (myLINES[num].istab == 1) {
-					if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1)) {
-						double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
-						double i_x2 = i_x;
-						double i_y2 = i_y;
-						add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
-						double alpha2 = vector_angle(x, y, i_x, i_y);
-						double i_x3 = i_x;
-						double i_y3 = i_y;
-						add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
-						draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-						draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
-						draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-						hflag = 1;
-						if (gcmd == 1) {
-							if (PARAMETER[P_T_TYPE].vint == 0) {
-								translateAxisX(i_x2, tx_str);
-								translateAxisY(i_y2, ty_str);
-								sprintf(cline, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
-								append_gcode(cline);
-								translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
-								sprintf(cline, "G00 %s\n", tz_str);
-								append_gcode(cline);
-								translateAxisX(i_x3, tx_str);
-								translateAxisY(i_y3, ty_str);
-								sprintf(cline, "G0%i %s %s F%i (tab)\n", gcmd, tx_str, ty_str, feed);
-								append_gcode(cline);
-								translateAxisZ(mill_last_z, tz_str);
-								sprintf(cline, "G01 %s F%i  (tabend)\n", tz_str, PARAMETER[P_M_PLUNGE_SPEED].vint);
-								append_gcode(cline);
-								translateAxisX(x, tx_str);
-								translateAxisY(y, ty_str);
-								sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-								append_gcode(cline);
-							} else {
-								translateAxisX(i_x2, tx_str);
-								translateAxisY(i_y2, ty_str);
-								sprintf(cline, "G0%i %s %s F%i (tabstart)\n", gcmd, tx_str, ty_str, feed);
-								append_gcode(cline);
-								translateAxisX(i_x, tx_str);
-								translateAxisY(i_y, ty_str);
-								translateAxisZ(PARAMETER[P_T_DEPTH].vdouble, tz_str);
-								sprintf(cline, "G0%i %s %s %s F%i (tab2top)\n", gcmd, tx_str, ty_str, tz_str, feed);
-								append_gcode(cline);
-								translateAxisX(i_x3, tx_str);
-								translateAxisY(i_y3, ty_str);
-								translateAxisZ(mill_last_z, tz_str);
-								sprintf(cline, "G0%i %s %s %s F%i (tab2bottom)\n", gcmd, tx_str, ty_str, tz_str, feed);
-								append_gcode(cline);
-								translateAxisX(x, tx_str);
-								translateAxisY(y, ty_str);
-								sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-								append_gcode(cline);
-							}
-						} else if (gcmd == 2 || gcmd == 3) {
-							sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
-							append_gcode(cline);
-						}
-					}
-				}
-			}
-		}
-*/
 		if (hflag == 0) {
 			draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			if (gcmd == 1) {
 #ifdef USE_POSTCAM
-				postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
-				postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+if (update_post == 1) {
+				postcam_var_push_int("feedRate", feed);
 				postcam_var_push_double("currentX", _X(mill_last_x));
 				postcam_var_push_double("currentY", _Y(mill_last_y));
 				postcam_var_push_double("currentZ", _Z(mill_last_z));
@@ -1135,6 +972,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 				postcam_var_push_double("endY", _Y(y));
 				postcam_var_push_double("endZ", _Z(mill_last_z));
 				postcam_call_function("OnMove");
+}
 #else
 				translateAxisX(x, tx_str);
 				translateAxisY(y, ty_str);
@@ -1143,8 +981,8 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 #endif
 			} else if (gcmd == 2 || gcmd == 3) {
 #ifdef USE_POSTCAM
-				postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
-				postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+if (update_post == 1) {
+				postcam_var_push_int("feedRate", feed);
 				postcam_var_push_double("currentX", _X(mill_last_x));
 				postcam_var_push_double("currentY", _Y(mill_last_y));
 				postcam_var_push_double("currentZ", _Z(mill_last_z));
@@ -1177,7 +1015,6 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 				} else {
 					double cx = mill_last_x + e * k/p - (f/p) * sqrt(r * r - k * k);
 					double cy = mill_last_y + f * k/p + (e/p) * sqrt(r * r - k * k);
-
 					double dx1 = cx - mill_last_x;
 					double dy1 = cy - mill_last_y;
 					double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
@@ -1197,6 +1034,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 				}
 				postcam_var_push_double("arcRadius", r);
 				postcam_call_function("OnArc");
+}
 #else
 				translateAxisX(x, tx_str);
 				translateAxisY(y, ty_str);
@@ -1211,7 +1049,8 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 			draw_line3((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z);
 		}
 #ifdef USE_POSTCAM
-		postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
+if (update_post == 1) {
+		postcam_var_push_int("feedRate", feed);
 		postcam_var_push_double("currentX", _X(mill_last_x));
 		postcam_var_push_double("currentY", _Y(mill_last_y));
 		postcam_var_push_double("currentZ", _Z(mill_last_z));
@@ -1219,6 +1058,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		postcam_var_push_double("endY", _Y(y));
 		postcam_var_push_double("endZ", _Z(mill_last_z));
 		postcam_call_function("OnRapid");
+}
 #else
 		translateAxisX(x, tx_str);
 		translateAxisY(y, ty_str);
@@ -1258,8 +1098,8 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	}
 	mill_z(1, depth);
 #ifdef USE_POSTCAM
-	postcam_var_push_int("feedRate", PARAMETER[P_M_FEEDRATE].vint);
-	postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
+if (update_post == 1) {
+	postcam_var_push_int("feedRate", feed);
 	postcam_var_push_double("currentX", _X(mill_last_x));
 	postcam_var_push_double("currentY", _Y(mill_last_y));
 	postcam_var_push_double("currentZ", _Z(mill_last_z));
@@ -1278,6 +1118,7 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	postcam_var_push_double("currentX", _X(x + r));
 	postcam_var_push_double("endX", _X(x - r));
 	postcam_call_function("OnArc");
+}
 #else
 	translateAxisX(x + r, tx_str);
 	translateAxisY(y, ty_str);
@@ -1319,12 +1160,14 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 	if (lasermode == 1) {
 		if (tool_last != 5) {
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
 			char tmp_str[1024];
 			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
 			postcam_var_push_string("toolName", tmp_str);
 			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 			postcam_call_function("OnToolChange");
+}
 #else
 			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
 			append_gcode(cline);
@@ -1334,7 +1177,9 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
 		mill_z(0, 0.0);
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 		postcam_call_function("OnSpindleCW");
+}
 #else
 		sprintf(cline, "M03 (Laser-On)\n");
 		append_gcode(cline);
@@ -1342,6 +1187,7 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 	} else {
 		if (tool_last != PARAMETER[P_TOOL_NUM].vint) {
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 			postcam_var_push_double("tool", PARAMETER[P_TOOL_NUM].vint);
 			char tmp_str[1024];
 			sprintf(tmp_str, "Tool# %i", PARAMETER[P_TOOL_NUM].vint);
@@ -1350,6 +1196,7 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 			postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
 			postcam_call_function("OnToolChange");
 			postcam_call_function("OnSpindleCW");
+}
 #else
 			sprintf(cline, "M6 T%i", PARAMETER[P_TOOL_NUM].vint);
 			append_gcode(cline);
@@ -1368,7 +1215,9 @@ void mill_move_out (int lasermode) {
 	// move out
 	if (lasermode == 1) {
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 		postcam_call_function("OnSpindleOff");
+}
 #else
 		sprintf(cline, "M05 (Laser-Off)\n");
 		append_gcode(cline);
@@ -1888,6 +1737,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	}
 
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 	postcam_comment("--------------------------------------------------");
 	sprintf(cline, "Object: #%i", object_num);
 	postcam_var_push_string("partName", cline);
@@ -1914,6 +1764,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	postcam_comment(cline);
 	postcam_comment("--------------------------------------------------");
 	postcam_call_function("OnNewPart");
+}
 #endif
 
 	mill_start = 0;
@@ -2317,8 +2168,8 @@ void init_objects (void) {
 			gtk_list_store_insert_with_values(ListStore[P_O_SELECT], NULL, object_num, 0, NULL, 1, tmp_str, -1);
 		}
 	}
-
 	PARAMETER[P_O_SELECT].vint = -1;
+	update_post = 1;
 }
 
 void draw_helplines (void) {
@@ -2582,6 +2433,7 @@ void mainloop (void) {
 		gcode_buffer = NULL;
 	}
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 	if (postcam_plugin != PARAMETER[P_H_POST].vint) {
 		postcam_exit_lua();
 		strcpy(output_extension, "ngc");
@@ -2626,6 +2478,7 @@ void mainloop (void) {
 		postcam_var_push_string("axisY", "Y");
 	}
 	postcam_var_push_string("axisZ", "Z");
+}
 #else
 	append_gcode("G21 (Metric)\n");
 	append_gcode("G40 (No Offsets)\n");
@@ -2810,9 +2663,11 @@ void mainloop (void) {
 
 	/* exit output */
 #ifdef USE_POSTCAM
+if (update_post == 1) {
 	postcam_call_function("OnSpindleOff");
 	postcam_call_function("OnFinish");
 	gtk_label_set_text(GTK_LABEL(OutputErrorLabel), output_error);
+}
 #else
 	append_gcode("M05 (Spindle-/Laser-Off)\n");
 	append_gcode("M02 (Programm-End)\n");
@@ -2823,6 +2678,9 @@ void mainloop (void) {
 	GtkTextBuffer *bufferLua;
 	bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
 	gtk_text_buffer_get_bounds(bufferLua, &startLua, &endLua);
+
+if (update_post == 1) {
+	update_post = 0;
 	GtkTextIter start, end;
 	GtkTextBuffer *buffer;
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeView));
@@ -2840,6 +2698,7 @@ void mainloop (void) {
 	} else {
 		gtk_text_buffer_set_text(buffer, "", -1);
 	}
+}
 	double milltime = mill_distance_xy / PARAMETER[P_M_FEEDRATE].vint;
 	milltime += mill_distance_z / PARAMETER[P_M_PLUNGE_SPEED].vint;
 	milltime += (move_distance_xy + move_distance_z) / PARAMETER[P_H_FEEDRATE_FAST].vint;
@@ -3554,6 +3413,9 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].pocket = PARAMETER[P_O_POCKET].vint;
 		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
+	}
+	if (strcmp(PARAMETER[n].group, "View") != 0) {
+		update_post = 1;
 	}
 }
 

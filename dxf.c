@@ -282,6 +282,12 @@ void dxf_read (char *file) {
 						double p_y2 = atof(dxf_options[OPTION_POINT_Y]);
 						add_line(TYPE_POINT, dxf_options[8], p_x1, p_y1, p_x2, p_y2, 0.0, 0.0, 0.0);
 					} else if (strcmp(last_0, "SPLINE") == 0) {
+					} else if (strcmp(last_0, "CIRCLE") == 0) {
+						double cx = atof(dxf_options[OPTION_ARC_X]);
+						double cy = atof(dxf_options[OPTION_ARC_Y]);
+						double r = atof(dxf_options[OPTION_ARC_RADIUS]);
+						add_line(TYPE_CIRCLE, dxf_options[8], cx - r, cy, cx + r, cy, r, cx, cy);
+						add_line(TYPE_CIRCLE, dxf_options[8], cx + r, cy, cx - r, cy, r, cx, cy);
 					} else if (strcmp(last_0, "ARC") == 0 || strcmp(last_0, "CIRCLE") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_ARC_X]);
 						double p_y1 = atof(dxf_options[OPTION_ARC_Y]);
