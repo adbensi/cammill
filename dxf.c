@@ -106,7 +106,7 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		line_last = line_n;
 	} else {
 		printf("### TO MANY LINES ##\n");
-		exit(1);
+//		exit(1);
 	}
 }
 
@@ -149,6 +149,7 @@ void dxf_read (char *file) {
 	ssize_t read;
 
 	line_last = 0;
+	line_n = 1;
 	if (myLINES != NULL) {
 		free(myLINES);
 		myLINES = NULL;
@@ -420,6 +421,6 @@ void dxf_read (char *file) {
 	}
 
 //exit(0);
-
+	fclose(fp);
 }
 

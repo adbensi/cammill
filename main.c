@@ -109,6 +109,7 @@ char *gcode_buffer = NULL;
 char output_extension[128];
 char output_info[1024];
 char output_error[1024];
+int loading = 0;
 
 int last_mouse_x = 0;
 int last_mouse_y = 0;
@@ -1225,19 +1226,15 @@ void object_draw (FILE *fd_out, int object_num) {
 			last = myOBJECTS[object_num].line[num];
 		}
 	}
-	if (myOBJECTS[object_num].use == 0) {
-		return;
+	if (PARAMETER[P_O_SELECT].vint == object_num) {
+		glColor4f(1.0, 0.0, 0.0, 0.3);
+		glBegin(GL_QUADS);
+		glVertex3f(myOBJECTS[object_num].min_x - PARAMETER[P_TOOL_DIAMETER].vdouble, myOBJECTS[object_num].min_y - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(myOBJECTS[object_num].max_x + PARAMETER[P_TOOL_DIAMETER].vdouble, myOBJECTS[object_num].min_y - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(myOBJECTS[object_num].max_x + PARAMETER[P_TOOL_DIAMETER].vdouble, myOBJECTS[object_num].max_y + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+		glVertex3f(myOBJECTS[object_num].min_x - PARAMETER[P_TOOL_DIAMETER].vdouble, myOBJECTS[object_num].max_y + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+		glEnd();
 	}
-
-/*
-	glBegin(GL_LINE_STRIP);
-	glVertex3f(myOBJECTS[object_num].min_x, myOBJECTS[object_num].min_y, 0.0);
-	glVertex3f(myOBJECTS[object_num].max_x, myOBJECTS[object_num].min_y, 0.0);
-	glVertex3f(myOBJECTS[object_num].max_x, myOBJECTS[object_num].max_y, 0.0);
-	glVertex3f(myOBJECTS[object_num].min_x, myOBJECTS[object_num].max_y, 0.0);
-	glVertex3f(myOBJECTS[object_num].min_x, myOBJECTS[object_num].min_y, 0.0);
-	glEnd();
-*/
 
 	if (PARAMETER[P_M_NCDEBUG].vint == 1) {
 		append_gcode("\n");
@@ -1273,7 +1270,11 @@ void object_draw (FILE *fd_out, int object_num) {
 			double angle1 = toRad(an);
 			double x1 = r * cos(angle1);
 			double y1 = r * sin(angle1);
-			glColor4f(0.0, 1.0, 0.0, 1.0);
+			if (PARAMETER[P_O_SELECT].vint == object_num) {
+				glColor4f(1.0, 0.0, 0.0, 1.0);
+			} else {
+				glColor4f(0.0, 1.0, 0.0, 1.0);
+			}
 			draw_oline(last_x, last_y, (float)x + x1, (float)y + y1, mill_depth_real);
 			last_x = (float)x + x1;
 			last_y = (float)y + y1;
@@ -1299,7 +1300,11 @@ void object_draw (FILE *fd_out, int object_num) {
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			int lnum = myOBJECTS[object_num].line[num];
-			glColor4f(0.0, 1.0, 0.0, 1.0);
+			if (PARAMETER[P_O_SELECT].vint == object_num) {
+				glColor4f(1.0, 0.0, 0.0, 1.0);
+			} else {
+				glColor4f(0.0, 1.0, 0.0, 1.0);
+			}
 			draw_oline((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, mill_depth_real);
 			if (myOBJECTS[object_num].closed == 0 && (myLINES[lnum].type != TYPE_MTEXT || PARAMETER[P_M_TEXT].vint == 1)) {
 				draw_line2((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, 0.01, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.01, (PARAMETER[P_TOOL_DIAMETER].vdouble));
@@ -1351,7 +1356,7 @@ void object_draw (FILE *fd_out, int object_num) {
 							glColor4f(1.0, 1.0, 1.0, 1.0);
 						}
 						sprintf(tmp_str, "%i", object_num);
-//						output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
+						output_text_gl_center(tmp_str, (float)myLINES[lnum].x1, (float)myLINES[lnum].y1, PARAMETER[P_CUT_SAVE].vdouble, 0.2);
 					}
 				}
 			}
@@ -2139,7 +2144,7 @@ void init_objects (void) {
 		}
 	}
 
-	PARAMETER[P_O_SELECT].vint = 0;
+	PARAMETER[P_O_SELECT].vint = -1;
 	gtk_list_store_clear(ListStore[P_O_SELECT]);
 	for (object_num = 0; object_num < line_last; object_num++) {
 		if (myOBJECTS[object_num].line[0] != 0) {
@@ -2148,7 +2153,6 @@ void init_objects (void) {
 			gtk_list_store_insert_with_values(ListStore[P_O_SELECT], NULL, object_num, 0, NULL, 1, tmp_str, -1);
 		}
 	}
-	PARAMETER[P_O_SELECT].vint = -1;
 	update_post = 1;
 }
 
@@ -3017,10 +3021,12 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		strcpy(PARAMETER[P_V_DXF].vstr, filename);
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf..."), "reading dxf...");
+		loading = 1;
 		dxf_read(PARAMETER[P_V_DXF].vstr);
 		init_objects();
 		DrawCheckSize();
 		DrawSetZero();
+		loading = 0;
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf...done"), "reading dxf...done");
 		g_free(filename);
 	}
@@ -3345,6 +3351,9 @@ GtkWidget *create_gl () {
 }
 
 void ParameterChanged (GtkWidget *widget, gpointer data) {
+	if (loading == 1) {
+		return;
+	}
 	int n = (int)data;
 //	printf("UPDATED(%i): %s\n", n, PARAMETER[n].name);
 	if (PARAMETER[n].type == T_FLOAT) {
@@ -3362,6 +3371,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 	} else if (PARAMETER[n].type == T_FILE) {
 		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
 	}
+
 	if (n == P_O_SELECT) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
 		PARAMETER[P_O_USE].vint = myOBJECTS[object_num].use;
@@ -3383,13 +3393,13 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
 	}
+
 	if (strncmp(PARAMETER[n].name, "Translate", 9) != 0 && strncmp(PARAMETER[n].name, "Rotate", 6) != 0 && strncmp(PARAMETER[n].name, "Zoom", 4) != 0) {
 		update_post = 1;
 	}
 }
 
 void ParameterUpdate (void) {
-	GtkTreeIter iter;
 	char path[1024];
 	char value2[1024];
 	int n = 0;
@@ -3441,191 +3451,8 @@ void ParameterUpdate (void) {
 		} else {
 			continue;
 		}
-		gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(treestore), &iter, path);
-		gtk_tree_store_set(GTK_TREE_STORE(treestore), &iter, 1, value2, -1);
 	}
 }
-
-GtkTreeModel *create_and_fill_model (void) {
-	GtkTreeIter toplevel;
-	GtkTreeIter value;
-	treestore = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
-
-	gtk_tree_store_append(treestore, &toplevel, NULL);
-	gtk_tree_store_set(treestore, &toplevel, 0, "Parameter", -1);
-
-	GtkTreeIter childView;
-	gtk_tree_store_append(treestore, &childView, &toplevel);
-	gtk_tree_store_set(treestore, &childView, 0, "View", -1);
-
-	GtkTreeIter childTool;
-	gtk_tree_store_append(treestore, &childTool, &toplevel);
-	gtk_tree_store_set(treestore, &childTool, 0, "Tool", -1);
-
-	GtkTreeIter childMilling;
-	gtk_tree_store_append(treestore, &childMilling, &toplevel);
-	gtk_tree_store_set(treestore, &childMilling, 0, "Milling", -1);
-
-	GtkTreeIter childHolding;
-	gtk_tree_store_append(treestore, &childHolding, &toplevel);
-	gtk_tree_store_set(treestore, &childHolding, 0, "Holding-Tabs", -1);
-
-	GtkTreeIter childMachine;
-	gtk_tree_store_append(treestore, &childMachine, &toplevel);
-	gtk_tree_store_set(treestore, &childMachine, 0, "Machine", -1);
-
-	GtkTreeIter childMaterial;
-	gtk_tree_store_append(treestore, &childMaterial, &toplevel);
-	gtk_tree_store_set(treestore, &childMaterial, 0, "Material", -1);
-
-	GtkTreeIter childObjects;
-	gtk_tree_store_append(treestore, &childObjects, &toplevel);
-	gtk_tree_store_set(treestore, &childObjects, 0, "Objects", -1);
-
-	int n = 0;
-	for (n = 0; n < P_LAST; n++) {
-		char name_str[1024];
-		char tmp_str[1024];
-		sprintf(name_str, "%s", PARAMETER[n].name);
-
-		if (strcmp(PARAMETER[n].group, "View") == 0) {
-			gtk_tree_store_append(treestore, &value, &childView);
-		} else if (strcmp(PARAMETER[n].group, "Tool") == 0) {
-			gtk_tree_store_append(treestore, &value, &childTool);
-		} else if (strcmp(PARAMETER[n].group, "Milling") == 0) {
-			gtk_tree_store_append(treestore, &value, &childMilling);
-		} else if (strcmp(PARAMETER[n].group, "Holding-Tabs") == 0) {
-			gtk_tree_store_append(treestore, &value, &childHolding);
-		} else if (strcmp(PARAMETER[n].group, "Machine") == 0) {
-			gtk_tree_store_append(treestore, &value, &childMachine);
-		} else if (strcmp(PARAMETER[n].group, "Material") == 0) {
-			gtk_tree_store_append(treestore, &value, &childMaterial);
-		} else if (strcmp(PARAMETER[n].group, "Objects") == 0) {
-			gtk_tree_store_append(treestore, &value, &childObjects);
-		}
-		if (PARAMETER[n].type == T_FLOAT) {
-			sprintf(tmp_str, "%f", PARAMETER[n].vfloat);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else if (PARAMETER[n].type == T_DOUBLE) {
-			sprintf(tmp_str, "%f", PARAMETER[n].vdouble);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else if (PARAMETER[n].type == T_INT) {
-			sprintf(tmp_str, "%i", PARAMETER[n].vint);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else if (PARAMETER[n].type == T_SELECT) {
-			sprintf(tmp_str, "%i", PARAMETER[n].vint);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else if (PARAMETER[n].type == T_BOOL) {
-			sprintf(tmp_str, "%i", PARAMETER[n].vint);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else if (PARAMETER[n].type == T_STRING) {
-			sprintf(tmp_str, "%s", PARAMETER[n].vstr);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else if (PARAMETER[n].type == T_FILE) {
-			sprintf(tmp_str, "%s", PARAMETER[n].vstr);
-			gtk_tree_store_set(treestore, &value, 0, name_str, 1, tmp_str, -1);
-		} else {
-			continue;
-		}
-	}
-
-
-	gtk_tree_store_append(treestore, &toplevel, NULL);
-	gtk_tree_store_set(treestore, &toplevel, 0, "Layers", -1);
-
-	int num = 0;
-	for (num = 0; num < object_last; num++) {
-		if (LayerNames[num][0] != 0) {
-
-			char tmp_str[1024];
-			sprintf(tmp_str, "Layer: %s", LayerNames[num]);
-
-			GtkTreeIter childObject;
-			gtk_tree_store_append(treestore, &childObject, &toplevel);
-			gtk_tree_store_set(treestore, &childObject, 0, tmp_str, -1);
-
-			int num2 = 0;
-			for (num2 = 0; num2 < object_last; num2++) {
-				if (myOBJECTS[num2].line[0] != 0 && strcmp(myOBJECTS[num2].layer, LayerNames[num]) == 0) {
-					char tmp_str[1024];
-
-					GtkTreeIter Object;
-					gtk_tree_store_append(treestore, &Object, &childObject);
-					sprintf(tmp_str, "Object #%i", num2);
-					gtk_tree_store_set(treestore, &Object, 0, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].use);
-					gtk_tree_store_set(treestore, &value, 0, "Selected", 1, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].offset);
-					gtk_tree_store_set(treestore, &value, 0, "Offset", 1, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].force);
-					gtk_tree_store_set(treestore, &value, 0, "Force", 1, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].overcut);
-					gtk_tree_store_set(treestore, &value, 0, "Overcut", 1, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].pocket);
-					gtk_tree_store_set(treestore, &value, 0, "Pocket", 1, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%i", myOBJECTS[num2].laser);
-					gtk_tree_store_set(treestore, &value, 0, "Laser", 1, tmp_str, -1);
-
-					gtk_tree_store_append(treestore, &value, &Object);
-					sprintf(tmp_str, "%f", myOBJECTS[num2].depth);
-					gtk_tree_store_set(treestore, &value, 0, "Depth", 1, tmp_str, -1);
-				}
-			}
-		}
-	}
-
-	return GTK_TREE_MODEL(treestore);
-}
-
-GtkWidget *create_view_and_model (void) {
-	GtkTreeViewColumn *col;
-	GtkCellRenderer *renderer;
-	GtkWidget *view;
-	GtkTreeModel *model;
-
-	view = gtk_tree_view_new();
-	renderer = gtk_cell_renderer_text_new();
-
-	col = gtk_tree_view_column_new();
-	gtk_tree_view_column_set_title(col, "Name");
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-	gtk_tree_view_column_pack_start(col, renderer, TRUE);
-	gtk_tree_view_column_add_attribute(col, renderer,  "text", 0);
-
-	col = gtk_tree_view_column_new();
-	gtk_tree_view_column_set_title(col, "Value");
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-	gtk_tree_view_column_pack_start(col, renderer, TRUE);
-	gtk_tree_view_column_add_attribute(col, renderer,  "text", 1);
-
-	model = create_and_fill_model();
-
-	gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
-	g_object_unref(model); 
-
-	GtkWidget *scwin = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(scwin), view);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scwin), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-
-	return scwin;
-}
-
-
-
-
-
 
 
 
@@ -3788,6 +3615,16 @@ int main (int argc, char *argv[]) {
 	GtkWidget *HoldingBox = gtk_vbox_new(0, 0);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), HoldingBox, HoldingLabel);
 
+	int RotaryNum = 0;
+	GtkWidget *RotaryLabel = gtk_label_new("Rotary");
+	GtkWidget *RotaryBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), RotaryBox, RotaryLabel);
+
+	int TangencialNum = 0;
+	GtkWidget *TangencialLabel = gtk_label_new("Tangencial");
+	GtkWidget *TangencialBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), TangencialBox, TangencialLabel);
+
 	int MachineNum = 0;
 	GtkWidget *MachineLabel = gtk_label_new("Machine");
 	GtkWidget *MachineBox = gtk_vbox_new(0, 0);
@@ -3898,6 +3735,16 @@ int main (int argc, char *argv[]) {
 			PARAMETER[n].l1 = 3;
 			PARAMETER[n].l2 = HoldingNum;
 			HoldingNum++;
+		} else if (strcmp(PARAMETER[n].group, "Rotary") == 0) {
+			gtk_box_pack_start(GTK_BOX(RotaryBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 3;
+			PARAMETER[n].l2 = RotaryNum;
+			RotaryNum++;
+		} else if (strcmp(PARAMETER[n].group, "Tangencial") == 0) {
+			gtk_box_pack_start(GTK_BOX(TangencialBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 3;
+			PARAMETER[n].l2 = TangencialNum;
+			TangencialNum++;
 		} else if (strcmp(PARAMETER[n].group, "Machine") == 0) {
 			gtk_box_pack_start(GTK_BOX(MachineBox), Box, 0, 0, 0);
 			PARAMETER[n].l1 = 4;
@@ -3920,6 +3767,7 @@ int main (int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(MachineBox), OutputInfoLabel, 0, 0, 0);
 
 	/* import DXF */
+	loading = 1;
 	if (PARAMETER[P_V_DXF].vstr[0] != 0) {
 		dxf_read(PARAMETER[P_V_DXF].vstr);
 	}
@@ -3927,13 +3775,8 @@ int main (int argc, char *argv[]) {
 	DrawCheckSize();
 	DrawSetZero();
 //	LayerLoadList();
+	loading = 0;
 
-
-	GtkWidget *TreeLabel = gtk_label_new("Tree");
-	GtkWidget *TreeBox = gtk_vbox_new(0, 0);
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), TreeBox, TreeLabel);
-	GtkWidget *TreeView = create_view_and_model();
-	gtk_box_pack_start(GTK_BOX(TreeBox), TreeView, 1, 1, 0);
 
 	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "None", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Inside", -1);
