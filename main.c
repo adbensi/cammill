@@ -958,17 +958,92 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 
 	if (gcmd != 0) {
 		int hflag = 0;
+
+		postcam_var_push_int("feedRate", feed);
+		postcam_var_push_double("currentZ", _Z(mill_last_z));
+		postcam_var_push_double("currentX", _X(mill_last_x));
+		postcam_var_push_double("currentY", _Y(mill_last_y));
+		postcam_var_push_double("endZ", _Z(mill_last_z));
+
+
+		if (gcmd == 1) {
+			double i_x = 0.0;
+			double i_y = 0.0;
+			int num = 0;
+			if (PARAMETER[P_T_USE].vint == 1) {
+
+
+//PARAMETER[P_T_XGRID].vdouble
+
+				for (num = 0; num < line_last; num++) {
+					if (myLINES[num].istab == 1) {
+						if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, &i_x, &i_y) == 1)) {
+							double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
+							double i_x2 = i_x;
+							double i_y2 = i_y;
+							add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
+							double alpha2 = vector_angle(x, y, i_x, i_y);
+							double i_x3 = i_x;
+							double i_y3 = i_y;
+							add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
+							draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+							draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+							draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+							hflag = 1;
+							if (PARAMETER[P_T_TYPE].vint == 0) {
+								postcam_var_push_double("endX", _X(i_x2));
+								postcam_var_push_double("endY", _Y(i_y2));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endX", _X(i_x2));
+								postcam_var_push_double("endY", _Y(i_y2));
+								postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endX", _X(i_x3));
+								postcam_var_push_double("endY", _Y(i_y3));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endZ", _Z(mill_last_z));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endX", _X(x));
+								postcam_var_push_double("endY", _Y(y));
+								postcam_call_function("OnMove");
+							} else {
+								postcam_var_push_double("endX", _X(i_x2));
+								postcam_var_push_double("endY", _Y(i_y2));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endX", _X(i_x));
+								postcam_var_push_double("endY", _Y(i_y));
+								postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endX", _X(i_x3));
+								postcam_var_push_double("endY", _Y(i_y3));
+								postcam_var_push_double("endZ", _Z(mill_last_z));
+								postcam_call_function("OnMove");
+
+								postcam_var_push_double("endX", _X(x));
+								postcam_var_push_double("endY", _Y(y));
+								postcam_call_function("OnMove");
+							}
+						}
+					}
+				}
+			}
+		}
+
 		if (hflag == 0) {
 			draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
 			if (gcmd == 1) {
+
+
+
 #ifdef USE_POSTCAM
-				postcam_var_push_int("feedRate", feed);
-				postcam_var_push_double("currentX", _X(mill_last_x));
-				postcam_var_push_double("currentY", _Y(mill_last_y));
-				postcam_var_push_double("currentZ", _Z(mill_last_z));
 				postcam_var_push_double("endX", _X(x));
 				postcam_var_push_double("endY", _Y(y));
-				postcam_var_push_double("endZ", _Z(mill_last_z));
 				postcam_call_function("OnMove");
 #else
 				translateAxisX(x, tx_str);
@@ -978,13 +1053,9 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 #endif
 			} else if (gcmd == 2 || gcmd == 3) {
 #ifdef USE_POSTCAM
-				postcam_var_push_int("feedRate", feed);
-				postcam_var_push_double("currentX", _X(mill_last_x));
-				postcam_var_push_double("currentY", _Y(mill_last_y));
-				postcam_var_push_double("currentZ", _Z(mill_last_z));
 				postcam_var_push_double("endX", _X(x));
 				postcam_var_push_double("endY", _Y(y));
-				postcam_var_push_double("endZ", _Z(mill_last_z));
+
 				double e = x - mill_last_x;
 				double f = y - mill_last_y;
 				double p = sqrt(e*e + f*f);
@@ -2888,7 +2959,7 @@ void DrawSetZero (void) {
 	int num = 0;
 	/* set bottom-left to 0,0 */
 	for (num = 0; num < line_last; num++) {
-		if (myLINES[num].used == 1) {
+		if (myLINES[num].used == 1 || myLINES[num].istab == 1) {
 			myLINES[num].x1 -= min_x;
 			myLINES[num].y1 -= min_y;
 			myLINES[num].x2 -= min_x;

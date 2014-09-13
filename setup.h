@@ -65,6 +65,7 @@ enum {
 	P_T_DEPTH,
 	P_T_LEN,
 	P_T_TYPE,
+	P_T_XGRID,
 	P_H_FEEDRATE_FAST,
 	P_H_POST,
 	P_MFILE,
