@@ -2462,6 +2462,42 @@ void init_objects (void) {
 	update_post = 1;
 }
 
+void draw_grid (void) {
+	if (PARAMETER[P_M_ROTARYMODE].vint == 0 && PARAMETER[P_V_GRID].vint == 1) {
+		float gridXYZ = PARAMETER[P_V_HELP_GRID].vfloat * 10.0;
+		float gridXYZmin = PARAMETER[P_V_HELP_GRID].vfloat;
+		float lenY = size_y;
+		float lenX = size_x;
+		int pos_n = 0;
+		glColor4f(1.0, 1.0, 1.0, 0.3);
+		for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZ) {
+			glBegin(GL_LINES);
+			glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glEnd();
+		}
+		for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZ) {
+			glBegin(GL_LINES);
+			glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glEnd();
+		}
+		glColor4f(1.0, 1.0, 1.0, 0.2);
+		for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZmin) {
+			glBegin(GL_LINES);
+			glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glEnd();
+		}
+		for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZmin) {
+			glBegin(GL_LINES);
+			glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble - 0.1);
+			glEnd();
+		}
+	}
+}
+
 void draw_helplines (void) {
 	char tmp_str[128];
 	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
@@ -2517,8 +2553,6 @@ void draw_helplines (void) {
 	}
 
 	/* Scale-Arrow's */
-	float gridXYZ = PARAMETER[P_V_HELP_GRID].vfloat * 10.0;
-	float gridXYZmin = PARAMETER[P_V_HELP_GRID].vfloat;
 	float lenY = size_y;
 	float lenX = size_x;
 	float lenZ = PARAMETER[P_M_DEPTH].vdouble * -1;
@@ -2526,34 +2560,6 @@ void draw_helplines (void) {
 	float arrow_d = 1.0 * PARAMETER[P_V_HELP_ARROW].vfloat;
 	float arrow_l = 6.0 * PARAMETER[P_V_HELP_ARROW].vfloat;
 	GLUquadricObj *quadratic = gluNewQuadric();
-
-	int pos_n = 0;
-	glColor4f(1.0, 1.0, 1.0, 0.3);
-	for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZ) {
-		glBegin(GL_LINES);
-		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glEnd();
-	}
-	for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZ) {
-		glBegin(GL_LINES);
-		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glEnd();
-	}
-	glColor4f(1.0, 1.0, 1.0, 0.2);
-	for (pos_n = 0; pos_n <= lenY; pos_n += gridXYZmin) {
-		glBegin(GL_LINES);
-		glVertex3f(0.0, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glVertex3f(lenX, pos_n, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glEnd();
-	}
-	for (pos_n = 0; pos_n <= lenX; pos_n += gridXYZmin) {
-		glBegin(GL_LINES);
-		glVertex3f(pos_n, 0.0, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glVertex3f(pos_n, lenY, PARAMETER[P_M_DEPTH].vdouble - 0.1);
-		glEnd();
-	}
 
 	glColor4f(1.0, 0.0, 0.0, 1.0);
 	glBegin(GL_LINES);
@@ -2680,6 +2686,7 @@ void mainloop (void) {
 		glDeleteLists(1, 1);
 		glNewList(1, GL_COMPILE);
 
+		draw_grid();
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
 			if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 				draw_helplines();
