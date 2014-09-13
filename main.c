@@ -2807,7 +2807,7 @@ void mainloop (void) {
 			for (object_num2 = 0; object_num2 < object_last; object_num2++) {
 				int nnum = 0;
 				if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
-					if (myOBJECTS[object_num2].line[nnum] != 0 && ((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 1) || myOBJECTS[object_num2].inside == 1) && myOBJECTS[object_num2].visited == 0) {
+					if (myOBJECTS[object_num2].line[nnum] != 0 && ((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 1) || (myOBJECTS[object_num2].force == 0 && myOBJECTS[object_num2].inside == 1)) && myOBJECTS[object_num2].visited == 0) {
 						int lnum2 = myOBJECTS[object_num2].line[nnum];
 						double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
 						if (len < shortest_len) {
@@ -2819,7 +2819,7 @@ void mainloop (void) {
 					}
 				} else {
 					for (nnum = 0; nnum < line_last; nnum++) {
-						if (myOBJECTS[object_num2].line[nnum] != 0 && ((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 1) || myOBJECTS[object_num2].inside == 1) && myOBJECTS[object_num2].visited == 0) {
+						if (myOBJECTS[object_num2].line[nnum] != 0 && ((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 1) || (myOBJECTS[object_num2].force == 0 && myOBJECTS[object_num2].inside == 1)) && myOBJECTS[object_num2].visited == 0) {
 							int lnum2 = myOBJECTS[object_num2].line[nnum];
 							double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
 							if (len < shortest_len) {
@@ -2883,7 +2883,7 @@ void mainloop (void) {
 			for (object_num2 = 0; object_num2 < object_last; object_num2++) {
 				int nnum = 0;
 				if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
-					if (myOBJECTS[object_num2].line[nnum] != 0 && (((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 2) || myOBJECTS[object_num2].inside == 0) && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
+					if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
 						int lnum2 = myOBJECTS[object_num2].line[nnum];
 						double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
 						if (len < shortest_len) {
@@ -2895,7 +2895,7 @@ void mainloop (void) {
 					}
 				} else {
 					for (nnum = 0; nnum < line_last; nnum++) {
-						if (myOBJECTS[object_num2].line[nnum] != 0 && (((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 2) || myOBJECTS[object_num2].inside == 0) && myOBJECTS[object_num2].closed == 1) && myOBJECTS[object_num2].visited == 0) {
+						if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
 							int lnum2 = myOBJECTS[object_num2].line[nnum];
 							double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
 							if (len < shortest_len) {
