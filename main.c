@@ -1675,7 +1675,7 @@ void object_draw (FILE *fd_out, int object_num) {
 	}
 	if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 		if (PARAMETER[P_V_HELPLINES].vint == 1) {
-			if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 0) {
+			if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].offset == 2) {
 				object2poly(object_num, 0.0, mill_depth_real, 0);
 			} else if (myOBJECTS[object_num].inside == 1 && mill_depth_real > PARAMETER[P_M_DEPTH].vdouble) {
 				object2poly(object_num, mill_depth_real - 0.001, mill_depth_real - 0.001, 1);
