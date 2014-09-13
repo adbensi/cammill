@@ -44,11 +44,8 @@ PARA PARAMETER[] = {
 	{"Depth",	"Holding-Tabs",	"-hd",	T_DOUBLE,	0,	0.0,	-7.0,	"",	-40.0,	1.0,	0.01,		"mm", 1, 1, "depth of the holding-tabs", 0, 0},
 	{"Lenght",	"Holding-Tabs",	"-hl",	T_DOUBLE,	0,	0.0,	5.0,	"",	0.1,	0.1,	40.0,		"mm", 1, 1, "lenght of the holding-tabs", 0, 0},
 	{"Triangle-Type","Holding-Tabs","-ht",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "type of the holding-tabs", 0, 0},
-
-
-	{"X-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	100.0,		"", 1, 1, "grid of the holding-tabs", 0, 0},
-
-
+	{"X-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	45.0,	"",	0.0,	1.0,	100.0,		"", 1, 1, "X-grid of the holding-tabs", 0, 0},
+	{"Y-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	45.0,	"",	0.0,	1.0,	100.0,		"", 1, 1, "Y-grid of the holding-tabs", 0, 0},
 	{"Fastmove-Speed","Machine",	 "-fs",	T_INT,		1000,	0.0,	0.0,	"",	0.0,	1.0,	10000.0,	"mm/min", 1, 0, "fast-move speed of the maschine, to calculate the milling-time", 0, 0},
 	{"Post",	"Machine",	"-mp",	T_SELECT,	0,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0, 1, "post-processor selection", 0, 0},
 	{"Output-File",	"Milling",	"-o",	T_FILE,		0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, "gcode-output filename", 0, 0},

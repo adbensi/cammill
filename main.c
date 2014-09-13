@@ -955,159 +955,340 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 		sprintf(cline, "(%s)\n", comment);
 		append_gcode(cline);
 	}
-
 	if (gcmd != 0) {
 		int hflag = 0;
-
 		postcam_var_push_int("feedRate", feed);
 		postcam_var_push_double("currentZ", _Z(mill_last_z));
 		postcam_var_push_double("currentX", _X(mill_last_x));
 		postcam_var_push_double("currentY", _Y(mill_last_y));
 		postcam_var_push_double("endZ", _Z(mill_last_z));
-
-
 		if (gcmd == 1) {
 			double i_x = 0.0;
 			double i_y = 0.0;
 			int num = 0;
+			int numr = 0;
 			if (PARAMETER[P_T_USE].vint == 1) {
-
-
-//PARAMETER[P_T_XGRID].vdouble
-
-				for (num = 0; num < line_last; num++) {
-					if (myLINES[num].istab == 1) {
-						if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, &i_x, &i_y) == 1)) {
-							double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
-							double i_x2 = i_x;
-							double i_y2 = i_y;
-							add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
-							double alpha2 = vector_angle(x, y, i_x, i_y);
-							double i_x3 = i_x;
-							double i_y3 = i_y;
-							add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
-							draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-							draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
-							draw_line((float)i_x3, (float)i_y3, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-							hflag = 1;
-							if (PARAMETER[P_T_TYPE].vint == 0) {
+				if (PARAMETER[P_T_XGRID].vdouble == 0.0 && PARAMETER[P_T_YGRID].vdouble == 0.0) {
+					int line_flag[MAX_LINES];
+					for (num = 0; num < line_last; num++) {
+						line_flag[num] = 0;
+					}
+					for (numr = 0; numr < line_last; numr++) {
+						int min_dist_line = -1;
+						double min_dist = 999999.0;
+						for (num = 0; num < line_last; num++) {
+							if (myLINES[num].istab == 1 && line_flag[num] == 0) {
+								if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1)) {
+									double dist = set_positive(get_len(mill_last_x, mill_last_y, i_x, i_y));
+									if (min_dist > dist) {
+										min_dist = dist;
+										min_dist_line = num;
+									}
+								} else {
+									line_flag[num] = 1;
+								}
+							}
+						}
+						if (min_dist_line != -1) {
+							line_flag[min_dist_line] = 1;
+							num = min_dist_line;
+							if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, myLINES[num].x1 + 0.0002, myLINES[num].y1 + 0.0002, myLINES[num].x2 + 0.0002, myLINES[num].y2 + 0.0002, &i_x, &i_y) == 1)) {
+								double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
+								double i_x2 = i_x;
+								double i_y2 = i_y;
+								add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
+								double alpha2 = vector_angle(x, y, i_x, i_y);
+								double i_x3 = i_x;
+								double i_y3 = i_y;
+								add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
+								draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+								draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+								hflag = 1;
 								postcam_var_push_double("endX", _X(i_x2));
 								postcam_var_push_double("endY", _Y(i_y2));
 								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endX", _X(i_x2));
-								postcam_var_push_double("endY", _Y(i_y2));
-								postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
-								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endX", _X(i_x3));
-								postcam_var_push_double("endY", _Y(i_y3));
-								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endZ", _Z(mill_last_z));
-								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endX", _X(x));
-								postcam_var_push_double("endY", _Y(y));
-								postcam_call_function("OnMove");
+								postcam_var_push_double("currentX", _X(i_x2));
+								postcam_var_push_double("currentY", _Y(i_y2));
+								if (PARAMETER[P_T_TYPE].vint == 0) {
+									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_var_push_double("endX", _X(i_x3));
+									postcam_var_push_double("endY", _Y(i_y3));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x3));
+									postcam_var_push_double("currentY", _Y(i_y3));
+									postcam_var_push_double("endZ", _Z(mill_last_z));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentZ", _Z(mill_last_z));
+								} else {
+									postcam_var_push_double("endX", _X(i_x));
+									postcam_var_push_double("endY", _Y(i_y));
+									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x));
+									postcam_var_push_double("currentY", _Y(i_y));
+									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_var_push_double("endX", _X(i_x3));
+									postcam_var_push_double("endY", _Y(i_y3));
+									postcam_var_push_double("endZ", _Z(mill_last_z));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x3));
+									postcam_var_push_double("currentY", _Y(i_y3));
+									postcam_var_push_double("currentZ", _Z(mill_last_z));
+								}
+								mill_last_x = i_x3;
+								mill_last_y = i_y3;
+							}
+						} else {
+							break;
+						}
+					}
+				} else {
+					if (PARAMETER[P_T_XGRID].vdouble > 0.0) {
+						double tx1 = -10.0;
+						double ty1 = -10.0;
+						double tx2 = size_x + 10.0;
+						double ty2 = size_y + 10.0;
+						if (mill_last_x < x) {
+							tx1 = -10.0;
+						} else {
+							tx1 = size_x + 10.0;
+						}
+						while (1) {
+							if (mill_last_x < x) {
+								if (tx1 >= size_x + 10.0) {
+									break;
+								}
 							} else {
+								if (tx1 <= -10.0) {
+									break;
+								}
+							}
+							tx2 = tx1;
+							if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1)) {
+								double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
+								double i_x2 = i_x;
+								double i_y2 = i_y;
+								add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
+								double dist = set_positive(get_len(mill_last_x, mill_last_y, i_x, i_y));
+								double dist2 = set_positive(get_len(x, y, i_x, i_y));
+								if (dist < PARAMETER[P_T_LEN].vdouble || dist2 < PARAMETER[P_T_LEN].vdouble) {
+									if (mill_last_x < x) {
+										tx1 += PARAMETER[P_T_XGRID].vdouble;
+									} else {
+										tx1 -= PARAMETER[P_T_XGRID].vdouble;
+									}
+									continue;
+								}
+								double alpha2 = vector_angle(x, y, i_x, i_y);
+								double i_x3 = i_x;
+								double i_y3 = i_y;
+								add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
+								draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+								draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+								hflag = 1;
 								postcam_var_push_double("endX", _X(i_x2));
 								postcam_var_push_double("endY", _Y(i_y2));
 								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endX", _X(i_x));
-								postcam_var_push_double("endY", _Y(i_y));
-								postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
-								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endX", _X(i_x3));
-								postcam_var_push_double("endY", _Y(i_y3));
-								postcam_var_push_double("endZ", _Z(mill_last_z));
-								postcam_call_function("OnMove");
-
-								postcam_var_push_double("endX", _X(x));
-								postcam_var_push_double("endY", _Y(y));
-								postcam_call_function("OnMove");
+								postcam_var_push_double("currentX", _X(i_x2));
+								postcam_var_push_double("currentY", _Y(i_y2));
+								if (PARAMETER[P_T_TYPE].vint == 0) {
+									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_var_push_double("endX", _X(i_x3));
+									postcam_var_push_double("endY", _Y(i_y3));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x3));
+									postcam_var_push_double("currentY", _Y(i_y3));
+									postcam_var_push_double("endZ", _Z(mill_last_z));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentZ", _Z(mill_last_z));
+								} else {
+									postcam_var_push_double("endX", _X(i_x));
+									postcam_var_push_double("endY", _Y(i_y));
+									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x));
+									postcam_var_push_double("currentY", _Y(i_y));
+									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_var_push_double("endX", _X(i_x3));
+									postcam_var_push_double("endY", _Y(i_y3));
+									postcam_var_push_double("endZ", _Z(mill_last_z));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x3));
+									postcam_var_push_double("currentY", _Y(i_y3));
+									postcam_var_push_double("currentZ", _Z(mill_last_z));
+								}
+								mill_last_x = i_x3;
+								mill_last_y = i_y3;
+							}
+							if (mill_last_x < x) {
+								tx1 += PARAMETER[P_T_XGRID].vdouble;
+							} else {
+								tx1 -= PARAMETER[P_T_XGRID].vdouble;
 							}
 						}
 					}
+					if (PARAMETER[P_T_YGRID].vdouble > 0.0) {
+						double tx1 = -10.0;
+						double ty1 = -10.0;
+						double tx2 = size_x + 10.0;
+						double ty2 = size_y + 10.0;
+						if (mill_last_y < y) {
+							ty1 = -10.0;
+						} else {
+							ty1 = size_y + 10.0;
+						}
+						while (1) {
+							if (mill_last_y < y) {
+								if (ty1 >= size_y + 10.0) {
+									break;
+								}
+							} else {
+								if (ty1 <= -10.0) {
+									break;
+								}
+							}
+							ty2 = ty1;
+							if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1)) {
+								double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
+								double i_x2 = i_x;
+								double i_y2 = i_y;
+								add_angle_offset(&i_x2, &i_y2, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha1 + 180);
+								double dist = set_positive(get_len(mill_last_x, mill_last_y, i_x, i_y));
+								double dist2 = set_positive(get_len(x, y, i_x, i_y));
+								if (dist < PARAMETER[P_T_LEN].vdouble || dist2 < PARAMETER[P_T_LEN].vdouble) {
+									if (mill_last_y < y) {
+										ty1 += PARAMETER[P_T_YGRID].vdouble;
+									} else {
+										ty1 -= PARAMETER[P_T_YGRID].vdouble;
+									}
+									continue;
+								}
+								double alpha2 = vector_angle(x, y, i_x, i_y);
+								double i_x3 = i_x;
+								double i_y3 = i_y;
+								add_angle_offset(&i_x3, &i_y3, (PARAMETER[P_T_LEN].vdouble + PARAMETER[P_TOOL_DIAMETER].vdouble) / 2.0, alpha2 + 180);
+								draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)i_x2, (float)i_y2, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+								draw_line((float)i_x2, (float)i_y2, (float)PARAMETER[P_T_DEPTH].vdouble, (float)i_x3, (float)i_y3, PARAMETER[P_T_DEPTH].vdouble, PARAMETER[P_TOOL_DIAMETER].vdouble);
+								hflag = 1;
+								postcam_var_push_double("endX", _X(i_x2));
+								postcam_var_push_double("endY", _Y(i_y2));
+								postcam_call_function("OnMove");
+								postcam_var_push_double("currentX", _X(i_x2));
+								postcam_var_push_double("currentY", _Y(i_y2));
+								if (PARAMETER[P_T_TYPE].vint == 0) {
+									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_var_push_double("endX", _X(i_x3));
+									postcam_var_push_double("endY", _Y(i_y3));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x3));
+									postcam_var_push_double("currentY", _Y(i_y3));
+									postcam_var_push_double("endZ", _Z(mill_last_z));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentZ", _Z(mill_last_z));
+								} else {
+									postcam_var_push_double("endX", _X(i_x));
+									postcam_var_push_double("endY", _Y(i_y));
+									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x));
+									postcam_var_push_double("currentY", _Y(i_y));
+									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
+									postcam_var_push_double("endX", _X(i_x3));
+									postcam_var_push_double("endY", _Y(i_y3));
+									postcam_var_push_double("endZ", _Z(mill_last_z));
+									postcam_call_function("OnMove");
+									postcam_var_push_double("currentX", _X(i_x3));
+									postcam_var_push_double("currentY", _Y(i_y3));
+									postcam_var_push_double("currentZ", _Z(mill_last_z));
+								}
+								mill_last_x = i_x3;
+								mill_last_y = i_y3;
+							}
+							if (mill_last_y < y) {
+								ty1 += PARAMETER[P_T_YGRID].vdouble;
+							} else {
+								ty1 -= PARAMETER[P_T_YGRID].vdouble;
+							}
+						}
+					}
+
+
 				}
 			}
 		}
-
-		if (hflag == 0) {
-			draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
-			if (gcmd == 1) {
-
-
-
+		draw_line((float)mill_last_x, (float)mill_last_y, (float)mill_last_z, (float)x, (float)y, (float)mill_last_z, PARAMETER[P_TOOL_DIAMETER].vdouble);
+		if (gcmd == 1) {
 #ifdef USE_POSTCAM
-				postcam_var_push_double("endX", _X(x));
-				postcam_var_push_double("endY", _Y(y));
-				postcam_call_function("OnMove");
+			postcam_var_push_double("endX", _X(x));
+			postcam_var_push_double("endY", _Y(y));
+			postcam_call_function("OnMove");
 #else
-				translateAxisX(x, tx_str);
-				translateAxisY(y, ty_str);
-				sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
-				append_gcode(cline);
+			translateAxisX(x, tx_str);
+			translateAxisY(y, ty_str);
+			sprintf(cline, "G0%i %s %s F%i\n", gcmd, tx_str, ty_str, feed);
+			append_gcode(cline);
 #endif
-			} else if (gcmd == 2 || gcmd == 3) {
+		} else if (gcmd == 2 || gcmd == 3) {
 #ifdef USE_POSTCAM
-				postcam_var_push_double("endX", _X(x));
-				postcam_var_push_double("endY", _Y(y));
-
-				double e = x - mill_last_x;
-				double f = y - mill_last_y;
-				double p = sqrt(e*e + f*f);
-				double k = (p*p + r*r - r*r) / (2 * p);
-				if (gcmd == 2) {
-					double cx = mill_last_x + e * k/p + (f/p) * sqrt(r * r - k * k);
-					double cy = mill_last_y + f * k/p - (e/p) * sqrt(r * r - k * k);
-					double dx1 = cx - mill_last_x;
-					double dy1 = cy - mill_last_y;
-					double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
-					double dx2 = cx - x;
-					double dy2 = cy - y;
-					double alpha2 = toDeg(atan2(dx2, dy2)) + 180.0;
-					double alpha = alpha2 - alpha1;
-					if (alpha >= 360.0) {
-						alpha -= 360.0;
-					}
-					if (alpha < 0.0) {
-						alpha += 360.0;
-					}
-					postcam_var_push_double("arcCentreX", _X(cx));
-					postcam_var_push_double("arcCentreY", _Y(cy));
-					postcam_var_push_double("arcAngle", toRad(alpha));
-				} else {
-					double cx = mill_last_x + e * k/p - (f/p) * sqrt(r * r - k * k);
-					double cy = mill_last_y + f * k/p + (e/p) * sqrt(r * r - k * k);
-					double dx1 = cx - mill_last_x;
-					double dy1 = cy - mill_last_y;
-					double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
-					double dx2 = cx - x;
-					double dy2 = cy - y;
-					double alpha2 = toDeg(atan2(dx2, dy2)) + 180.0;
-					double alpha = alpha2 - alpha1;
-					if (alpha <= -360.0) {
-						alpha += 360.0;
-					}
-					if (alpha > 0.0) {
-						alpha -= 360.0;
-					}
-					postcam_var_push_double("arcCentreX", _X(cx));
-					postcam_var_push_double("arcCentreY", _Y(cy));
-					postcam_var_push_double("arcAngle", toRad(alpha));
+			postcam_var_push_double("endX", _X(x));
+			postcam_var_push_double("endY", _Y(y));
+			double e = x - mill_last_x;
+			double f = y - mill_last_y;
+			double p = sqrt(e*e + f*f);
+			double k = (p*p + r*r - r*r) / (2 * p);
+			if (gcmd == 2) {
+				double cx = mill_last_x + e * k/p + (f/p) * sqrt(r * r - k * k);
+				double cy = mill_last_y + f * k/p - (e/p) * sqrt(r * r - k * k);
+				double dx1 = cx - mill_last_x;
+				double dy1 = cy - mill_last_y;
+				double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
+				double dx2 = cx - x;
+				double dy2 = cy - y;
+				double alpha2 = toDeg(atan2(dx2, dy2)) + 180.0;
+				double alpha = alpha2 - alpha1;
+				if (alpha >= 360.0) {
+					alpha -= 360.0;
 				}
-				postcam_var_push_double("arcRadius", r);
-				postcam_call_function("OnArc");
-#else
-				translateAxisX(x, tx_str);
-				translateAxisY(y, ty_str);
-				sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
-				append_gcode(cline);
-#endif
+				if (alpha < 0.0) {
+					alpha += 360.0;
+				}
+				postcam_var_push_double("arcCentreX", _X(cx));
+				postcam_var_push_double("arcCentreY", _Y(cy));
+				postcam_var_push_double("arcAngle", toRad(alpha));
+			} else {
+				double cx = mill_last_x + e * k/p - (f/p) * sqrt(r * r - k * k);
+				double cy = mill_last_y + f * k/p + (e/p) * sqrt(r * r - k * k);
+				double dx1 = cx - mill_last_x;
+				double dy1 = cy - mill_last_y;
+				double alpha1 = toDeg(atan2(dx1, dy1)) + 180.0;
+				double dx2 = cx - x;
+				double dy2 = cy - y;
+				double alpha2 = toDeg(atan2(dx2, dy2)) + 180.0;
+				double alpha = alpha2 - alpha1;
+				if (alpha <= -360.0) {
+					alpha += 360.0;
+				}
+				if (alpha > 0.0) {
+					alpha -= 360.0;
+				}
+				postcam_var_push_double("arcCentreX", _X(cx));
+				postcam_var_push_double("arcCentreY", _Y(cy));
+				postcam_var_push_double("arcAngle", toRad(alpha));
 			}
+			postcam_var_push_double("arcRadius", r);
+			postcam_call_function("OnArc");
+#else
+			translateAxisX(x, tx_str);
+			translateAxisY(y, ty_str);
+			sprintf(cline, "G0%i %s %s R%f F%i\n", gcmd, tx_str, ty_str, r, feed);
+			append_gcode(cline);
+#endif
 		}
 	} else {
 		if (mill_start_all != 0) {
