@@ -4,6 +4,8 @@
 #port selfupdate
 #port upgrade outdated
 #port install gtkglext
+#port install gtksourceview2
+#port install lua
 
 #export PATH="${PATH}:~/.local/bin"
 #export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/opt/X11/lib/pkgconfig"

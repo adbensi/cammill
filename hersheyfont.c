@@ -19,7 +19,11 @@
 
 #include "hersheyfont.h"
 
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

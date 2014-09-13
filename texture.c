@@ -4,7 +4,15 @@
 #else
 #include <GL/glut.h>
 #endif
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <math.h>
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
+#include <malloc.h>
+#endif
 
 struct Image {
 	unsigned long sizeX;

@@ -32,6 +32,11 @@
 #include <math.h>
 #include <dxf.h>
 #include <font.h>
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
+#include <malloc.h>
+#endif
 
 
 int block = 0;
@@ -70,9 +75,9 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 			}
 		}
 		if (myLINES == NULL) {
-			myLINES = malloc(sizeof(_LINE) * 5);
+			myLINES = (_LINE *)malloc(sizeof(_LINE) * 5);
 		} else {
-			myLINES = realloc(myLINES, sizeof(_LINE) * (line_last + 5));
+			myLINES = (_LINE *)realloc((void *)myLINES, sizeof(_LINE) * (line_last + 5));
 		}
 		if (strcmp(layer, "holding-tabs") == 0) {
 			myLINES[line_n].istab = 1;

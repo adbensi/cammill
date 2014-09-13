@@ -48,6 +48,11 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
+#include <malloc.h>
+#endif
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -152,11 +157,11 @@ void append_gcode (char *text) {
 #endif
 	if (gcode_buffer == NULL) {
 		int len = strlen(text) + 1;
-		gcode_buffer = malloc(len);
+		gcode_buffer = (char *)malloc(len);
 		gcode_buffer[0] = 0;
 	} else {
 		int len = strlen(gcode_buffer) + strlen(text) + 1;
-		gcode_buffer = realloc(gcode_buffer, len);
+		gcode_buffer = (char *)realloc((void *)gcode_buffer, len);
 	}
 	strcat(gcode_buffer, text);
 }
@@ -164,11 +169,11 @@ void append_gcode (char *text) {
 void append_gcode_new (char *text) {
 	if (gcode_buffer == NULL) {
 		int len = strlen(text) + 1;
-		gcode_buffer = malloc(len);
+		gcode_buffer = (char *)malloc(len);
 		gcode_buffer[0] = 0;
 	} else {
 		int len = strlen(gcode_buffer) + strlen(text) + 1;
-		gcode_buffer = realloc(gcode_buffer, len);
+		gcode_buffer = (char *)realloc((void *)gcode_buffer, len);
 	}
 	strcat(gcode_buffer, text);
 }
@@ -2273,7 +2278,7 @@ void init_objects (void) {
 		free(myOBJECTS);
 		myOBJECTS = NULL;
 	}
-	myOBJECTS = malloc(sizeof(_OBJECT) * (line_last + 1));
+	myOBJECTS = (_OBJECT *)malloc(sizeof(_OBJECT) * (line_last + 1));
 	for (object_num = 0; object_num < line_last; object_num++) {
 		myOBJECTS[object_num].use = 1;
 		myOBJECTS[object_num].closed = 0;
