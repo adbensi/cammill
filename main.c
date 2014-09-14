@@ -68,8 +68,6 @@
 void texture_init (void);
 GLuint texture_load (char *filename);
 
-#define FUZZY 0.001
-
 #ifndef CALLBACK
 #define CALLBACK
 #endif
@@ -2181,7 +2179,6 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	mill_move_out(lasermode);
 }
 
-
 int find_next_line (int object_num, int first, int num, int dir, int depth) {
 	int fnum = 0;
 	int num4 = 0;
@@ -2223,10 +2220,10 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 	fnum = 0;
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
-			if (px >= myLINES[num2].x1 - FUZZY && px <= myLINES[num2].x1 + FUZZY && py >= myLINES[num2].y1 - FUZZY && py <= myLINES[num2].y1 + FUZZY) {
+			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
 //				printf("###### %i NEXT LINE: %f,%f -> %f,%f START\n", depth, myLINES[num2].x1, myLINES[num2].y1, myLINES[num2].x2, myLINES[num2].y2);
 				fnum++;
-			} else if (px >= myLINES[num2].x2 - FUZZY && px <= myLINES[num2].x2 + FUZZY && py >= myLINES[num2].y2 - FUZZY && py <= myLINES[num2].y2 + FUZZY) {
+			} else if (px >= myLINES[num2].x2 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x2 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y2 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y2 + PARAMETER[P_O_TOLERANCE].vdouble) {
 //				printf("###### %i NEXT LINE: %f,%f -> %f,%f END\n", depth, myLINES[num2].x1, myLINES[num2].y1, myLINES[num2].x2, myLINES[num2].y2);
 				fnum++;
 			}
@@ -2234,7 +2231,7 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 	}
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
-			if (px >= myLINES[num2].x1 - FUZZY && px <= myLINES[num2].x1 + FUZZY && py >= myLINES[num2].y1 - FUZZY && py <= myLINES[num2].y1 + FUZZY) {
+			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
 //				printf("###### %i NEXT LINE: %f,%f -> %f,%f START\n", depth, myLINES[num2].x1, myLINES[num2].y1, myLINES[num2].x2, myLINES[num2].y2);
 				if (num2 != first) {
 					ret = find_next_line(object_num, first, num2, 1, depth + 1);
@@ -2245,7 +2242,7 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 //					printf("###### OBJECT CLOSED\n");
 					return 1;
 				}
-			} else if (px >= myLINES[num2].x2 - FUZZY && px <= myLINES[num2].x2 + FUZZY && py >= myLINES[num2].y2 - FUZZY && py <= myLINES[num2].y2 + FUZZY) {
+			} else if (px >= myLINES[num2].x2 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x2 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y2 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y2 + PARAMETER[P_O_TOLERANCE].vdouble) {
 				line_invert(num2);
 //				printf("###### %i NEXT LINE: %f,%f -> %f,%f END\n", depth, myLINES[num2].x1, myLINES[num2].y1, myLINES[num2].x2, myLINES[num2].y2);
 				if (num2 != first) {
@@ -2285,11 +2282,11 @@ int line_open_check (int num) {
 	py = myLINES[num].y1;
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
-			if (px >= myLINES[num2].x1 - FUZZY && px <= myLINES[num2].x1 + FUZZY && py >= myLINES[num2].y1 - FUZZY && py <= myLINES[num2].y1 + FUZZY) {
+			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
 				ret++;
 				dir = 1;
 				break;
-			} else if (px >= myLINES[num2].x2 - FUZZY && px <= myLINES[num2].x2 + FUZZY && py >= myLINES[num2].y2 - FUZZY && py <= myLINES[num2].y2 + FUZZY) {
+			} else if (px >= myLINES[num2].x2 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x2 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y2 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y2 + PARAMETER[P_O_TOLERANCE].vdouble) {
 				ret++;
 				dir = 1;
 				break;
@@ -2300,11 +2297,11 @@ int line_open_check (int num) {
 	py = myLINES[num].y2;
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
-			if (px >= myLINES[num2].x1 - FUZZY && px <= myLINES[num2].x1 + FUZZY && py >= myLINES[num2].y1 - FUZZY && py <= myLINES[num2].y1 + FUZZY) {
+			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
 				ret++;
 				dir = 2;
 				break;
-			} else if (px >= myLINES[num2].x2 - FUZZY && px <= myLINES[num2].x2 + FUZZY && py >= myLINES[num2].y2 - FUZZY && py <= myLINES[num2].y2 + FUZZY) {
+			} else if (px >= myLINES[num2].x2 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x2 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y2 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y2 + PARAMETER[P_O_TOLERANCE].vdouble) {
 				ret++;
 				dir = 2;
 				break;
@@ -3792,7 +3789,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		strcpy(PARAMETER[n].vstr, (char *)gtk_entry_get_text(GTK_ENTRY(widget)));
 	}
 
-	if (n == P_O_SELECT) {
+	if (n == P_O_SELECT && PARAMETER[P_O_SELECT].vint != -1) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
 		PARAMETER[P_O_USE].vint = myOBJECTS[object_num].use;
 		PARAMETER[P_O_FORCE].vint = myOBJECTS[object_num].force;
@@ -3802,7 +3799,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		PARAMETER[P_O_POCKET].vint = myOBJECTS[object_num].pocket;
 		PARAMETER[P_O_LASER].vint = myOBJECTS[object_num].laser;
 		PARAMETER[P_O_DEPTH].vdouble = myOBJECTS[object_num].depth;
-	} else if (n > P_O_SELECT) {
+	} else if (n > P_O_SELECT && PARAMETER[P_O_SELECT].vint != -1) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
 		myOBJECTS[object_num].use = PARAMETER[P_O_USE].vint;
 		myOBJECTS[object_num].force = PARAMETER[P_O_FORCE].vint;
@@ -3814,6 +3811,13 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
 	}
 
+	if (n == P_O_TOLERANCE) {
+		loading = 1;
+		init_objects();
+		DrawCheckSize();
+		DrawSetZero();
+		loading = 0;
+	}
 	if (strncmp(PARAMETER[n].name, "Translate", 9) != 0 && strncmp(PARAMETER[n].name, "Rotate", 6) != 0 && strncmp(PARAMETER[n].name, "Zoom", 4) != 0) {
 		update_post = 1;
 	}
@@ -4060,6 +4064,10 @@ int main (int argc, char *argv[]) {
 	GtkWidget *ObjectsBox = gtk_vbox_new(0, 0);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), ObjectsBox, ObjectsLabel);
 
+	int MiscNum = 0;
+	GtkWidget *MiscLabel = gtk_label_new("Misc");
+	GtkWidget *MiscBox = gtk_vbox_new(0, 0);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MiscBox, MiscLabel);
 
 	int n = 0;
 	for (n = 0; n < P_LAST; n++) {
@@ -4079,7 +4087,7 @@ int main (int argc, char *argv[]) {
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
-			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 3);
+			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 4);
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_INT) {
@@ -4160,6 +4168,11 @@ int main (int argc, char *argv[]) {
 			PARAMETER[n].l1 = 3;
 			PARAMETER[n].l2 = RotaryNum;
 			RotaryNum++;
+		} else if (strcmp(PARAMETER[n].group, "Misc") == 0) {
+			gtk_box_pack_start(GTK_BOX(MiscBox), Box, 0, 0, 0);
+			PARAMETER[n].l1 = 3;
+			PARAMETER[n].l2 = MiscNum;
+			MiscNum++;
 		} else if (strcmp(PARAMETER[n].group, "Tangencial") == 0) {
 			gtk_box_pack_start(GTK_BOX(TangencialBox), Box, 0, 0, 0);
 			PARAMETER[n].l1 = 3;
