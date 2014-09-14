@@ -3380,6 +3380,7 @@ void handler_destroy (GtkWidget *widget, gpointer data) {
 
 void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
 	int num;
+	loading = 1;
 	for (num = 0; num < line_last; num++) {
 		if (myLINES[num].used == 1) {
 			double tmp = myLINES[num].x1;
@@ -3396,7 +3397,7 @@ void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
 	init_objects();
 	DrawCheckSize();
 	DrawSetZero();
-
+	loading = 0;
 }
 
 void handler_load_dxf (GtkWidget *widget, gpointer data) {
