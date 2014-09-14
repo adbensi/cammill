@@ -54,6 +54,7 @@ typedef struct{
 	int overcut;
 	int pocket;
 	int laser;
+	int order;
 	double depth;
 	double min_x;
 	double min_y;

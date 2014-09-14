@@ -2384,6 +2384,7 @@ void init_objects (void) {
 		myOBJECTS[object_num].overcut = 0;
 		myOBJECTS[object_num].pocket = 0;
 		myOBJECTS[object_num].laser = 0;
+		myOBJECTS[object_num].order = 5;
 		myOBJECTS[object_num].visited = 0;
 		myOBJECTS[object_num].depth = 0.0;
 		myOBJECTS[object_num].layer[0] = 0;
@@ -2864,6 +2865,7 @@ void mainloop (void) {
 		// update Object-Data
 		for (object_num = 0; object_num < object_last; object_num++) {
 			if (myOBJECTS[object_num].force == 0) {
+				myOBJECTS[object_num].order = 5;
 				myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;
 				myOBJECTS[object_num].overcut = PARAMETER[P_M_OVERCUT].vint;
 				myOBJECTS[object_num].laser = PARAMETER[P_M_LASERMODE].vint;
@@ -2900,6 +2902,65 @@ void mainloop (void) {
 			myOBJECTS[object_num].visited = 0;
 		}
 
+		// manuel order < 0
+		int order_num = 0;
+		for (order_num = 0; order_num < 5; order_num++) {
+			for (object_num = 0; object_num < object_last; object_num++) {
+				double shortest_len = 9999999.0;
+				int shortest_object = -1;
+				int shortest_line = -1;
+				int flag = 0;
+				int object_num2 = 0;
+				for (object_num2 = 0; object_num2 < object_last; object_num2++) {
+					if (myOBJECTS[object_num2].order != order_num) {
+						continue;
+					}
+					int nnum = 0;
+					if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
+						if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
+							int lnum2 = myOBJECTS[object_num2].line[nnum];
+							double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
+							if (len < shortest_len) {
+								shortest_len = len;
+								shortest_object = object_num2;
+								shortest_line = nnum;
+								flag = 1;
+							}
+						}
+					} else {
+						for (nnum = 0; nnum < line_last; nnum++) {
+							if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
+								int lnum2 = myOBJECTS[object_num2].line[nnum];
+								double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+								if (len < shortest_len) {
+									shortest_len = len;
+									shortest_object = object_num2;
+									shortest_line = nnum;
+									flag = 1;
+								}
+							}
+						}
+					}
+				}
+				if (flag == 1) {
+					myOBJECTS[shortest_object].visited = 1;
+					if (myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
+						resort_object(shortest_object, shortest_line);
+						object_optimize_dir(shortest_object);
+					}
+					if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
+					} else {
+						object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+						object_draw(fd_out, shortest_object);
+					}
+					last_x = next_x;
+					last_y = next_y;
+				} else {
+					break;
+				}
+			}
+		}
+
 		/* inside and open objects */
 		for (object_num = 0; object_num < object_last; object_num++) {
 			double shortest_len = 9999999.0;
@@ -2908,6 +2969,9 @@ void mainloop (void) {
 			int flag = 0;
 			int object_num2 = 0;
 			for (object_num2 = 0; object_num2 < object_last; object_num2++) {
+				if (myOBJECTS[object_num2].order != 5) {
+					continue;
+				}
 				int nnum = 0;
 				if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
 					if (myOBJECTS[object_num2].line[nnum] != 0 && ((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 1) || (myOBJECTS[object_num2].force == 0 && myOBJECTS[object_num2].inside == 1)) && myOBJECTS[object_num2].visited == 0) {
@@ -2984,6 +3048,9 @@ void mainloop (void) {
 			int flag = 0;
 			int object_num2 = 0;
 			for (object_num2 = 0; object_num2 < object_last; object_num2++) {
+				if (myOBJECTS[object_num2].order != 5) {
+					continue;
+				}
 				int nnum = 0;
 				if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
 					if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
@@ -3029,7 +3096,65 @@ void mainloop (void) {
 			}
 		}
 
-	/* exit output */
+		// manuel order > 0
+		for (order_num = 6; order_num < 10; order_num++) {
+			for (object_num = 0; object_num < object_last; object_num++) {
+				double shortest_len = 9999999.0;
+				int shortest_object = -1;
+				int shortest_line = -1;
+				int flag = 0;
+				int object_num2 = 0;
+				for (object_num2 = 0; object_num2 < object_last; object_num2++) {
+					if (myOBJECTS[object_num2].order != order_num) {
+						continue;
+					}
+					int nnum = 0;
+					if (myLINES[myOBJECTS[object_num2].line[nnum]].type == TYPE_CIRCLE) {
+						if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
+							int lnum2 = myOBJECTS[object_num2].line[nnum];
+							double len = get_len(last_x, last_y, myLINES[lnum2].cx - myLINES[lnum2].opt, myLINES[lnum2].cy);
+							if (len < shortest_len) {
+								shortest_len = len;
+								shortest_object = object_num2;
+								shortest_line = nnum;
+								flag = 1;
+							}
+						}
+					} else {
+						for (nnum = 0; nnum < line_last; nnum++) {
+							if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
+								int lnum2 = myOBJECTS[object_num2].line[nnum];
+								double len = get_len(last_x, last_y, myLINES[lnum2].x1, myLINES[lnum2].y1);
+								if (len < shortest_len) {
+									shortest_len = len;
+									shortest_object = object_num2;
+									shortest_line = nnum;
+									flag = 1;
+								}
+							}
+						}
+					}
+				}
+				if (flag == 1) {
+					myOBJECTS[shortest_object].visited = 1;
+					if (myLINES[myOBJECTS[shortest_object].line[0]].type != TYPE_CIRCLE) {
+						resort_object(shortest_object, shortest_line);
+						object_optimize_dir(shortest_object);
+					}
+					if (myLINES[myOBJECTS[shortest_object].line[0]].type == TYPE_MTEXT) {
+					} else {
+						object_draw_offset(fd_out, shortest_object, &next_x, &next_y);
+						object_draw(fd_out, shortest_object);
+					}
+					last_x = next_x;
+					last_y = next_y;
+				} else {
+					break;
+				}
+			}
+		}
+
+		/* exit output */
 #ifdef USE_POSTCAM
 		postcam_call_function("OnSpindleOff");
 		postcam_call_function("OnFinish");
@@ -3799,6 +3924,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		PARAMETER[P_O_POCKET].vint = myOBJECTS[object_num].pocket;
 		PARAMETER[P_O_LASER].vint = myOBJECTS[object_num].laser;
 		PARAMETER[P_O_DEPTH].vdouble = myOBJECTS[object_num].depth;
+		PARAMETER[P_O_ORDER].vint = myOBJECTS[object_num].order;
 	} else if (n > P_O_SELECT && PARAMETER[P_O_SELECT].vint != -1) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
 		myOBJECTS[object_num].use = PARAMETER[P_O_USE].vint;
@@ -3809,6 +3935,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].pocket = PARAMETER[P_O_POCKET].vint;
 		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
+		myOBJECTS[object_num].order = PARAMETER[P_O_ORDER].vint;
 	}
 
 	if (n == P_O_TOLERANCE) {
@@ -4214,6 +4341,18 @@ int main (int argc, char *argv[]) {
 	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "None", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Inside", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Outside", -1);
+
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-5 First", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-4", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-3", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-2", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-1", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "Auto", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "1", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "2", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "3", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "4", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "5 Last", -1);
 
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "A", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "B", -1);
