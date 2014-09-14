@@ -61,6 +61,7 @@ PARA PARAMETER[] = {
 	{"Pocket",	"Objects",	"-op",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
 	{"Laser",	"Objects",	"-ol",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
 	{"Depth",	"Objects",	"-od",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1, 1, "end depth", 0, 0},
+	{"Holding-Tab's","Objects",	"-ot",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "use holding tabs", 0, 0},
 	{"Order",	"Objects",	"-mo",	T_SELECT,	0,	-1.0,	-1.0,	"",	-1.0,	1.0,	10.0,		"", 1, 1, "milling order", 0, 0},
 	{"Activate",	"Rotary",	"-rm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "rotarymode to project 2D on rotating axis", 0, 0},
 	{"Axis",	"Rotary",	"-ra",	T_SELECT,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 1, "axis that used as rotating axis", 0, 0},

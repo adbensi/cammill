@@ -430,10 +430,14 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 		glLoadIdentity();
 		glScalef(0.002, 0.002, 0.002);
 	} else  {
-		if (invert == 0) {
-			glColor4f(0.0, 0.5, 0.2, 0.5);
+		if (PARAMETER[P_O_SELECT].vint == object_num) {
+			glColor4f(1.0, 0.0, 0.0, 0.5);
 		} else {
-			glColor4f(0.0, 0.75, 0.3, 0.5);
+			if (invert == 0) {
+				glColor4f(0.0, 0.5, 0.2, 0.5);
+			} else {
+				glColor4f(0.0, 0.75, 0.3, 0.5);
+			}
 		}
 	}
 	tobj = gluNewTess();
@@ -1047,7 +1051,7 @@ void mill_z (int gcmd, double z) {
 	mill_last_z = z;
 }
 
-void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
+void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, char *comment) {
 #ifndef USE_POSTCAM
 	char tx_str[128];
 	char ty_str[128];
@@ -1069,7 +1073,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 			double i_y = 0.0;
 			int num = 0;
 			int numr = 0;
-			if (PARAMETER[P_T_USE].vint == 1) {
+			if (myOBJECTS[object_num].tabs == 1) {
 				if (PARAMETER[P_T_XGRID].vdouble == 0.0 && PARAMETER[P_T_YGRID].vdouble == 0.0) {
 					int line_flag[MAX_LINES];
 					for (num = 0; num < line_last; num++) {
@@ -1479,7 +1483,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, char *comment) {
 	mill_last_y = y;
 }
 
-void mill_drill (double x, double y, double depth, int feed, char *comment) {
+void mill_drill (double x, double y, double depth, int feed, int object_num, char *comment) {
 	if (comment[0] != 0) {
 		sprintf(cline, "(%s)\n", comment);
 		append_gcode(cline);
@@ -1489,7 +1493,7 @@ void mill_drill (double x, double y, double depth, int feed, char *comment) {
 	mill_z(0, 0.0);
 }
 
-void mill_circle (int gcmd, double x, double y, double r, double depth, int feed, int inside, char *comment) {
+void mill_circle (int gcmd, double x, double y, double r, double depth, int feed, int inside, int object_num, char *comment) {
 #ifndef USE_POSTCAM
 	char tx_str[128];
 	char ty_str[128];
@@ -1555,7 +1559,7 @@ void mill_circle (int gcmd, double x, double y, double r, double depth, int feed
 	mill_distance_xy += set_positive(r * 2 * PI);
 }
 
-void mill_move_in (double x, double y, double depth, int lasermode) {
+void mill_move_in (double x, double y, double depth, int lasermode, int object_num) {
 	// move to
 	if (lasermode == 1) {
 		if (tool_last != 5) {
@@ -1572,7 +1576,7 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 #endif
 		}
 		tool_last = PARAMETER[P_TOOL_NUM].vint;
-		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 		mill_z(0, 0.0);
 #ifdef USE_POSTCAM
 		postcam_call_function("OnSpindleCW");
@@ -1600,12 +1604,12 @@ void mill_move_in (double x, double y, double depth, int lasermode) {
 		}
 		tool_last = PARAMETER[P_TOOL_NUM].vint;
 		mill_z(0, PARAMETER[P_CUT_SAVE].vdouble);
-		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+		mill_xy(0, x, y, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 	}
 }
 
 
-void mill_move_out (int lasermode) {
+void mill_move_out (int lasermode, int object_num) {
 	// move out
 	if (lasermode == 1) {
 #ifdef USE_POSTCAM
@@ -1671,8 +1675,8 @@ void object_draw (FILE *fd_out, int object_num) {
 		double last_y = y;
 
 		if (PARAMETER[P_M_NCDEBUG].vint == 1) {
-			mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, 0.0, lasermode);
-			mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, 0.0, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+			mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, 0.0, lasermode, object_num);
+			mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, 0.0, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, object_num, "");
 		}
 		for (an = 0.0; an <= 360.0; an += 9.0) {
 			double angle1 = toRad(an);
@@ -1726,7 +1730,7 @@ void object_draw (FILE *fd_out, int object_num) {
 						}
 						tool_last = 5;
 					}
-					mill_xy(0, myLINES[lnum].x1, myLINES[lnum].y1, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(0, myLINES[lnum].x1, myLINES[lnum].y1, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 					if (lasermode == 1) {
 						mill_z(0, 0.0);
 						sprintf(cline, "M03 (Laser-On)\n");
@@ -1736,23 +1740,23 @@ void object_draw (FILE *fd_out, int object_num) {
 				if (myLINES[lnum].type == TYPE_ARC || myLINES[lnum].type == TYPE_CIRCLE) {
 					if (myOBJECTS[object_num].climb == 0) {
 						if (myLINES[lnum].opt < 0) {
-							mill_xy(3, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(3, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 						} else {
-							mill_xy(2, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(2, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 						}
 					} else {
 						if (myLINES[lnum].opt < 0) {
-							mill_xy(2, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(2, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 						} else {
-							mill_xy(3, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(3, myLINES[lnum].x2, myLINES[lnum].y2, myLINES[lnum].opt, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 						}
 					}
 				} else if (myLINES[lnum].type == TYPE_MTEXT) {
 					if (PARAMETER[P_M_TEXT].vint == 1) {
-						mill_xy(1, myLINES[lnum].x2, myLINES[lnum].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+						mill_xy(1, myLINES[lnum].x2, myLINES[lnum].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 					}
 				} else {
-					mill_xy(1, myLINES[lnum].x2, myLINES[lnum].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(1, myLINES[lnum].x2, myLINES[lnum].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 				}
 			}
 			if (num == 0) {
@@ -1816,23 +1820,23 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 				r += tool_offset;
 			}
 			if (mill_start == 0) {
-				mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, depth, lasermode);
+				mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, depth, lasermode, object_num);
 				mill_start = 1;
 			}
 			if (myOBJECTS[object_num].climb == 0) {
-				mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+				mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, object_num, "");
 			} else {
-				mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, "");
+				mill_circle(3, myLINES[lnum].cx, myLINES[lnum].cy, r, depth, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, object_num, "");
 			}
 			*next_x = myLINES[lnum].cx - r;
 			*next_y = myLINES[lnum].cy;
 		} else {
 
 			if (mill_start == 0) {
-				mill_move_in(myLINES[lnum].cx, myLINES[lnum].cy, depth, lasermode);
+				mill_move_in(myLINES[lnum].cx, myLINES[lnum].cy, depth, lasermode, object_num);
 				mill_start = 1;
 			}
-			mill_drill(myLINES[lnum].cx, myLINES[lnum].cy, depth, PARAMETER[P_M_FEEDRATE].vint, "");
+			mill_drill(myLINES[lnum].cx, myLINES[lnum].cy, depth, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 			*next_x = myLINES[lnum].cx;
 			*next_y = myLINES[lnum].cy;
 		}
@@ -1904,46 +1908,46 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 						first_x = check1b_x;
 						first_y = check1b_y;
 						if (mill_start == 0) {
-							mill_move_in(first_x, first_y, depth, lasermode);
+							mill_move_in(first_x, first_y, depth, lasermode, object_num);
 							mill_start = 1;
 						}
 						append_gcode("\n");
 						mill_z(1, depth);
 
 						if (myOBJECTS[object_num].climb == 0) {
-							mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 						} else {
-							mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 						}
 					} else {
 						if (myLINES[lnum1].type == TYPE_ARC || myLINES[lnum1].type == TYPE_CIRCLE) {
 							if (myOBJECTS[object_num].climb == 0) {
 								if (myLINES[lnum1].opt < 0) {
-									mill_xy(2, check1b_x, check1b_y, (myLINES[lnum1].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(2, check1b_x, check1b_y, (myLINES[lnum1].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								} else {
-									mill_xy(3, check1b_x, check1b_y, (myLINES[lnum1].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(3, check1b_x, check1b_y, (myLINES[lnum1].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								}
 							} else {
 								if (myLINES[lnum1].opt < 0) {
-									mill_xy(2, check1b_x, check1b_y, (myLINES[lnum1].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(2, check1b_x, check1b_y, (myLINES[lnum1].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								} else {
-									mill_xy(3, check1b_x, check1b_y, (myLINES[lnum1].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(3, check1b_x, check1b_y, (myLINES[lnum1].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								}
 							}
 							if (myLINES[lnum2].type == TYPE_ARC || myLINES[lnum2].type == TYPE_CIRCLE) {
 							} else {
 								if (myOBJECTS[object_num].climb == 0) {
-									mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								} else {
-									mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								}
 							}
 						} else {
-							mill_xy(1, check1b_x, check1b_y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(1, check1b_x, check1b_y, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 							if (myOBJECTS[object_num].climb == 0) {
-								mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+								mill_xy(3, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 							} else {
-								mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, "");
+								mill_xy(2, check2_x, check2_y, tool_offset, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 							}
 						}
 					}
@@ -1966,7 +1970,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 						first_x = px;
 						first_y = py;
 						if (mill_start == 0) {
-							mill_move_in(first_x, first_y, depth, lasermode);
+							mill_move_in(first_x, first_y, depth, lasermode, object_num);
 							mill_start = 1;
 							last_x = first_x;
 							last_y = first_y;
@@ -1984,8 +1988,8 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							}
 							double len = sqrt(adx * adx + ady * ady);
 							add_angle_offset(&enx, &eny, len - tool_offset, aalpha);
-							mill_xy(1, enx, eny, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-							mill_xy(1, px, py, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(1, enx, eny, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
+							mill_xy(1, px, py, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 							last_x = px;
 							last_y = py;
 						}
@@ -2005,22 +2009,22 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 						if (myLINES[lnum1].type == TYPE_ARC || myLINES[lnum1].type == TYPE_CIRCLE) {
 							if (myOBJECTS[object_num].climb == 0) {
 								if (myLINES[lnum1].opt < 0) {
-									mill_xy(2, px, py, (myLINES[lnum1].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(2, px, py, (myLINES[lnum1].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								} else {
-									mill_xy(3, px, py, (myLINES[lnum1].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(3, px, py, (myLINES[lnum1].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								}
 							} else {
 								if (myLINES[lnum1].opt < 0) {
-									mill_xy(2, px, py, (myLINES[lnum1].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(2, px, py, (myLINES[lnum1].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								} else {
-									mill_xy(3, px, py, (myLINES[lnum1].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, "");
+									mill_xy(3, px, py, (myLINES[lnum1].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 								}
 							}
 						} else {
-							mill_xy(1, px, py, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+							mill_xy(1, px, py, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 							if (overcut == 1 && ((myLINES[lnum1].type == TYPE_LINE && myLINES[lnum2].type == TYPE_LINE) || (myLINES[lnum1].type == TYPE_ELLIPSE && myLINES[lnum2].type == TYPE_ELLIPSE))) {
-								mill_xy(1, enx, eny, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
-								mill_xy(1, px, py, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+								mill_xy(1, enx, eny, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
+								mill_xy(1, px, py, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 							}
 						}
 						last_x = px;
@@ -2031,7 +2035,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 				if (num == 0) {
 					first_x = myLINES[lnum2].x1;
 					first_y = myLINES[lnum2].y1;
-					mill_move_in(first_x, first_y, depth, lasermode);
+					mill_move_in(first_x, first_y, depth, lasermode, object_num);
 					mill_start = 1;
 					append_gcode("\n");
 					mill_z(1, depth);
@@ -2041,9 +2045,9 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 				double alpha_diff = alpha2 - alpha1;
 				if (myLINES[lnum2].type == TYPE_ARC || myLINES[lnum2].type == TYPE_CIRCLE) {
 					if (myLINES[lnum2].opt < 0) {
-						mill_xy(2, myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+						mill_xy(2, myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 					} else {
-						mill_xy(3, myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt, PARAMETER[P_M_FEEDRATE].vint, "");
+						mill_xy(3, myLINES[lnum2].x2, myLINES[lnum2].y2, myLINES[lnum2].opt, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 					}
 				} else {
 					if (PARAMETER[P_M_KNIFEMODE].vint == 1) {
@@ -2063,7 +2067,7 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 							append_gcode(cline);
 						}
 					}
-					mill_xy(1, myLINES[lnum2].x2, myLINES[lnum2].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(1, myLINES[lnum2].x2, myLINES[lnum2].y2, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 				}
 				last_x = myLINES[lnum2].x2;
 				last_y = myLINES[lnum2].y2;
@@ -2075,19 +2079,19 @@ void object_draw_offset_depth (FILE *fd_out, int object_num, double depth, doubl
 		if (myLINES[last].type == TYPE_ARC || myLINES[last].type == TYPE_CIRCLE) {
 			if (myOBJECTS[object_num].climb == 0) {
 				if (myLINES[last].opt < 0) {
-					mill_xy(2, first_x, first_y, (myLINES[last].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(2, first_x, first_y, (myLINES[last].opt + tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 				} else {
-					mill_xy(3, first_x, first_y, (myLINES[last].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(3, first_x, first_y, (myLINES[last].opt + tool_offset), PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 				}
 			} else {
 				if (myLINES[last].opt < 0) {
-					mill_xy(2, first_x, first_y, (myLINES[last].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(2, first_x, first_y, (myLINES[last].opt - tool_offset) * -1, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 				} else {
-					mill_xy(3, first_x, first_y, (myLINES[last].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, "");
+					mill_xy(3, first_x, first_y, (myLINES[last].opt - tool_offset), PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 				}
 			}
 		} else {
-			mill_xy(1, first_x, first_y, 0.0, PARAMETER[P_M_FEEDRATE].vint, "");
+			mill_xy(1, first_x, first_y, 0.0, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
 		}
 		last_x = first_x;
 		last_y = first_y;
@@ -2176,7 +2180,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 			object_draw_offset_depth(fd_out, object_num, new_depth, next_x, next_y, tool_offset, overcut, lasermode, offset);
 		}
 	}
-	mill_move_out(lasermode);
+	mill_move_out(lasermode, object_num);
 }
 
 int find_next_line (int object_num, int first, int num, int dir, int depth) {
@@ -2385,6 +2389,7 @@ void init_objects (void) {
 		myOBJECTS[object_num].pocket = 0;
 		myOBJECTS[object_num].laser = 0;
 		myOBJECTS[object_num].order = 5;
+		myOBJECTS[object_num].tabs = 1;
 		myOBJECTS[object_num].visited = 0;
 		myOBJECTS[object_num].depth = 0.0;
 		myOBJECTS[object_num].layer[0] = 0;
@@ -2866,6 +2871,7 @@ void mainloop (void) {
 		for (object_num = 0; object_num < object_last; object_num++) {
 			if (myOBJECTS[object_num].force == 0) {
 				myOBJECTS[object_num].order = 5;
+				myOBJECTS[object_num].tabs = PARAMETER[P_T_USE].vint;
 				myOBJECTS[object_num].depth = PARAMETER[P_M_DEPTH].vdouble;
 				myOBJECTS[object_num].overcut = PARAMETER[P_M_OVERCUT].vint;
 				myOBJECTS[object_num].laser = PARAMETER[P_M_LASERMODE].vint;
@@ -3925,6 +3931,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		PARAMETER[P_O_LASER].vint = myOBJECTS[object_num].laser;
 		PARAMETER[P_O_DEPTH].vdouble = myOBJECTS[object_num].depth;
 		PARAMETER[P_O_ORDER].vint = myOBJECTS[object_num].order;
+		PARAMETER[P_O_TABS].vint = myOBJECTS[object_num].tabs;
 	} else if (n > P_O_SELECT && PARAMETER[P_O_SELECT].vint != -1) {
 		int object_num = PARAMETER[P_O_SELECT].vint;
 		myOBJECTS[object_num].use = PARAMETER[P_O_USE].vint;
@@ -3936,6 +3943,7 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].laser = PARAMETER[P_O_LASER].vint;
 		myOBJECTS[object_num].depth = PARAMETER[P_O_DEPTH].vdouble;
 		myOBJECTS[object_num].order = PARAMETER[P_O_ORDER].vint;
+		myOBJECTS[object_num].tabs = PARAMETER[P_O_TABS].vint;
 	}
 
 	if (n == P_O_TOLERANCE) {
