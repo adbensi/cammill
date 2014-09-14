@@ -2880,7 +2880,9 @@ void mainloop (void) {
 				if (strncmp(myOBJECTS[object_num].layer, "laser", 5) == 0) {
 					myOBJECTS[object_num].laser = 1;
 				}
-				if (myOBJECTS[object_num].closed == 1) {
+				if (PARAMETER[P_M_NOOFFSET].vint == 1) {
+					myOBJECTS[object_num].offset = 0; // NO_OFFSET
+				} else if (myOBJECTS[object_num].closed == 1) {
 					if (myOBJECTS[object_num].inside == 1) {
 						myOBJECTS[object_num].offset = 1; // INSIDE
 					} else {
