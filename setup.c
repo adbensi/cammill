@@ -61,7 +61,6 @@ PARA PARAMETER[] = {
 	{"Pocket",	"Objects",	"-op",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
 	{"Laser",	"Objects",	"-ol",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "", 0, 0},
 	{"Depth",	"Objects",	"-od",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1, 1, "end depth", 0, 0},
-	{"Order",	"Objects",	"-od",	T_DOUBLE,	0,	-1.0,	-1.0,	"",	-1.0,	1.0,	10.0,		"#", 1, 1, "milling order 1=first 10=last -1=auto/last", 0, 0},
 	{"Activate",	"Rotary",	"-rm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "rotarymode to project 2D on rotating axis", 0, 0},
 	{"Axis",	"Rotary",	"-ra",	T_SELECT,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 1, "axis that used as rotating axis", 0, 0},
 	{"Rotary/Diameter","Rotary",	"-md",	T_DOUBLE,	0,	0.0,	100.0,	"",	0.01,	0.01,	1000.0,		"mm", 1, 1, "diameter of the material for the rotary-mode", 0, 0},
