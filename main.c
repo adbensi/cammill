@@ -1170,11 +1170,13 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 								tx1 = maxn - nx;
 								tx2 = maxn - nx;
 							}
-							glColor4f(0.0, 0.0, 1.0, 0.1);
-							glBegin(GL_LINES);
-							glVertex3f(tx1, ty1, PARAMETER[P_T_DEPTH].vdouble);
-							glVertex3f(tx2, ty2, PARAMETER[P_T_DEPTH].vdouble);
-							glEnd();
+							if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+								glColor4f(0.0, 0.0, 1.0, 0.1);
+								glBegin(GL_LINES);
+								glVertex3f(tx1, ty1, PARAMETER[P_T_DEPTH].vdouble);
+								glVertex3f(tx2, ty2, PARAMETER[P_T_DEPTH].vdouble);
+								glEnd();
+							}
 							if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1)) {
 								double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
 								double i_x2 = i_x;
@@ -1199,25 +1201,27 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 								postcam_var_push_double("currentX", _X(i_x2));
 								postcam_var_push_double("currentY", _Y(i_y2));
 								if (PARAMETER[P_T_TYPE].vint == 0) {
-									glColor4f(1.0, 1.0, 0.0, 0.5);
-									glBegin(GL_QUADS);
-									glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glEnd();
-									glBegin(GL_QUADS);
-									glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glEnd();
-									glBegin(GL_QUADS);
-									glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glEnd();
+									if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+										glColor4f(1.0, 1.0, 0.0, 0.5);
+										glBegin(GL_QUADS);
+										glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glEnd();
+										glBegin(GL_QUADS);
+										glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glEnd();
+										glBegin(GL_QUADS);
+										glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glEnd();
+									}
 									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
 									postcam_call_function("OnMove");
 									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
@@ -1230,19 +1234,21 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 									postcam_call_function("OnMove");
 									postcam_var_push_double("currentZ", _Z(mill_last_z));
 								} else {
-									glColor4f(1.0, 1.0, 0.0, 0.5);
-									glBegin(GL_QUADS);
-									glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x, i_y - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x, i_y + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glEnd();
-									glBegin(GL_QUADS);
-									glVertex3f(i_x, i_y - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x, i_y + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
-									glEnd();
+									if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+										glColor4f(1.0, 1.0, 0.0, 0.5);
+										glBegin(GL_QUADS);
+										glVertex3f(i_x2, i_y2 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x, i_y - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x, i_y + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2, i_y2 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glEnd();
+										glBegin(GL_QUADS);
+										glVertex3f(i_x, i_y - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 - PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x3, i_y3 + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x, i_y + PARAMETER[P_TOOL_DIAMETER].vdouble, PARAMETER[P_T_DEPTH].vdouble);
+										glEnd();
+									}
 									postcam_var_push_double("endX", _X(i_x));
 									postcam_var_push_double("endY", _Y(i_y));
 									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
@@ -1283,11 +1289,13 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 								ty1 = maxn - ny;
 								ty2 = maxn - ny;
 							}
-							glColor4f(0.0, 0.0, 1.0, 0.1);
-							glBegin(GL_LINES);
-							glVertex3f(tx1, ty1, PARAMETER[P_T_DEPTH].vdouble);
-							glVertex3f(tx2, ty2, PARAMETER[P_T_DEPTH].vdouble);
-							glEnd();
+							if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+								glColor4f(0.0, 0.0, 1.0, 0.1);
+								glBegin(GL_LINES);
+								glVertex3f(tx1, ty1, PARAMETER[P_T_DEPTH].vdouble);
+								glVertex3f(tx2, ty2, PARAMETER[P_T_DEPTH].vdouble);
+								glEnd();
+							}
 							if (mill_last_z < PARAMETER[P_T_DEPTH].vdouble && (intersect_check(mill_last_x, mill_last_y, x, y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1 || intersect_check(x, y, mill_last_x, mill_last_y, tx1 + 0.0002, ty1 + 0.0002, tx2 + 0.0002, ty2 + 0.0002, &i_x, &i_y) == 1)) {
 								double alpha1 = vector_angle(mill_last_x, mill_last_y, i_x, i_y);
 								double i_x2 = i_x;
@@ -1312,28 +1320,27 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 								postcam_var_push_double("currentX", _X(i_x2));
 								postcam_var_push_double("currentY", _Y(i_y2));
 								if (PARAMETER[P_T_TYPE].vint == 0) {
-
-									glColor4f(1.0, 1.0, 0.0, 0.5);
-									glBegin(GL_QUADS);
-									glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
-									glEnd();
-									glBegin(GL_QUADS);
-									glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
-									glEnd();
-									glBegin(GL_QUADS);
-									glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
-									glEnd();
-
-
+									if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+										glColor4f(1.0, 1.0, 0.0, 0.5);
+										glBegin(GL_QUADS);
+										glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
+										glEnd();
+										glBegin(GL_QUADS);
+										glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_T_DEPTH].vdouble);
+										glEnd();
+										glBegin(GL_QUADS);
+										glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_T_DEPTH].vdouble);
+										glEnd();
+									}
 									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
 									postcam_call_function("OnMove");
 									postcam_var_push_double("currentZ", _Z(PARAMETER[P_T_DEPTH].vdouble));
@@ -1346,19 +1353,21 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 									postcam_call_function("OnMove");
 									postcam_var_push_double("currentZ", _Z(mill_last_z));
 								} else {
-									glColor4f(1.0, 1.0, 0.0, 0.5);
-									glBegin(GL_QUADS);
-									glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
-									glEnd();
-									glBegin(GL_QUADS);
-									glVertex3f(i_x - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
-									glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
-									glVertex3f(i_x + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
-									glEnd();
+									if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+										glColor4f(1.0, 1.0, 0.0, 0.5);
+										glBegin(GL_QUADS);
+										glVertex3f(i_x2 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x2 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y2, PARAMETER[P_M_DEPTH].vdouble);
+										glEnd();
+										glBegin(GL_QUADS);
+										glVertex3f(i_x - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
+										glVertex3f(i_x3 - PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x3 + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y3, PARAMETER[P_M_DEPTH].vdouble);
+										glVertex3f(i_x + PARAMETER[P_TOOL_DIAMETER].vdouble, i_y, PARAMETER[P_T_DEPTH].vdouble);
+										glEnd();
+									}
 									postcam_var_push_double("endX", _X(i_x));
 									postcam_var_push_double("endY", _Y(i_y));
 									postcam_var_push_double("endZ", _Z(PARAMETER[P_T_DEPTH].vdouble));

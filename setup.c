@@ -65,7 +65,7 @@ PARA PARAMETER[] = {
 	{"Order",	"Objects",	"-mo",	T_SELECT,	0,	-1.0,	-1.0,	"",	-1.0,	1.0,	10.0,		"", 1, 1, "milling order", 0, 0},
 	{"Activate",	"Rotary",	"-rm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "rotarymode to project 2D on rotating axis", 0, 0},
 	{"Axis",	"Rotary",	"-ra",	T_SELECT,	0,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 1, "axis that used as rotating axis", 0, 0},
-	{"Rotary/Diameter","Rotary",	"-md",	T_DOUBLE,	0,	0.0,	100.0,	"",	0.01,	0.01,	1000.0,		"mm", 1, 1, "diameter of the material for the rotary-mode", 0, 0},
+	{"Diameter",	"Rotary",	"-md",	T_DOUBLE,	0,	0.0,	100.0,	"",	0.01,	0.01,	1000.0,		"mm", 1, 1, "diameter of the material for the rotary-mode", 0, 0},
 	{"Activate",	"Tangencial",	"-tm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "tangencial-knife cutting, depth=0.0", 0, 0},
 	{"Axis",	"Tangencial",	"-ta",	T_SELECT,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 1, "axis that used as tangencial axis", 0, 0},
 	{"MaxAngle",	"Tangencial", 	"-tm",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1, 1, "maximum angle before push up the knife", 0, 0},
