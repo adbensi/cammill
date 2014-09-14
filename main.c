@@ -188,11 +188,110 @@ void line_invert (int num) {
 	myLINES[num].opt *= -1;
 }
 
-
 int point_in_object (int object_num, int object_ex, double testx, double testy) {
+	int result = 0;
+	int num = 0;
+	int onum = object_num;
+	testx += 0.0001;
+	testy += 0.0001;
+	if (object_num == -1) {
+		for (onum = 0; onum < object_last; onum++) {
+			if (onum == object_ex) {
+				continue;
+			}
+			if (myOBJECTS[onum].closed == 0) {
+				continue;
+			}
+			for (num = 0; num < line_last; num++) {
+				if (myOBJECTS[onum].line[num] != 0) {
+					int lnum = myOBJECTS[onum].line[num];
+					if (myLINES[lnum].y2 == testy) {
+						if ((myLINES[lnum].x2 == testx) || (myLINES[lnum].y1 == testy && ((myLINES[lnum].x2 > testx) == (myLINES[lnum].x1 < testx)))) {
+							fprintf(stderr, "Point on line\n");
+							return -1;
+						}
+					}
+					if ((myLINES[lnum].y1 < testy) != (myLINES[lnum].y2 < testy)) {
+						if (myLINES[lnum].x1 >= testx) {
+							if (myLINES[lnum].x2 > testx) {
+								result = 1 - result;
+							} else {
+								double d = (double)(myLINES[lnum].x1 - testx) * (myLINES[lnum].y2 - testy) - (double)(myLINES[lnum].x2 - testx) * (myLINES[lnum].y1 - testy);
+								if (!d) {
+									return -1;
+								}
+								if ((d > 0) == (myLINES[lnum].y2 > myLINES[lnum].y1)) {
+									result = 1 - result;
+								}
+							}
+						} else {
+							if (myLINES[lnum].x2 > testx) {
+								double d = (double)(myLINES[lnum].x1 - testx) * (myLINES[lnum].y2 - testy) - (double)(myLINES[lnum].x2 - testx) * (myLINES[lnum].y1 - testy);
+								if (!d) {
+									return -1;
+								}
+								if ((d > 0) == (myLINES[lnum].y2 > myLINES[lnum].y1)) {
+									result = 1 - result;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	} else {
+		if (myOBJECTS[onum].closed == 0) {
+			return 0;
+		}
+		for (num = 0; num < line_last; num++) {
+			if (myOBJECTS[onum].line[num] != 0) {
+				int lnum = myOBJECTS[onum].line[num];
+				if (myLINES[lnum].y2 == testy) {
+					if ((myLINES[lnum].x2 == testx) || (myLINES[lnum].y1 == testy && ((myLINES[lnum].x2 > testx) == (myLINES[lnum].x1 < testx)))) {
+						fprintf(stderr, "Point on line\n");
+						return -1;
+					}
+				}
+				if ((myLINES[lnum].y1 < testy) != (myLINES[lnum].y2 < testy)) {
+					if (myLINES[lnum].x1 >= testx) {
+						if (myLINES[lnum].x2 > testx) {
+							result = 1 - result;
+						} else {
+							double d = (double)(myLINES[lnum].x1 - testx) * (myLINES[lnum].y2 - testy) - (double)(myLINES[lnum].x2 - testx) * (myLINES[lnum].y1 - testy);
+							if (!d) {
+								return -1;
+							}
+							if ((d > 0) == (myLINES[lnum].y2 > myLINES[lnum].y1)) {
+								result = 1 - result;
+							}
+						}
+					} else {
+						if (myLINES[lnum].x2 > testx) {
+							double d = (double)(myLINES[lnum].x1 - testx) * (myLINES[lnum].y2 - testy) - (double)(myLINES[lnum].x2 - testx) * (myLINES[lnum].y1 - testy);
+							if (!d) {
+								return -1;
+							}
+							if ((d > 0) == (myLINES[lnum].y2 > myLINES[lnum].y1)) {
+								result = 1 - result;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return result;
+}
+
+
+
+int point_in_object_old (int object_num, int object_ex, double testx, double testy) {
 	int num = 0;
 	int c = 0;
 	int onum = object_num;
+	testx += 0.001;
+	testy += 0.002;
+
 	if (object_num == -1) {
 		for (onum = 0; onum < object_last; onum++) {
 			if (onum == object_ex) {

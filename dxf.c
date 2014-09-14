@@ -288,12 +288,13 @@ void dxf_read (char *file) {
 						double p_y2 = atof(dxf_options[OPTION_POINT_Y]);
 						add_line(TYPE_POINT, dxf_options[8], p_x1, p_y1, p_x2, p_y2, 0.0, 0.0, 0.0);
 					} else if (strcmp(last_0, "SPLINE") == 0) {
-					} else if (strcmp(last_0, "CIRCLE") == 0) {
+/*					} else if (strcmp(last_0, "CIRCLE") == 0) {
 						double cx = atof(dxf_options[OPTION_ARC_X]);
 						double cy = atof(dxf_options[OPTION_ARC_Y]);
 						double r = atof(dxf_options[OPTION_ARC_RADIUS]);
 						add_line(TYPE_CIRCLE, dxf_options[8], cx - r, cy, cx + r, cy, r, cx, cy);
 						add_line(TYPE_CIRCLE, dxf_options[8], cx + r, cy, cx - r, cy, r, cx, cy);
+*/
 					} else if (strcmp(last_0, "ARC") == 0 || strcmp(last_0, "CIRCLE") == 0) {
 						double p_x1 = atof(dxf_options[OPTION_ARC_X]);
 						double p_y1 = atof(dxf_options[OPTION_ARC_Y]);
@@ -314,7 +315,7 @@ void dxf_read (char *file) {
 						double last_x = (p_x1 + x2);
 						double last_y = (p_y1 + y2);
 						double an = 0;
-						double p_rast = (p_a2 - p_a1) / 10.0;
+						double p_rast = (p_a2 - p_a1) / 9.0;
 						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
 							double angle1 = toRad(an);
 							double x1 = r * cos(angle1);
