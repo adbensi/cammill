@@ -412,7 +412,6 @@ void draw_helplines (void) {
 
 void mainloop (void) {
 	char tmp_str[1024];
-	int object_num = 0;
 	size_x = (max_x - min_x);
 	size_y = (max_y - min_y);
 	float scale = (4.0 / size_x);
