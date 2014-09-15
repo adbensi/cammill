@@ -42,6 +42,9 @@
 #include <gtk/gtkgl.h>
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
+#ifdef USE_VNC
+#include <gtk-vnc.h>
+#endif
 #include <libgen.h>
 #include <math.h>
 #include <stdio.h>
@@ -122,6 +125,9 @@ int last_mouse_state = 0;
 void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
 
+#ifdef USE_VNC
+GtkWidget *VncView;
+#endif
 GtkWidget *gCodeViewLabel;
 GtkWidget *gCodeViewLabelLua;
 GtkWidget *OutputInfoLabel;
@@ -4546,6 +4552,19 @@ int main (int argc, char *argv[]) {
 	gCodeViewLabelLua = gtk_label_new("PostProcessor");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidgetLuaBox, gCodeViewLabelLua);
 
+#ifdef USE_VNC
+	if (PARAMETER[P_O_VNCSERVER].vstr[0] != 0) {
+		char port[128];
+		GtkWidget *VncLabel = gtk_label_new("VNC");
+		VncView = vnc_display_new();
+		GtkWidget *VncWindow = gtk_scrolled_window_new(NULL, NULL);
+		gtk_container_add(GTK_CONTAINER(VncWindow), VncView);
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(VncWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+	        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), VncWindow, VncLabel);
+		sprintf(port, "%i", PARAMETER[P_O_VNCPORT].vint);
+		vnc_display_open_host(VNC_DISPLAY(VncView), PARAMETER[P_O_VNCSERVER].vstr, port);
+	}
+#endif
 
 //	hbox = gtk_hbox_new(0, 0);
 //	gtk_box_pack_start(GTK_BOX(hbox), NbBox, 0, 0, 0);
