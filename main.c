@@ -72,6 +72,11 @@
 #include <postprocessor.h>
 #include <calc.h>
 
+#include <libintl.h>
+#define _(String) gettext (String)
+#define gettext_noop(String) String
+#define N_(String) gettext_noop (String)
+
 
 void texture_init (void);
 
@@ -1329,16 +1334,16 @@ void create_gui (void) {
 		gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 		gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
 		gtk_table_attach_defaults(GTK_TABLE(NbBox), notebook, 0, 1, 0, 1);
-		GtkWidget *ViewLabel = gtk_label_new("View");
-		GtkWidget *ToolLabel = gtk_label_new("Tool");
-		GtkWidget *MillingLabel = gtk_label_new("Milling");
-		GtkWidget *HoldingLabel = gtk_label_new("Tabs");
-		GtkWidget *RotaryLabel = gtk_label_new("Rotary");
-		GtkWidget *TangencialLabel = gtk_label_new("Tangencial");
-		GtkWidget *MachineLabel = gtk_label_new("Machine");
-		GtkWidget *MaterialLabel = gtk_label_new("Material");
-		GtkWidget *ObjectsLabel = gtk_label_new("Objects");
-		GtkWidget *MiscLabel = gtk_label_new("Misc");
+		GtkWidget *ViewLabel = gtk_label_new(_("View"));
+		GtkWidget *ToolLabel = gtk_label_new(_("Tool"));
+		GtkWidget *MillingLabel = gtk_label_new(_("Milling"));
+		GtkWidget *HoldingLabel = gtk_label_new(_("Tabs"));
+		GtkWidget *RotaryLabel = gtk_label_new(_("Rotary"));
+		GtkWidget *TangencialLabel = gtk_label_new(_("Tangencial"));
+		GtkWidget *MachineLabel = gtk_label_new(_("Machine"));
+		GtkWidget *MaterialLabel = gtk_label_new(_("Material"));
+		GtkWidget *ObjectsLabel = gtk_label_new(_("Objects"));
+		GtkWidget *MiscLabel = gtk_label_new(_("Misc"));
 		gtk_notebook_append_page(GTK_NOTEBOOK(notebook), ViewBox, ViewLabel);
 		gtk_notebook_append_page(GTK_NOTEBOOK(notebook), ToolBox, ToolLabel);
 		gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MillingBox, MillingLabel);
@@ -1351,16 +1356,16 @@ void create_gui (void) {
 		gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MiscBox, MiscLabel);
 	} else {
 		GtkWidget *ExpanderBox = gtk_vbox_new(0, 0);
-		GtkWidget *ViewExpander = gtk_expander_new("View");
-		GtkWidget *ToolExpander = gtk_expander_new("Tool");
-		GtkWidget *MillingExpander = gtk_expander_new("Milling");
-		GtkWidget *TabsExpander = gtk_expander_new("Tabs");
-		GtkWidget *RotaryExpander = gtk_expander_new("Rotary");
-		GtkWidget *TangencialExpander = gtk_expander_new("Tangencial");
-		GtkWidget *MachineExpander = gtk_expander_new("Machine");
-		GtkWidget *MaterialExpander = gtk_expander_new("Material");
-		GtkWidget *ObjectsExpander = gtk_expander_new("Objects");
-		GtkWidget *MiscExpander = gtk_expander_new("Misc");
+		GtkWidget *ViewExpander = gtk_expander_new(_("View"));
+		GtkWidget *ToolExpander = gtk_expander_new(_("Tool"));
+		GtkWidget *MillingExpander = gtk_expander_new(_("Milling"));
+		GtkWidget *TabsExpander = gtk_expander_new(_("Tabs"));
+		GtkWidget *RotaryExpander = gtk_expander_new(_("Rotary"));
+		GtkWidget *TangencialExpander = gtk_expander_new(_("Tangencial"));
+		GtkWidget *MachineExpander = gtk_expander_new(_("Machine"));
+		GtkWidget *MaterialExpander = gtk_expander_new(_("Material"));
+		GtkWidget *ObjectsExpander = gtk_expander_new(_("Objects"));
+		GtkWidget *MiscExpander = gtk_expander_new(_("Misc"));
 		GtkWidget *ViewBoxFrame = gtk_frame_new("");
 		GtkWidget *ToolBoxFrame = gtk_frame_new("");
 		GtkWidget *MillingBoxFrame = gtk_frame_new("");
@@ -1411,8 +1416,8 @@ void create_gui (void) {
 		GtkWidget *Label;
 		GtkTooltips *tooltips = gtk_tooltips_new ();
 		GtkWidget *Box = gtk_hbox_new(0, 0);
+		Label = gtk_label_new(_(PARAMETER[n].name));
 		if (PARAMETER[n].type == T_FLOAT) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
@@ -1420,7 +1425,6 @@ void create_gui (void) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_DOUBLE) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
@@ -1428,7 +1432,6 @@ void create_gui (void) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_INT) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
@@ -1436,7 +1439,6 @@ void create_gui (void) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_SELECT) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ListStore[n] = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
@@ -1450,14 +1452,12 @@ void create_gui (void) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_BOOL) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ParamValue[n] = gtk_check_button_new_with_label("On/Off");
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_STRING) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ParamValue[n] = gtk_entry_new();
@@ -1465,7 +1465,6 @@ void create_gui (void) {
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_FILE) {
-			Label = gtk_label_new(PARAMETER[n].name);
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			ParamValue[n] = gtk_entry_new();
@@ -1818,12 +1817,16 @@ void create_gui (void) {
 
 int main (int argc, char *argv[]) {
 
+	bindtextdomain("cammill", "intl");
+	textdomain("cammill");
+
+
 	// force dots in printf
 	setlocale(LC_NUMERIC, "C");
 
 	SetupLoad();
 	ArgsRead(argc, argv);
-	SetupShow();
+//	SetupShow();
 
 	gtk_init(&argc, &argv);
 	gtk_gl_init(&argc, &argv);
