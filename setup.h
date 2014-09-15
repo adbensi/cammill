@@ -64,6 +64,7 @@ enum {
 	P_M_TEXT,
 	P_M_NCDEBUG,
 	P_T_USE,
+	P_T_GRID,
 	P_T_DEPTH,
 	P_T_LEN,
 	P_T_TYPE,

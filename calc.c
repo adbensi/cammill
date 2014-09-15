@@ -1479,7 +1479,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 								tx1 = maxn - nx;
 								tx2 = maxn - nx;
 							}
-							if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+							if (PARAMETER[P_M_ROTARYMODE].vint == 0 && PARAMETER[P_T_GRID].vint == 1) {
 								glColor4f(0.0, 0.0, 1.0, 0.1);
 								glBegin(GL_LINES);
 								glVertex3f(tx1, ty1, PARAMETER[P_T_DEPTH].vdouble);
@@ -1598,7 +1598,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 								ty1 = maxn - ny;
 								ty2 = maxn - ny;
 							}
-							if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
+							if (PARAMETER[P_M_ROTARYMODE].vint == 0 && PARAMETER[P_T_GRID].vint == 1) {
 								glColor4f(0.0, 0.0, 1.0, 0.1);
 								glBegin(GL_LINES);
 								glVertex3f(tx1, ty1, PARAMETER[P_T_DEPTH].vdouble);
