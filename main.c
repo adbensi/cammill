@@ -45,6 +45,9 @@
 #ifdef USE_VNC
 #include <gtk-vnc.h>
 #endif
+#ifdef USE_WEBKIT
+#include <webkit/webkitwebview.h>
+#endif
 #include <libgen.h>
 #include <math.h>
 #include <stdio.h>
@@ -106,6 +109,9 @@ void ParameterChanged (GtkWidget *widget, gpointer data);
 
 #ifdef USE_VNC
 GtkWidget *VncView;
+#endif
+#ifdef USE_WEBKIT
+GtkWidget *WebKit;
 #endif
 GtkWidget *gCodeViewLabel;
 GtkWidget *gCodeViewLabelLua;
@@ -643,6 +649,7 @@ void view_draw (void) {
 	}
 }
 
+
 void handler_destroy (GtkWidget *widget, gpointer data) {
 	gtk_main_quit();
 }
@@ -1176,6 +1183,20 @@ GdkPixbuf *create_pixbuf(const gchar * filename) {
 	}
 	return pixbuf;
 }
+
+#ifdef USE_WEBKIT
+void handler_webkit_back (GtkWidget *widget, gpointer data) {
+	webkit_web_view_go_back(WEBKIT_WEB_VIEW(WebKit));
+}
+
+void handler_webkit_home (GtkWidget *widget, gpointer data) {
+	webkit_web_view_open(WEBKIT_WEB_VIEW(WebKit), "file:///usr/src/cammill/index.html");
+}
+
+void handler_webkit_forward (GtkWidget *widget, gpointer data) {
+	webkit_web_view_go_forward(WEBKIT_WEB_VIEW(WebKit));
+}
+#endif
 
 void create_gui (void) {
 	GtkWidget *hbox;
@@ -1726,10 +1747,37 @@ void create_gui (void) {
 	}
 #endif
 
+#ifdef USE_WEBKIT
+	GtkWidget *WebKitLabel = gtk_label_new("Documentation");
+	GtkWidget *WebKitBox = gtk_vbox_new(0, 0);
+	GtkWidget *WebKitWindow = gtk_scrolled_window_new(NULL, NULL);
+	WebKit = webkit_web_view_new();
+	GtkWidget *WebKitToolBar = gtk_toolbar_new();
+	gtk_toolbar_set_style(GTK_TOOLBAR(WebKitToolBar), GTK_TOOLBAR_ICONS);
+
+	GtkToolItem *WebKitBack = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
+	gtk_toolbar_insert(GTK_TOOLBAR(WebKitToolBar), WebKitBack, -1);
+	g_signal_connect(G_OBJECT(WebKitBack), "clicked", GTK_SIGNAL_FUNC(handler_webkit_back), NULL);
+
+	GtkToolItem *WebKitHome = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
+	gtk_toolbar_insert(GTK_TOOLBAR(WebKitToolBar), WebKitHome, -1);
+	g_signal_connect(G_OBJECT(WebKitHome), "clicked", GTK_SIGNAL_FUNC(handler_webkit_home), NULL);
+
+	GtkToolItem *WebKitForward = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+	gtk_toolbar_insert(GTK_TOOLBAR(WebKitToolBar), WebKitForward, -1);
+	g_signal_connect(G_OBJECT(WebKitForward), "clicked", GTK_SIGNAL_FUNC(handler_webkit_forward), NULL);
+
+	gtk_box_pack_start(GTK_BOX(WebKitBox), WebKitToolBar, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(WebKitBox), WebKitWindow, 1, 1, 0);
+	gtk_container_add(GTK_CONTAINER(WebKitWindow), WebKit);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(WebKitWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), WebKitBox, WebKitLabel);
+	webkit_web_view_open(WEBKIT_WEB_VIEW(WebKit), "file:///usr/src/cammill/index.html");
+#endif
+
 	hbox = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(hbox), NbBox, TRUE, FALSE);
 	gtk_paned_pack2(GTK_PANED(hbox), NbBox2, TRUE, TRUE);
-
 
 	SizeInfoLabel = gtk_label_new("Width=0mm / Height=0mm");
 	GtkWidget *SizeInfo = gtk_event_box_new();
