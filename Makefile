@@ -16,11 +16,11 @@ CFLAGS+="-DUSE_POSTCAM"
 
 all: cammill
 
-cammill: main.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
-	clang -ggdb -Wall -O3 -o cammill main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+cammill: main.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
+	clang -ggdb -Wall -O3 -o cammill main.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
 
 gprof:
-	gcc -pg -ggdb -Wall -O3 -o cammill main.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
+	gcc -pg -ggdb -Wall -O3 -o cammill main.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} ${CFLAGS}
 	@echo "./cammill"
 	@echo "gprof cammill gmon.out"
 
