@@ -1,5 +1,6 @@
 
 #libwebkitgtk-dev
+#msgfmt de.po -o intl/de_DE.UTF-8/LC_MESSAGES/cammill.mo
 
 HERSHEY_FONTS_DIR = ./
 INCLUDES = -I./

@@ -55,3 +55,376 @@ msgstr "Objekte"
 #: main.c:1346 main.c:1368
 msgid "Misc"
 msgstr "Sonstiges"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "view-zoom"
+msgstr "View-Zoom"
+
+msgid "Helplines"
+msgstr "Hilfslinien"
+
+msgid "show helplines"
+msgstr "Hilfslinien zeigen"
+
+msgid "ShowGrid"
+msgstr "Raster anzeigen"
+
+msgid "show grid"
+msgstr "Raster anzeigen"
+
+msgid "ShowTool"
+msgstr "Werkzeug anzeigen"
+
+msgid "show tool-diameter"
+msgstr "Werkzeug-Durchmesser anzeigen"
+
+msgid "Textures"
+msgstr "Texturen"
+
+msgid "show textures"
+msgstr "Texturen anzeigen"
+
+msgid "Rotate-X"
+msgstr "Rotieren-X"
+
+msgid "View-Rotate X"
+msgstr "Rotieren-X"
+
+msgid "Rotate-Y"
+msgstr "Rotieren-Y"
+
+msgid "View-Rotate Y"
+msgstr "Rotieren-Y"
+
+msgid "Rotate-Z"
+msgstr "Rotieren-Z"
+
+msgid "View-Rotate Z"
+msgstr "Rotieren-Z"
+
+msgid "Translate-X"
+msgstr "Verschieben-X"
+
+msgid "View-Translate X"
+msgstr "Verschieben-X"
+
+msgid "Translate-Y"
+msgstr "Verschieben-Y"
+
+msgid "View-Translate Y"
+msgstr "Verschieben-Y"
+
+msgid "Grid-Size"
+msgstr "Raster-Größe"
+
+msgid "size of the grid"
+msgstr "Raster-Größe"
+
+msgid "Arrow-Scale"
+msgstr "Pfeil-Skalierung"
+
+msgid "size of arrows"
+msgstr "Pfeil-Skalierung"
+
+msgid "DXF-File"
+msgstr "DXF-Datei"
+
+msgid "dxf-filename"
+msgstr "DXF-Datei"
+
+msgid "Select"
+msgstr "Auswahl"
+
+msgid "selected tool from tooltable"
+msgstr "Werkzeug-Auswahl aus der Werkzeigtabelle"
+
+msgid "Number"
+msgstr "Nummer"
+
+msgid "tool-number"
+msgstr "Werkzeug-Nummer"
+
+msgid "Diameter"
+msgstr "Durchmesser"
+
+msgid "tool-diameter"
+msgstr "Werkzeug-Durchmesser"
+
+msgid "CalcSpeed"
+msgstr "Berechnete Drehzahl"
+
+msgid "calculated spindle-speed"
+msgstr "Berechnete Werkzeugspindel-Drehzahl"
+
+msgid "Speed"
+msgstr "Geschwindigkeit"
+
+msgid "real spindle-speed"
+msgstr "Werkzeugspindel-Drehzahl"
+
+msgid "Flutes"
+msgstr "Schneiden"
+
+msgid "flutes of the tool, to calculate max toolspeed and feedrate"
+msgstr "Schneiden des Werkzeugs"
+
+msgid "Table"
+msgstr "Tabelle"
+
+msgid "the tooltable filename"
+msgstr "Pfad zur Werkzeug-Tabelle"
+
+msgid "MaxFeedRate"
+msgstr "Maximaler Vorschub"
+
+msgid "calculated maximum feedrate"
+msgstr "Maximaler Vorschub / berechnet"
+
+msgid "FeedRate"
+msgstr "Vorschub"
+
+msgid "real feedrate"
+msgstr "Vorschub"
+
+msgid "PlungeRate"
+msgstr "Vertikaler-Vorschub"
+
+msgid "plunge feedrate"
+msgstr "Vertikaler-Vorschub"
+
+msgid "Depth"
+msgstr "Tiefe"
+
+msgid "end depth"
+msgstr "Tiefe"
+
+msgid "Z-Step"
+msgstr "Z-Schritte"
+
+msgid "depth per step"
+msgstr "Z-Schritte pro Durchgang"
+
+msgid "Save-Move"
+msgstr "Sichere-Z-Position"
+
+msgid "save move z-position"
+msgstr "Sichere-Bewegungen"
+
+msgid "Overcut"
+msgstr "Ecken Ausfräsen"
+
+msgid "overcutting endges"
+msgstr "Ecken Ausfräsen"
+
+msgid "Lasermode"
+msgstr "Laser-Modus"
+
+msgid "lasermode, depth=0.0, turn on/off per object"
+msgstr "Laser-Modus"
+
+msgid "Climb"
+msgstr "Climb"
+
+msgid "reverse milling direction / climb milling"
+msgstr "umdrehen der Fräs-Richtung / climb milling"
+
+msgid "NoOffsets"
+msgstr "KeineOffsets"
+
+msgid "without tool-offsets"
+msgstr "ohne Offsets"
+
+msgid "Mill Text"
+msgstr "Texte fräsen"
+
+msgid "mill mtext from dxf-files"
+msgstr "Texte fräsen"
+
+msgid "NC-Debug"
+msgstr "NC-Debug"
+
+msgid "output objects whithout offsets / for debuging"
+msgstr "NC-Debug"
+
+msgid "Use Taps"
+msgstr "Halte-Laschen"
+
+msgid "using holding-tabs"
+msgstr "Halte-Laschen"
+
+msgid "Show Grid"
+msgstr "Raster anzeigen"
+
+msgid "show tab-grid"
+msgstr "Raster anzeigen"
+
+msgid "depth of the holding-tabs"
+msgstr "Tiefe der Halte-Laschen"
+
+msgid "Lenght"
+msgstr "Länge der Halte-Laschen"
+
+msgid "lenght of the holding-tabs"
+msgstr "Tiefe der Halte-Laschen"
+
+msgid "Triangle-Type"
+msgstr "Dreickige Form"
+
+msgid "type of the holding-tabs"
+msgstr "Dreickige Form"
+
+msgid "X-Grid"
+msgstr "X-Raster"
+
+msgid "X-grid of the holding-tabs"
+msgstr "X-Raster"
+
+msgid "Y-Grid"
+msgstr "Y-Raster"
+
+msgid "Y-grid of the holding-tabs"
+msgstr "Y-Raster"
+
+msgid "Fastmove-Speed"
+msgstr ""
+
+msgid "fast-move speed of the maschine, to calculate the milling-time"
+msgstr ""
+
+msgid "Post"
+msgstr ""
+
+msgid "post-processor selection"
+msgstr "Postprozessor-Auswahl"
+
+msgid "Output-File"
+msgstr "Ausgabe-Datei"
+
+msgid "gcode-output filename"
+msgstr "Ausgabe-Datei"
+
+msgid "material selection to calculate feedrate and spindlespeed"
+msgstr "Material-Auswahl"
+
+msgid "Cutting Speed"
+msgstr "Fräs-Geschwindigkeit"
+
+msgid "Feedrate/Flute/<4mm"
+msgstr "Vorschub/Schneide/<4mm"
+
+msgid "Feedrate/Flute/<8mm"
+msgstr "Vorschub/Schneide/<8mm"
+
+msgid "Feedrate/Flute/<12mm"
+msgstr "Vorschub/Schneide/<12mm"
+
+msgid "Texture"
+msgstr "Texturen"
+
+msgid "Post-Command"
+msgstr "Post-Befehl"
+
+msgid "object selection"
+msgstr "Objekt-Auswahl"
+
+msgid "Use"
+msgstr "Nutzen"
+
+msgid "Overwrite"
+msgstr "Überschreiben"
+
+msgid "Offset"
+msgstr "Offset"
+
+msgid "Pocket"
+msgstr "Taschen"
+
+msgid "Laser"
+msgstr "Laser"
+
+msgid "Holding-Tab's"
+msgstr "Halte-Laschen"
+
+msgid "use holding tabs"
+msgstr "Halte-Laschen"
+
+msgid "Order"
+msgstr "Reihenfolge"
+
+msgid "milling order"
+msgstr "Fräs-Reihenfolge"
+
+msgid "Activate"
+msgstr "Aktivieren"
+
+msgid "rotarymode to project 2D on rotating axis"
+msgstr "Ratations-Modus"
+
+msgid "Axis"
+msgstr "Achse"
+
+msgid "axis that used as rotating axis"
+msgstr "Rotations-Achse"
+
+msgid "diameter of the material for the rotary-mode"
+msgstr "Durchmesser des Materials"
+
+msgid "tangencial-knife cutting, depth=0.0"
+msgstr "Tangenzial-Messer"
+
+msgid "axis that used as tangencial axis"
+msgstr "Tangenzial-Achse"
+
+msgid "MaxAngle"
+msgstr "Maximaler Winkel"
+
+msgid "maximum angle before push up the knife"
+msgstr "Maximaler Winkel befor das Messer hochgefahren wird"
+
+msgid "Tolerance"
+msgstr "Tolleranz"
+
+msgid "Tollerance between points to close objects"
+msgstr "Tolleranz zum verbinden von Linien"
+
+msgid "Parameter"
+msgstr "Parameter"
+
+msgid "Tabs or Expander for Parameter"
+msgstr "Parameter-Anzeige (Expander oder TAB's)"
+
+msgid "VNC-Server"
+msgstr "VNC-Server"
+
+msgid "VNC-Server address"
+msgstr "VNC-Server"
+
+msgid "VNC-Port"
+msgstr "VNC-Port"
+
+msgid "VNC-Server port"
+msgstr "VNC-Port"
+
+msgid "On/Off"
+msgstr "An/Aus"
+
+msgid "3D-View"
+msgstr "3D-Ansicht"
+
+msgid "Output"
+msgstr "Ausgabe"
+
+msgid "Output (%s)"
+msgstr "Ausgabe (%s)"
+
+msgid "PostProcessor"
+msgstr "Postprozessor"
+
+msgid "VNC"
+msgstr "VNC"
+
+msgid "Documentation"
+msgstr "Dokumentation"
+

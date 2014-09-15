@@ -73,9 +73,9 @@
 #include <calc.h>
 
 #include <libintl.h>
-#define _(String) gettext (String)
+#define _(String) gettext(String)
 #define gettext_noop(String) String
-#define N_(String) gettext_noop (String)
+#define N_(String) gettext_noop(String)
 
 
 void texture_init (void);
@@ -1414,7 +1414,7 @@ void create_gui (void) {
 	int n = 0;
 	for (n = 0; n < P_LAST; n++) {
 		GtkWidget *Label;
-		GtkTooltips *tooltips = gtk_tooltips_new ();
+		GtkTooltips *tooltips = gtk_tooltips_new();
 		GtkWidget *Box = gtk_hbox_new(0, 0);
 		Label = gtk_label_new(_(PARAMETER[n].name));
 		if (PARAMETER[n].type == T_FLOAT) {
@@ -1454,7 +1454,7 @@ void create_gui (void) {
 		} else if (PARAMETER[n].type == T_BOOL) {
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
-			ParamValue[n] = gtk_check_button_new_with_label("On/Off");
+			ParamValue[n] = gtk_check_button_new_with_label(_("On/Off"));
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_STRING) {
@@ -1478,7 +1478,7 @@ void create_gui (void) {
 		} else {
 			continue;
 		}
-		gtk_tooltips_set_tip(tooltips, Box, PARAMETER[n].help, NULL);
+		gtk_tooltips_set_tip(tooltips, Box, _(PARAMETER[n].help), NULL);
 		if (strcmp(PARAMETER[n].group, "View") == 0) {
 			gtk_box_pack_start(GTK_BOX(ViewBox), Box, 0, 0, 0);
 			PARAMETER[n].l1 = 0;
@@ -1722,20 +1722,20 @@ void create_gui (void) {
 	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook2), GTK_POS_TOP);
 	gtk_table_attach_defaults(GTK_TABLE(NbBox2), notebook2, 0, 1, 0, 1);
 
-	GtkWidget *glCanvasLabel = gtk_label_new("3D-View");
+	GtkWidget *glCanvasLabel = gtk_label_new(_("3D-View"));
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), glCanvas, glCanvasLabel);
 
-	gCodeViewLabel = gtk_label_new("Output");
+	gCodeViewLabel = gtk_label_new(_("Output"));
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidget, gCodeViewLabel);
 	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
 
-	gCodeViewLabelLua = gtk_label_new("PostProcessor");
+	gCodeViewLabelLua = gtk_label_new(_("PostProcessor"));
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidgetLuaBox, gCodeViewLabelLua);
 
 #ifdef USE_VNC
 	if (PARAMETER[P_O_VNCSERVER].vstr[0] != 0) {
 		char port[128];
-		GtkWidget *VncLabel = gtk_label_new("VNC");
+		GtkWidget *VncLabel = gtk_label_new(_("VNC"));
 		VncView = vnc_display_new();
 		GtkWidget *VncWindow = gtk_scrolled_window_new(NULL, NULL);
 		gtk_container_add(GTK_CONTAINER(VncWindow), VncView);
@@ -1747,7 +1747,7 @@ void create_gui (void) {
 #endif
 
 #ifdef USE_WEBKIT
-	GtkWidget *WebKitLabel = gtk_label_new("Documentation");
+	GtkWidget *WebKitLabel = gtk_label_new(_("Documentation"));
 	GtkWidget *WebKitBox = gtk_vbox_new(0, 0);
 	GtkWidget *WebKitWindow = gtk_scrolled_window_new(NULL, NULL);
 	WebKit = webkit_web_view_new();
@@ -1820,7 +1820,6 @@ int main (int argc, char *argv[]) {
 	bindtextdomain("cammill", "intl");
 	textdomain("cammill");
 
-
 	// force dots in printf
 	setlocale(LC_NUMERIC, "C");
 
@@ -1839,7 +1838,7 @@ int main (int argc, char *argv[]) {
 	postcam_plugin = PARAMETER[P_H_POST].vint;
 	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
 	char tmp_str[1024];
-	sprintf(tmp_str, "Output (%s)", output_extension);
+	sprintf(tmp_str, _("Output (%s)"), output_extension);
 	gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
 	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif
