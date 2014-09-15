@@ -15,6 +15,7 @@ typedef struct{
 	int show;
 	int inpreset;
 	char help[512];
+	int readonly;
 	int l1;
 	int l2;
 } PARA;
@@ -72,6 +73,11 @@ enum {
 	P_H_POST,
 	P_MFILE,
 	P_MAT_SELECT,
+	P_MAT_CUTSPEED,
+	P_MAT_FEEDFLUTE4,
+	P_MAT_FEEDFLUTE8,
+	P_MAT_FEEDFLUTE12,
+	P_MAT_TEXTURE,
 	P_POST_CMD,
 	P_O_SELECT,
 	P_O_USE,

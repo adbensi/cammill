@@ -3955,6 +3955,15 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 		myOBJECTS[object_num].tabs = PARAMETER[P_O_TABS].vint;
 	}
 
+	if (n == P_MAT_SELECT) {
+		int mat_num = PARAMETER[P_MAT_SELECT].vint;
+		PARAMETER[P_MAT_CUTSPEED].vint = material_vc[mat_num];
+		PARAMETER[P_MAT_FEEDFLUTE4].vdouble = material_fz[mat_num][0];
+		PARAMETER[P_MAT_FEEDFLUTE8].vdouble = material_fz[mat_num][1];
+		PARAMETER[P_MAT_FEEDFLUTE12].vdouble = material_fz[mat_num][2];
+		strcpy(PARAMETER[P_MAT_TEXTURE].vstr, material_texture[mat_num]);
+	}
+
 	if (n == P_O_TOLERANCE) {
 		loading = 1;
 		init_objects();
@@ -4421,7 +4430,9 @@ int main (int argc, char *argv[]) {
 
 	ParameterUpdate();
 	for (n = 0; n < P_LAST; n++) {
-		if (PARAMETER[n].type == T_FLOAT) {
+		if (PARAMETER[n].readonly == 1) {
+			gtk_widget_set_sensitive(GTK_WIDGET(ParamValue[n]), FALSE);
+		} else if (PARAMETER[n].type == T_FLOAT) {
 			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
 		} else if (PARAMETER[n].type == T_DOUBLE) {
 			gtk_signal_connect(GTK_OBJECT(ParamValue[n]), "changed", GTK_SIGNAL_FUNC(ParameterChanged), (gpointer)n);
@@ -4438,6 +4449,12 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
+	int mat_num = PARAMETER[P_MAT_SELECT].vint;
+	PARAMETER[P_MAT_CUTSPEED].vint = material_vc[mat_num];
+	PARAMETER[P_MAT_FEEDFLUTE4].vdouble = material_fz[mat_num][0];
+	PARAMETER[P_MAT_FEEDFLUTE8].vdouble = material_fz[mat_num][1];
+	PARAMETER[P_MAT_FEEDFLUTE12].vdouble = material_fz[mat_num][2];
+	strcpy(PARAMETER[P_MAT_TEXTURE].vstr, material_texture[mat_num]);
 
 	StatusBar = gtk_statusbar_new();
 
