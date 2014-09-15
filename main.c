@@ -80,31 +80,13 @@ double min_x = 99999.0;
 double min_y = 99999.0;
 double max_x = 0.0;
 double max_y = 0.0;
-int mill_start = 0;
-int mill_start_all = 0;
-double mill_last_x = 0.0;
-double mill_last_y = 0.0;
-double mill_last_z = 0.0;
 double tooltbl_diameters[100];
-char mill_layer[1024];
-int layer_sel = 0;
-int layer_selections[100];
-int layer_force[100];
-double layer_depth[100];
 FILE *fd_out = NULL;
 int object_last = 0;
 int batchmode = 0;
 int save_gcode = 0;
 char tool_descr[100][1024];
 int tools_max = 0;
-int tool_last = 0;
-int LayerMax = 1;
-int material_max = 8;
-char *material_texture[100];
-int material_vc[100];
-float material_fz[100][3];
-char *rotary_axis[3] = {"A", "B", "C"};
-char cline[1024];
 char postcam_plugins[100][1024];
 int postcam_plugin = -1;
 int update_post = 1;
@@ -443,13 +425,13 @@ void mainloop (void) {
 		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
 		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
 	}
-	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)material_vc[PARAMETER[P_MAT_SELECT].vint] * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
+	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)Material[PARAMETER[P_MAT_SELECT].vint].vc * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
 	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][0] * (float)PARAMETER[P_TOOL_W].vint);
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * Material[PARAMETER[P_MAT_SELECT].vint].fz[0] * (float)PARAMETER[P_TOOL_W].vint);
 	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 8.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][1] * (float)PARAMETER[P_TOOL_W].vint);
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * Material[PARAMETER[P_MAT_SELECT].vint].fz[1] * (float)PARAMETER[P_TOOL_W].vint);
 	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 12.0) {
-		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * material_fz[PARAMETER[P_MAT_SELECT].vint][2] * (float)PARAMETER[P_TOOL_W].vint);
+		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * Material[PARAMETER[P_MAT_SELECT].vint].fz[2] * (float)PARAMETER[P_TOOL_W].vint);
 	}
 
 	if (update_post == 1) {
@@ -463,72 +445,7 @@ void mainloop (void) {
 			}
 		}
 
-		// init output
-		mill_start_all = 0;
-		tool_last = -1;
-		mill_distance_xy = 0.0;
-		mill_distance_z = 0.0;
-		move_distance_xy = 0.0;
-		move_distance_z = 0.0;
-		mill_last_x = 0.0;
-		mill_last_y = 0.0;
-		mill_last_z = PARAMETER[P_CUT_SAVE].vdouble;
-		if (gcode_buffer != NULL) {
-			free(gcode_buffer);
-			gcode_buffer = NULL;
-		}
-#ifdef USE_POSTCAM
-		if (postcam_plugin != PARAMETER[P_H_POST].vint) {
-			postcam_exit_lua();
-			strcpy(output_extension, "ngc");
-			strcpy(output_info, "");
-			postcam_init_lua(postcam_plugins[PARAMETER[P_H_POST].vint]);
-			postcam_plugin = PARAMETER[P_H_POST].vint;
-			gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
-			sprintf(tmp_str, "Output (%s)", output_extension);
-			gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
-			postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
-		}
-		postcam_var_push_string("fileName", PARAMETER[P_V_DXF].vstr);
-		postcam_var_push_string("postName", postcam_plugins[PARAMETER[P_H_POST].vint]);
-		postcam_var_push_string("date", "---");
-		postcam_var_push_double("metric", 1.0);
-		postcam_var_push_int("feedRate", PARAMETER[P_M_PLUNGE_SPEED].vint);
-		postcam_var_push_int("spindleSpeed", PARAMETER[P_TOOL_SPEED].vint);
-		postcam_var_push_double("currentX", _X(0.0));
-		postcam_var_push_double("currentY", _Y(0.0));
-		postcam_var_push_double("currentZ", _Z(0.0));
-		postcam_var_push_double("endX", _X(0.0));
-		postcam_var_push_double("endY", _Y(0.0));
-		postcam_var_push_double("endZ", _Z(0.0));
-		postcam_var_push_double("toolOffset", 0.0);
-		postcam_var_push_int("tool", -1);
-		postcam_var_push_int("lastinst", 0);
-	//	SetupShowGcode(fd_out);
-		postcam_call_function("OnInit");
-		if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
-			if (PARAMETER[P_H_ROTARYAXIS].vint == 1) {
-				postcam_var_push_string("axisX", "B");
-			} else {
-				postcam_var_push_string("axisX", "X");
-			}
-			if (PARAMETER[P_H_ROTARYAXIS].vint == 0) {
-				postcam_var_push_string("axisY", "A");
-			} else {
-				postcam_var_push_string("axisY", "Y");
-			}
-		} else {
-			postcam_var_push_string("axisX", "X");
-			postcam_var_push_string("axisY", "Y");
-		}
-		postcam_var_push_string("axisZ", "Z");
-#else
-		append_gcode("G21 (Metric)\n");
-		append_gcode("G40 (No Offsets)\n");
-		append_gcode("G90 (Absolute-Mode)\n");
-		sprintf(cline, "F%i\n", PARAMETER[P_M_FEEDRATE].vint);
-		append_gcode(cline);
-#endif
+		mill_begin();
 
 		// update Object-Data
 		for (object_num = 0; object_num < object_last; object_num++) {
@@ -824,20 +741,18 @@ void mainloop (void) {
 		}
 
 		/* exit output */
-#ifdef USE_POSTCAM
-		postcam_call_function("OnSpindleOff");
-		postcam_call_function("OnFinish");
-		gtk_label_set_text(GTK_LABEL(OutputErrorLabel), output_error);
-#else
-		append_gcode("M05 (Spindle-/Laser-Off)\n");
-		append_gcode("M02 (Programm-End)\n");
-#endif
+
+		mill_end();
 
 		// update GUI
 		GtkTextIter startLua, endLua;
 		GtkTextBuffer *bufferLua;
 		bufferLua = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gCodeViewLua));
 		gtk_text_buffer_get_bounds(bufferLua, &startLua, &endLua);
+
+#ifdef USE_POSTCAM
+		gtk_label_set_text(GTK_LABEL(OutputErrorLabel), output_error);
+#endif
 
 		update_post = 0;
 		GtkTextIter start, end;
@@ -974,7 +889,6 @@ void ArgsRead (int argc, char **argv) {
 //		SetupShowHelp();
 //		exit(1);
 	}
-	mill_layer[0] = 0;
 	PARAMETER[P_V_DXF].vstr[0] = 0;
 	strcpy(PARAMETER[P_MFILE].vstr, "-");
 	for (num = 1; num < argc; num++) {
@@ -1469,11 +1383,11 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 
 	if (n == P_MAT_SELECT) {
 		int mat_num = PARAMETER[P_MAT_SELECT].vint;
-		PARAMETER[P_MAT_CUTSPEED].vint = material_vc[mat_num];
-		PARAMETER[P_MAT_FEEDFLUTE4].vdouble = material_fz[mat_num][0];
-		PARAMETER[P_MAT_FEEDFLUTE8].vdouble = material_fz[mat_num][1];
-		PARAMETER[P_MAT_FEEDFLUTE12].vdouble = material_fz[mat_num][2];
-		strcpy(PARAMETER[P_MAT_TEXTURE].vstr, material_texture[mat_num]);
+		PARAMETER[P_MAT_CUTSPEED].vint = Material[mat_num].vc;
+		PARAMETER[P_MAT_FEEDFLUTE4].vdouble = Material[mat_num].fz[0];
+		PARAMETER[P_MAT_FEEDFLUTE8].vdouble = Material[mat_num].fz[1];
+		PARAMETER[P_MAT_FEEDFLUTE12].vdouble = Material[mat_num].fz[2];
+		strcpy(PARAMETER[P_MAT_TEXTURE].vstr, Material[mat_num].texture);
 	}
 
 	if (n == P_O_TOLERANCE) {
@@ -1945,11 +1859,11 @@ void create_gui (void) {
 	}
 
 	int mat_num = PARAMETER[P_MAT_SELECT].vint;
-	PARAMETER[P_MAT_CUTSPEED].vint = material_vc[mat_num];
-	PARAMETER[P_MAT_FEEDFLUTE4].vdouble = material_fz[mat_num][0];
-	PARAMETER[P_MAT_FEEDFLUTE8].vdouble = material_fz[mat_num][1];
-	PARAMETER[P_MAT_FEEDFLUTE12].vdouble = material_fz[mat_num][2];
-	strcpy(PARAMETER[P_MAT_TEXTURE].vstr, material_texture[mat_num]);
+	PARAMETER[P_MAT_CUTSPEED].vint = Material[mat_num].vc;
+	PARAMETER[P_MAT_FEEDFLUTE4].vdouble = Material[mat_num].fz[0];
+	PARAMETER[P_MAT_FEEDFLUTE8].vdouble = Material[mat_num].fz[1];
+	PARAMETER[P_MAT_FEEDFLUTE12].vdouble = Material[mat_num].fz[2];
+	strcpy(PARAMETER[P_MAT_TEXTURE].vstr, Material[mat_num].texture);
 
 	StatusBar = gtk_statusbar_new();
 
