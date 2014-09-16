@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 #include <pwd.h>
 #include <dxf.h>
 #include <setup.h>
@@ -169,6 +170,7 @@ void SetupSave (void) {
 	int n = 0;
 	struct passwd *pw = getpwuid(getuid());
 	const char *homedir = pw->pw_dir;
+	setlocale(LC_NUMERIC, "C");
 	sprintf(cfgfile, "%s/.cammill.cfg", homedir);
 	cfg_fp = fopen(cfgfile, "w");
 	if (cfg_fp == NULL) {
@@ -200,6 +202,7 @@ void SetupSave (void) {
 void SetupSavePreset (char *cfgfile) {
 	FILE *cfg_fp;
 	int n = 0;
+	setlocale(LC_NUMERIC, "C");
 	cfg_fp = fopen(cfgfile, "w");
 	if (cfg_fp == NULL) {
 		fprintf(stderr, "Can not write Setup: %s\n", cfgfile);
@@ -235,6 +238,7 @@ void SetupLoad (void) {
 	int n = 0;
 	struct passwd *pw = getpwuid(getuid());
 	const char *homedir = pw->pw_dir;
+	setlocale(LC_NUMERIC, "C");
 	sprintf(cfgfile, "%s/.cammill.cfg", homedir);
 	cfg_fp = fopen(cfgfile, "r");
 	if (cfg_fp == NULL) {
@@ -275,6 +279,7 @@ void SetupLoadPreset (char *cfgfile) {
 	char line2[2048];
 	FILE *cfg_fp;
 	int n = 0;
+	setlocale(LC_NUMERIC, "C");
 	cfg_fp = fopen(cfgfile, "r");
 	if (cfg_fp == NULL) {
 		fprintf(stderr, "Can not read Setup: %s\n", cfgfile);
