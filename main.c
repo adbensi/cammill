@@ -1727,14 +1727,14 @@ void create_gui (void) {
 	gtk_table_attach_defaults(GTK_TABLE(NbBox2), notebook2, 0, 1, 0, 1);
 
 	GtkWidget *glCanvasLabel = gtk_label_new(_("3D-View"));
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), glCanvas, glCanvasLabel);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), glCanvas, glCanvasLabel);
 
 	gCodeViewLabel = gtk_label_new(_("Output"));
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidget, gCodeViewLabel);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidget, gCodeViewLabel);
 	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
 
 	gCodeViewLabelLua = gtk_label_new(_("PostProcessor"));
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidgetLuaBox, gCodeViewLabelLua);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), textWidgetLuaBox, gCodeViewLabelLua);
 
 #ifdef USE_VNC
 	if (PARAMETER[P_O_VNCSERVER].vstr[0] != 0) {
@@ -1744,7 +1744,7 @@ void create_gui (void) {
 		GtkWidget *VncWindow = gtk_scrolled_window_new(NULL, NULL);
 		gtk_container_add(GTK_CONTAINER(VncWindow), VncView);
 		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(VncWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-	        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), VncWindow, VncLabel);
+		gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), VncWindow, VncLabel);
 		sprintf(port, "%i", PARAMETER[P_O_VNCPORT].vint);
 		vnc_display_open_host(VNC_DISPLAY(VncView), PARAMETER[P_O_VNCSERVER].vstr, port);
 	}
@@ -1774,9 +1774,16 @@ void create_gui (void) {
 	gtk_box_pack_start(GTK_BOX(WebKitBox), WebKitWindow, 1, 1, 0);
 	gtk_container_add(GTK_CONTAINER(WebKitWindow), WebKit);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(WebKitWindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), WebKitBox, WebKitLabel);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), WebKitBox, WebKitLabel);
 	webkit_web_view_open(WEBKIT_WEB_VIEW(WebKit), "file:///usr/src/cammill/index.html");
 #endif
+
+/*
+	Embedded Programms (-wid)
+	GtkWidget *PlugLabel = gtk_label_new(_("PlugIn"));
+	GtkWidget *sck = gtk_socket_new();
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook2), sck, PlugLabel);
+*/
 
 	hbox = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(hbox), NbBox, TRUE, FALSE);
@@ -1817,6 +1824,12 @@ void create_gui (void) {
 	gtk_container_add (GTK_CONTAINER(window), vbox);
 
 	gtk_widget_show_all(window);
+
+/*
+	Embedded Programms (-wid)
+	GdkNativeWindow nwnd = gtk_socket_get_id(GTK_SOCKET(sck));
+	g_print("%i\n", nwnd);
+*/
 }
 
 int main (int argc, char *argv[]) {
