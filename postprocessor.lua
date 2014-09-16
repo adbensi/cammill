@@ -2,6 +2,7 @@ require("math")
 
 about_text = ""
 
+os.setlocale("C")
 
 ModalTable = {}
 

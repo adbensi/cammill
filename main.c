@@ -1828,6 +1828,9 @@ int main (int argc, char *argv[]) {
 //	SetupShow();
 
 	gtk_init(&argc, &argv);
+
+	setlocale(LC_NUMERIC, "C");
+
 	gtk_gl_init(&argc, &argv);
 	create_gui();
 
@@ -1842,6 +1845,7 @@ int main (int argc, char *argv[]) {
 	gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
 	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif
+
 
 	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
 	gtk_main ();

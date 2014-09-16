@@ -37,6 +37,8 @@
 #else
 #include <malloc.h>
 #endif
+#include <locale.h>
+
 
 
 int block = 0;
@@ -152,6 +154,8 @@ void dxf_read (char *file) {
 	char line2[1024];
 	size_t len = 0;
 	ssize_t read;
+
+	setlocale(LC_NUMERIC, "C");
 
 	line_last = 0;
 	line_n = 1;
