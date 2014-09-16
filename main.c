@@ -1439,7 +1439,7 @@ void create_gui (void) {
 			GtkWidget *Align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 			gtk_container_add(GTK_CONTAINER(Align), Label);
 			GtkAdjustment *Adj = (GtkAdjustment *)gtk_adjustment_new(PARAMETER[n].vdouble, PARAMETER[n].min, PARAMETER[n].max, PARAMETER[n].step, PARAMETER[n].step * 10.0, 0.0);
-			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 3);
+			ParamValue[n] = gtk_spin_button_new(Adj, PARAMETER[n].step, 0);
 			gtk_box_pack_start(GTK_BOX(Box), Align, 1, 1, 0);
 			gtk_box_pack_start(GTK_BOX(Box), ParamValue[n], 0, 0, 0);
 		} else if (PARAMETER[n].type == T_SELECT) {
