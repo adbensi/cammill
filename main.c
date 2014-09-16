@@ -683,7 +683,7 @@ void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
 
 void handler_load_dxf (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Load Drawing",
+	dialog = gtk_file_chooser_dialog_new(_("Load Drawing"),
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -693,19 +693,19 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 
 	GtkFileFilter *ffilter;
 	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, "DXF-Drawings");
+	gtk_file_filter_set_name(ffilter, _("DXF-Drawings"));
 	gtk_file_filter_add_pattern(ffilter, "*.dxf");
 	gtk_file_filter_add_pattern(ffilter, "*.DXF");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
 /*
 	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, "DWG-Drawings");
+	gtk_file_filter_set_name(ffilter, _("DWG-Drawings"));
 	gtk_file_filter_add_pattern(ffilter, "*.dwg");
 	gtk_file_filter_add_pattern(ffilter, "*.DXF");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
 	
 	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, "SVG-Drawings");
+	gtk_file_filter_set_name(ffilter, _("SVG-Drawings"));
 	gtk_file_filter_add_pattern(ffilter, "*.scg");
 	gtk_file_filter_add_pattern(ffilter, "*.SVG");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
@@ -734,7 +734,7 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 
 void handler_load_preset (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Load preset",
+	dialog = gtk_file_chooser_dialog_new ("Load Preset",
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -761,7 +761,7 @@ void handler_load_preset (GtkWidget *widget, gpointer data) {
 
 void handler_save_preset (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Save preset",
+	dialog = gtk_file_chooser_dialog_new ("Save Preset",
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_SAVE,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -814,14 +814,14 @@ void handler_save_lua (GtkWidget *widget, gpointer data) {
 void handler_save_gcode (GtkWidget *widget, gpointer data) {
 	char ext_str[1024];
 	GtkWidget *dialog;
-	sprintf(ext_str, "Save Output (.%s)", output_extension);
+	sprintf(ext_str, "%s (.%s)", _("Save Output"), output_extension);
 	dialog = gtk_file_chooser_dialog_new (ext_str,
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_SAVE,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 	NULL);
-	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (dialog), TRUE);
 
 	GtkFileFilter *ffilter;
 	ffilter = gtk_file_filter_new();
@@ -863,7 +863,7 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 
 void handler_load_tooltable (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog;
-	dialog = gtk_file_chooser_dialog_new ("Load Tooltable",
+	dialog = gtk_file_chooser_dialog_new (_("Load Tooltable"),
 		GTK_WINDOW(window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -873,7 +873,7 @@ void handler_load_tooltable (GtkWidget *widget, gpointer data) {
 
 	GtkFileFilter *ffilter;
 	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, "Tooltable");
+	gtk_file_filter_set_name(ffilter, _("Tooltable"));
 	gtk_file_filter_add_pattern(ffilter, "*.tbl");
 	gtk_file_filter_add_pattern(ffilter, "*.TBL");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
@@ -906,7 +906,7 @@ void handler_about (GtkWidget *widget, gpointer data) {
 	GtkWidget *dialog = gtk_dialog_new();
 	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
-	gtk_window_set_title(GTK_WINDOW(dialog), "About");
+	gtk_window_set_title(GTK_WINDOW(dialog), _("About"));
 	gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_QUIT, 1);
 	GtkWidget *label = gtk_label_new("CAMmill 2D\nCopyright by Oliver Dippel <oliver@multixmedia.org>\nMac-Port by McUles <mcules@fpv-club.de>");
 	gtk_widget_modify_font(label, pango_font_description_from_string("Tahoma 18"));
