@@ -99,8 +99,10 @@ enum {
 	P_H_KNIFEMAXANGLE,
 	P_O_TOLERANCE,
 	P_O_PARAVIEW,
+#ifdef USE_VNC
 	P_O_VNCSERVER,
 	P_O_VNCPORT,
+#endif
 	P_LAST,
 };
 

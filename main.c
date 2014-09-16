@@ -1547,21 +1547,21 @@ void create_gui (void) {
 	loading = 0;
 
 
-	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "None", -1);
-	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Inside", -1);
-	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, "Outside", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, _("None"), -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, _("Inside"), -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_OFFSET], NULL, -1, 0, NULL, 1, _("Outside"), -1);
 
-	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-5 First", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, _("-5 First"), -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-4", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-3", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-2", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "-1", -1);
-	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "Auto", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, _("0 Auto"), -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "1", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "2", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "3", -1);
 	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "4", -1);
-	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, "5 Last", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_ORDER], NULL, -1, 0, NULL, 1, _("5 Last"), -1);
 
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "A", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_ROTARYAXIS], NULL, -1, 0, NULL, 1, "B", -1);
@@ -1571,8 +1571,8 @@ void create_gui (void) {
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "B", -1);
 	gtk_list_store_insert_with_values(ListStore[P_H_KNIFEAXIS], NULL, -1, 0, NULL, 1, "C", -1);
 
-	gtk_list_store_insert_with_values(ListStore[P_O_PARAVIEW], NULL, -1, 0, NULL, 1, "Expander", -1);
-	gtk_list_store_insert_with_values(ListStore[P_O_PARAVIEW], NULL, -1, 0, NULL, 1, "Notebook-Tabs", -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_PARAVIEW], NULL, -1, 0, NULL, 1, _("Expander"), -1);
+	gtk_list_store_insert_with_values(ListStore[P_O_PARAVIEW], NULL, -1, 0, NULL, 1, _("Notebook-Tabs"), -1);
 
 	DIR *dir;
 	n = 0;

@@ -3,64 +3,73 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: cammill\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-15 08:19+0200\n"
-"PO-Revision-Date: 2014-06-15 08:37+0200\n"
+"PO-Revision-Date: 2014-09-16 12:38+0100\n"
 "Last-Translator: Oliver Dippel <o.dippel@gmx.de>\n"
 "Language-Team: German <o.dippel@gmx.de>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit"
+"Content-Transfer-Encoding: 8bit\n"
 
-#: main.c:1337 main.c:1359
+#: main.c:1337
+#: main.c:1359
 msgid "View"
 msgstr "Ansicht"
 
-#: main.c:1338 main.c:1360
+#: main.c:1338
+#: main.c:1360
 msgid "Tool"
 msgstr "Werkzeug"
 
-#: main.c:1339 main.c:1361
+#: main.c:1339
+#: main.c:1361
 msgid "Milling"
 msgstr "Fräsen"
 
-#: main.c:1340 main.c:1362
+#: main.c:1340
+#: main.c:1362
 msgid "Tabs"
 msgstr "Halte-Laschen"
 
-#: main.c:1341 main.c:1363
+#: main.c:1341
+#: main.c:1363
 msgid "Rotary"
 msgstr "Rotation"
 
-#: main.c:1342 main.c:1364
+#: main.c:1342
+#: main.c:1364
 msgid "Tangencial"
 msgstr "Tangenzial"
 
-#: main.c:1343 main.c:1365
+#: main.c:1343
+#: main.c:1365
 msgid "Machine"
 msgstr "Maschine"
 
-#: main.c:1344 main.c:1366
+#: main.c:1344
+#: main.c:1366
 msgid "Material"
 msgstr "Material"
 
-#: main.c:1345 main.c:1367
+#: main.c:1345
+#: main.c:1367
 msgid "Objects"
 msgstr "Objekte"
 
-#: main.c:1346 main.c:1368
+#: main.c:1346
+#: main.c:1368
 msgid "Misc"
 msgstr "Sonstiges"
 
 msgid "Zoom"
-msgstr "Zoom"
+msgstr "Vergrößern"
 
 msgid "view-zoom"
-msgstr "View-Zoom"
+msgstr "Vergrößern der 3D-Ansicht"
 
 msgid "Helplines"
 msgstr "Hilfslinien"
@@ -87,34 +96,34 @@ msgid "show textures"
 msgstr "Texturen anzeigen"
 
 msgid "Rotate-X"
-msgstr "Rotieren-X"
+msgstr "X-Achse drehen"
 
 msgid "View-Rotate X"
-msgstr "Rotieren-X"
+msgstr "X-Achse in der 3D-Ansicht drehen"
 
 msgid "Rotate-Y"
-msgstr "Rotieren-Y"
+msgstr "Y-Achse drehen"
 
 msgid "View-Rotate Y"
-msgstr "Rotieren-Y"
+msgstr "Y-Achse in der 3D-Ansicht drehen"
 
 msgid "Rotate-Z"
-msgstr "Rotieren-Z"
+msgstr "Z-Achse drehen"
 
 msgid "View-Rotate Z"
-msgstr "Rotieren-Z"
+msgstr "Z-Achse in der 3D-Ansicht drehen"
 
 msgid "Translate-X"
-msgstr "Verschieben-X"
+msgstr "X-Achse verschieben"
 
 msgid "View-Translate X"
-msgstr "Verschieben-X"
+msgstr "X-Achse in der 3D-Ansicht verschieben"
 
 msgid "Translate-Y"
-msgstr "Verschieben-Y"
+msgstr "Y-Achse verschieben"
 
 msgid "View-Translate Y"
-msgstr "Verschieben-Y"
+msgstr "Y-Achse in der 3D-Ansicht verschieben"
 
 msgid "Grid-Size"
 msgstr "Raster-Größe"
@@ -168,7 +177,7 @@ msgid "Flutes"
 msgstr "Schneiden"
 
 msgid "flutes of the tool, to calculate max toolspeed and feedrate"
-msgstr "Schneiden des Werkzeugs"
+msgstr "Anzahl Schneiden des Werkzeugs"
 
 msgid "Table"
 msgstr "Tabelle"
@@ -225,40 +234,40 @@ msgid "lasermode, depth=0.0, turn on/off per object"
 msgstr "Laser-Modus"
 
 msgid "Climb"
-msgstr "Climb"
+msgstr "Gleichlauffräsen"
 
 msgid "reverse milling direction / climb milling"
-msgstr "umdrehen der Fräs-Richtung / climb milling"
+msgstr "umdrehen der Fräs-Richtung / Gleichlauffräsen"
 
 msgid "NoOffsets"
-msgstr "KeineOffsets"
+msgstr "Werkzeugkorrektur abschalten"
 
 msgid "without tool-offsets"
-msgstr "ohne Offsets"
+msgstr "ohne Werkzeugkorrektur"
 
 msgid "Mill Text"
 msgstr "Texte fräsen"
 
 msgid "mill mtext from dxf-files"
-msgstr "Texte fräsen"
+msgstr "MTEXT aus DXF fräsen"
 
 msgid "NC-Debug"
 msgstr "NC-Debug"
 
 msgid "output objects whithout offsets / for debuging"
-msgstr "NC-Debug"
+msgstr "Ausgabe der Objekte ohne Werkzeugkorrektur"
 
 msgid "Use Taps"
 msgstr "Halte-Laschen"
 
 msgid "using holding-tabs"
-msgstr "Halte-Laschen"
+msgstr "Halte-Laschen nutzen"
 
 msgid "Show Grid"
 msgstr "Raster anzeigen"
 
 msgid "show tab-grid"
-msgstr "Raster anzeigen"
+msgstr "Halte-Raster anzeigen"
 
 msgid "depth of the holding-tabs"
 msgstr "Tiefe der Halte-Laschen"
@@ -270,31 +279,31 @@ msgid "lenght of the holding-tabs"
 msgstr "Tiefe der Halte-Laschen"
 
 msgid "Triangle-Type"
-msgstr "Dreickige Form"
+msgstr "Dreiecks-Form"
 
 msgid "type of the holding-tabs"
-msgstr "Dreickige Form"
+msgstr "Typ der Haltelaschen"
 
 msgid "X-Grid"
 msgstr "X-Raster"
 
 msgid "X-grid of the holding-tabs"
-msgstr "X-Raster"
+msgstr "X-Raster der Haltelachen"
 
 msgid "Y-Grid"
 msgstr "Y-Raster"
 
 msgid "Y-grid of the holding-tabs"
-msgstr "Y-Raster"
+msgstr "Y-Raster der Haltelachen"
 
 msgid "Fastmove-Speed"
-msgstr ""
+msgstr "Maximale-Geschwindigkeit"
 
 msgid "fast-move speed of the maschine, to calculate the milling-time"
-msgstr ""
+msgstr "Maximale-Geschwindigkeit zum berechnen der mindest Fräs-Dauer"
 
 msgid "Post"
-msgstr ""
+msgstr "Post"
 
 msgid "post-processor selection"
 msgstr "Postprozessor-Auswahl"
@@ -309,16 +318,16 @@ msgid "material selection to calculate feedrate and spindlespeed"
 msgstr "Material-Auswahl"
 
 msgid "Cutting Speed"
-msgstr "Fräs-Geschwindigkeit"
+msgstr "Schnittgeschwindigkeit"
 
 msgid "Feedrate/Flute/<4mm"
-msgstr "Vorschub/Schneide/<4mm"
+msgstr "Schnittgeschwindigkeit/Schneide (<4mm)"
 
 msgid "Feedrate/Flute/<8mm"
-msgstr "Vorschub/Schneide/<8mm"
+msgstr "Schnittgeschwindigkeit/Schneide (<8mm)"
 
 msgid "Feedrate/Flute/<12mm"
-msgstr "Vorschub/Schneide/<12mm"
+msgstr "Schnittgeschwindigkeit/Schneide (<12mm)"
 
 msgid "Texture"
 msgstr "Texturen"
@@ -326,17 +335,21 @@ msgstr "Texturen"
 msgid "Post-Command"
 msgstr "Post-Befehl"
 
+msgid "postcommand to trigger an script after saving the gcode (you can use this to copy the gcode to your cnc-maschine)"
+msgstr "Post-Befehl zum starten eines Befehls nach dem Speichern der Ausgabe-Daten (z.B. zum kopieren der Daten auf eine entfernte CNC-Maschine)"
+
+
 msgid "object selection"
 msgstr "Objekt-Auswahl"
 
 msgid "Use"
-msgstr "Nutzen"
+msgstr "Benutzen"
 
 msgid "Overwrite"
 msgstr "Überschreiben"
 
 msgid "Offset"
-msgstr "Offset"
+msgstr "Werkzeugkorrektur"
 
 msgid "Pocket"
 msgstr "Taschen"
@@ -348,7 +361,7 @@ msgid "Holding-Tab's"
 msgstr "Halte-Laschen"
 
 msgid "use holding tabs"
-msgstr "Halte-Laschen"
+msgstr "Halte-Laschen nutzen"
 
 msgid "Order"
 msgstr "Reihenfolge"
@@ -360,7 +373,7 @@ msgid "Activate"
 msgstr "Aktivieren"
 
 msgid "rotarymode to project 2D on rotating axis"
-msgstr "Ratations-Modus"
+msgstr "Rotations-Modus"
 
 msgid "Axis"
 msgstr "Achse"
@@ -381,7 +394,7 @@ msgid "MaxAngle"
 msgstr "Maximaler Winkel"
 
 msgid "maximum angle before push up the knife"
-msgstr "Maximaler Winkel befor das Messer hochgefahren wird"
+msgstr "Maximaler Winkel bevor das Messer hochgefahren wird"
 
 msgid "Tolerance"
 msgstr "Tolleranz"
@@ -393,7 +406,7 @@ msgid "Parameter"
 msgstr "Parameter"
 
 msgid "Tabs or Expander for Parameter"
-msgstr "Parameter-Anzeige (Expander oder TAB's)"
+msgstr "Parameter-Anzeige (Aufklapp-Menüs oder Register)"
 
 msgid "VNC-Server"
 msgstr "VNC-Server"
@@ -405,7 +418,7 @@ msgid "VNC-Port"
 msgstr "VNC-Port"
 
 msgid "VNC-Server port"
-msgstr "VNC-Port"
+msgstr "VNC-Server Port"
 
 msgid "On/Off"
 msgstr "An/Aus"
@@ -427,4 +440,28 @@ msgstr "VNC"
 
 msgid "Documentation"
 msgstr "Dokumentation"
+
+msgid "-5 First"
+msgstr "-5 Am Anfang"
+
+msgid "0 Auto"
+msgstr "0 Automatisch"
+
+msgid "5 Last"
+msgstr "5 Am Ende"
+
+msgid "None"
+msgstr "Keine Korrektur"
+
+msgid "Inside"
+msgstr "Innenseite"
+
+msgid "Outside"
+msgstr "Außenseite"
+
+msgid "Expander"
+msgstr "Aufklapp-Menüs"
+
+msgid "Notebook-Tabs"
+msgstr "Register"
 
