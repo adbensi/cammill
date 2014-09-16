@@ -1220,42 +1220,46 @@ void create_gui (void) {
 	// top-menu
 	GtkWidget *MenuBar = gtk_menu_bar_new();
 	GtkWidget *MenuItem;
-	GtkWidget *FileMenu = gtk_menu_item_new_with_label("File");
+	GtkWidget *FileMenu = gtk_menu_item_new_with_label(_("File"));
 	GtkWidget *FileMenuList = gtk_menu_new();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(FileMenu), FileMenuList);
 	gtk_menu_bar_append(GTK_MENU_BAR(MenuBar), FileMenu);
 
-		MenuItem = gtk_menu_item_new_with_label("Load DXF");
+		MenuItem = gtk_menu_item_new_with_label(_("Load DXF"));
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
-		MenuItem = gtk_menu_item_new_with_label("Load Preset");
-		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
-		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_preset), NULL);
-
-		MenuItem = gtk_menu_item_new_with_label("Save Output");
+		MenuItem = gtk_menu_item_new_with_label(_("Save Output"));
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 
-		MenuItem = gtk_menu_item_new_with_label("Load Tooltable");
+		MenuItem = gtk_menu_item_new_with_label(_("Load Tooltable"));
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_tooltable), NULL);
 
-		MenuItem = gtk_menu_item_new_with_label("Save Setup");
+		MenuItem = gtk_menu_item_new_with_label(_("Load Preset"));
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_load_preset), NULL);
+
+		MenuItem = gtk_menu_item_new_with_label(_("Save Preset"));
+		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
+		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_preset), NULL);
+
+		MenuItem = gtk_menu_item_new_with_label(_("Save Setup"));
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
 
-		MenuItem = gtk_menu_item_new_with_label("Quit");
+		MenuItem = gtk_menu_item_new_with_label(_("Quit"));
 		gtk_menu_append(GTK_MENU(FileMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_destroy), NULL);
 
 
-	GtkWidget *HelpMenu = gtk_menu_item_new_with_label("Help");
+	GtkWidget *HelpMenu = gtk_menu_item_new_with_label(_("Help"));
 	GtkWidget *HelpMenuList = gtk_menu_new();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(HelpMenu), HelpMenuList);
 	gtk_menu_bar_append(GTK_MENU_BAR(MenuBar), HelpMenu);
 
-		MenuItem = gtk_menu_item_new_with_label("About");
+		MenuItem = gtk_menu_item_new_with_label(_("About"));
 		gtk_menu_append(GTK_MENU(HelpMenuList), MenuItem);
 		gtk_signal_connect(GTK_OBJECT(MenuItem), "activate", GTK_SIGNAL_FUNC(handler_about), NULL);
 
@@ -1264,17 +1268,17 @@ void create_gui (void) {
 	gtk_toolbar_set_style(GTK_TOOLBAR(ToolBar), GTK_TOOLBAR_ICONS);
 
 	GtkToolItem *ToolItemLoadDXF = gtk_tool_button_new_from_stock(GTK_STOCK_OPEN);
-	gtk_tool_item_set_tooltip_text(ToolItemLoadDXF, "Load DXF");
+	gtk_tool_item_set_tooltip_text(ToolItemLoadDXF, _("Load DXF"));
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemLoadDXF, -1);
 	g_signal_connect(G_OBJECT(ToolItemLoadDXF), "clicked", GTK_SIGNAL_FUNC(handler_load_dxf), NULL);
 
 	GtkToolItem *ToolItemSaveGcode = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
-	gtk_tool_item_set_tooltip_text(ToolItemSaveGcode, "Save Output");
+	gtk_tool_item_set_tooltip_text(ToolItemSaveGcode, _("Save Output"));
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveGcode, -1);
 	g_signal_connect(G_OBJECT(ToolItemSaveGcode), "clicked", GTK_SIGNAL_FUNC(handler_save_gcode), NULL);
 
 	GtkToolItem *ToolItemSaveSetup = gtk_tool_button_new_from_stock(GTK_STOCK_PROPERTIES);
-	gtk_tool_item_set_tooltip_text(ToolItemSaveSetup, "Save Setup");
+	gtk_tool_item_set_tooltip_text(ToolItemSaveSetup, _("Save Setup"));
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSaveSetup, -1);
 	g_signal_connect(G_OBJECT(ToolItemSaveSetup), "clicked", GTK_SIGNAL_FUNC(handler_save_setup), NULL);
 
@@ -1282,12 +1286,12 @@ void create_gui (void) {
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSep, -1); 
 
 	GtkToolItem *ToolItemLoadPreset = gtk_tool_button_new_from_stock(GTK_STOCK_OPEN);
-	gtk_tool_item_set_tooltip_text(ToolItemLoadPreset, "Load Preset");
+	gtk_tool_item_set_tooltip_text(ToolItemLoadPreset, _("Load Preset"));
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemLoadPreset, -1);
 	g_signal_connect(G_OBJECT(ToolItemLoadPreset), "clicked", GTK_SIGNAL_FUNC(handler_load_preset), NULL);
 
 	GtkToolItem *ToolItemSavePreset = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
-	gtk_tool_item_set_tooltip_text(ToolItemSavePreset, "Save Preset");
+	gtk_tool_item_set_tooltip_text(ToolItemSavePreset, _("Save Preset"));
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), ToolItemSavePreset, -1);
 	g_signal_connect(G_OBJECT(ToolItemSavePreset), "clicked", GTK_SIGNAL_FUNC(handler_save_preset), NULL);
 
@@ -1828,9 +1832,6 @@ int main (int argc, char *argv[]) {
 //	SetupShow();
 
 	gtk_init(&argc, &argv);
-
-	setlocale(LC_NUMERIC, "C");
-
 	gtk_gl_init(&argc, &argv);
 	create_gui();
 
@@ -1841,7 +1842,7 @@ int main (int argc, char *argv[]) {
 	postcam_plugin = PARAMETER[P_H_POST].vint;
 	gtk_label_set_text(GTK_LABEL(OutputInfoLabel), output_info);
 	char tmp_str[1024];
-	sprintf(tmp_str, _("Output (%s)"), output_extension);
+	sprintf(tmp_str, "%s (%s)", _("Output"), output_extension);
 	gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
 	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif

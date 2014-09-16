@@ -429,9 +429,6 @@ msgstr "3D-Ansicht"
 msgid "Output"
 msgstr "Ausgabe"
 
-msgid "Output (%s)"
-msgstr "Ausgabe (%s)"
-
 msgid "PostProcessor"
 msgstr "Postprozessor"
 
@@ -464,4 +461,35 @@ msgstr "Aufklapp-Menüs"
 
 msgid "Notebook-Tabs"
 msgstr "Register"
+
+msgid "Help"
+msgstr "Hilfe"
+
+msgid "About"
+msgstr "Über CAMmill"
+
+msgid "File"
+msgstr "Datei"
+
+msgid "Load DXF"
+msgstr "DXF-Datei laden"
+
+msgid "Load Preset"
+msgstr "Voreinstellungen laden"
+
+msgid "Save Preset"
+msgstr "Voreinstellungen speichern"
+
+msgid "Save Output"
+msgstr "Ausgaben speichern"
+
+msgid "Load Tooltable"
+msgstr "Werkzeugtabelle laden"
+
+msgid "Save Setup"
+msgstr "Einstellungen speichern"
+
+msgid "Quit"
+msgstr "Beenden"
+
 
