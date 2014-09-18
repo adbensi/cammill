@@ -981,6 +981,8 @@ void mill_begin (void) {
 	postcam_var_push_double("toolOffset", 0.0);
 	postcam_var_push_int("tool", -1);
 	postcam_var_push_int("lastinst", 0);
+	postcam_var_push_int("velocityMode", PARAMETER[P_M_VELOCITYMODE].vint);
+	postcam_var_push_double("blendingTolerance", PARAMETER[P_M_BLENDINGTOLERANCE].vdouble);
 //	SetupShowGcode(fd_out);
 	postcam_call_function("OnInit");
 	if (PARAMETER[P_M_ROTARYMODE].vint == 1) {
