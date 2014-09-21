@@ -2827,79 +2827,50 @@ void init_objects (void) {
 	glEndList();
 }
 
+
+
+char *csv_getfield (char *line, int num, char *val) {
+	char *p;
+	int n = 0;
+	int field = 0;
+	char prevc = ';';
+	strcpy(val, line);
+	for (p = line; *p != '\n'; p++) {  
+		if (*p == prevc) {
+			val[n] = 0;
+			if (field == num) {
+				return val;
+			}
+			n = 0;
+			strcpy(val, p + 1);
+			field++;
+		} else {
+			n++;
+		}
+	}
+	return 0;
+}
+
 void MaterialLoadList (void) {
-/*
-    Stahl: 40 – 120 m/min
-    Aluminium: 100 – 500 m/min
-    Kupfer, Messing und Bronze: 100 – 200 m/min
-    Kunststoffe: 50 – 150 m/min
-    Holz: Bis zu 3000 m/min
-*/
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Langsp.)", -1);
-	Material[0].vc = 200;
-	Material[0].fz[0] = 0.04;
-	Material[0].fz[1] = 0.05;
-	Material[0].fz[2] = 0.10;
-	Material[0].texture = "textures/metal.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Aluminium(Kurzsp.)", -1);
-	Material[1].vc = 150;
-	Material[1].fz[0] = 0.04;
-	Material[1].fz[1] = 0.05;
-	Material[1].fz[2] = 0.10;
-	Material[1].texture = "textures/metal.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "NE-Metalle", -1);
-	Material[2].vc = 150;
-	Material[2].fz[0] = 0.04;
-	Material[2].fz[1] = 0.05;
-	Material[2].fz[2] = 0.10;
-	Material[2].texture = "textures/metal.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "VA-Stahl", -1);
-	Material[3].vc = 100;
-	Material[3].fz[0] = 0.05;
-	Material[3].fz[1] = 0.06;
-	Material[3].fz[2] = 0.07;
-	Material[3].texture = "textures/metal.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Thermoplaste", -1);
-	Material[4].vc = 100;
-	Material[4].fz[0] = 0.0;
-	Material[4].fz[1] = 0.0;
-	Material[4].fz[2] = 0.0;
-	Material[4].texture = "textures/plast.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Duroplaste", -1);
-	Material[5].vc = 125;
-	Material[5].fz[0] = 0.04;
-	Material[5].fz[1] = 0.08;
-	Material[5].fz[2] = 0.10;
-	Material[5].texture = "textures/plast.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "GFK", -1);
-	Material[6].vc = 125;
-	Material[6].fz[0] = 0.04;
-	Material[6].fz[1] = 0.08;
-	Material[6].fz[2] = 0.10;
-	Material[6].texture = "textures/gfk.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "CFK", -1);
-	Material[7].vc = 125;
-	Material[7].fz[0] = 0.04;
-	Material[7].fz[1] = 0.08;
-	Material[7].fz[2] = 0.10;
-	Material[7].texture = "textures/cfk.bmp";
-
-	gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, "Holz", -1);
-	Material[8].vc = 2000;
-	Material[8].fz[0] = 0.04;
-	Material[8].fz[1] = 0.08;
-	Material[8].fz[2] = 0.10;
-	Material[8].texture = "textures/wood.bmp";
-
-	MaterialMax = 9;
+	FILE *stream = fopen("material.tbl", "r");
+	MaterialMax = 0;
+	if (stream != NULL) {
+		char line[1024];
+		char val_str[1024];
+		while (fgets(line, 1024, stream)) {
+			if (line[0] != '#' && strstr(line, ";") >= 0) {
+				gtk_list_store_insert_with_values(ListStore[P_MAT_SELECT], NULL, -1, 0, NULL, 1, csv_getfield(line, 0, val_str), -1);
+				Material[MaterialMax].vc = atoi(csv_getfield(line, 1, val_str));
+				Material[MaterialMax].fz[0] = atof(csv_getfield(line, 2, val_str));
+				Material[MaterialMax].fz[1] = atof(csv_getfield(line, 3, val_str));
+				Material[MaterialMax].fz[2] = atof(csv_getfield(line, 4, val_str));
+				Material[MaterialMax].texture = malloc(129);
+				strcpy(Material[MaterialMax].texture, csv_getfield(line, 5, val_str));
+				MaterialMax++;
+			}
+		}
+		fclose(stream);
+	}
 }
 
 void DrawCheckSize (void) {
