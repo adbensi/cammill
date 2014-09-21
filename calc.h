@@ -63,4 +63,6 @@ void init_objects (void);
 void MaterialLoadList (void);
 void DrawCheckSize (void);
 void DrawSetZero (void);
+void remove_double_lines (void);
+
 

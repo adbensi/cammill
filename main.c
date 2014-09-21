@@ -519,7 +519,6 @@ void mainloop (void) {
 		save_gcode = 0;
 	}
 
-
 	if (batchmode == 1) {
 		onExit();
 		exit(0);
@@ -546,6 +545,7 @@ void mainloop (void) {
 			glTranslatef(0.0, -size_y / 2.0, 0.0);
 		}
 		glCallList(1);
+		glCallList(2);
 		glPopMatrix();
 	}
 	return;
@@ -676,8 +676,6 @@ void handler_rotate_drawing (GtkWidget *widget, gpointer data) {
 		}
 	}
 	init_objects();
-	DrawCheckSize();
-	DrawSetZero();
 	loading = 0;
 }
 
@@ -723,8 +721,6 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		loading = 1;
 		dxf_read(PARAMETER[P_V_DXF].vstr);
 		init_objects();
-		DrawCheckSize();
-		DrawSetZero();
 		loading = 0;
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf...done"), "reading dxf...done");
 		g_free(filename);
@@ -1109,8 +1105,6 @@ void ParameterChanged (GtkWidget *widget, gpointer data) {
 	if (n == P_O_TOLERANCE) {
 		loading = 1;
 		init_objects();
-		DrawCheckSize();
-		DrawSetZero();
 		loading = 0;
 	}
 	if (n != P_O_PARAVIEW && strncmp(PARAMETER[n].name, "Translate", 9) != 0 && strncmp(PARAMETER[n].name, "Rotate", 6) != 0 && strncmp(PARAMETER[n].name, "Zoom", 4) != 0) {
@@ -1545,8 +1539,6 @@ void create_gui (void) {
 		dxf_read(PARAMETER[P_V_DXF].vstr);
 	}
 	init_objects();
-	DrawCheckSize();
-	DrawSetZero();
 //	LayerLoadList();
 	loading = 0;
 

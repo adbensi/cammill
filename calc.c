@@ -658,46 +658,6 @@ int point_in_object (int object_num, int object_ex, double testx, double testy) 
 	return result;
 }
 
-int point_in_object_old (int object_num, int object_ex, double testx, double testy) {
-	int num = 0;
-	int c = 0;
-	int onum = object_num;
-	testx += 0.001;
-	testy += 0.002;
-
-	if (object_num == -1) {
-		for (onum = 0; onum < object_last; onum++) {
-			if (onum == object_ex) {
-				continue;
-			}
-			if (myOBJECTS[onum].closed == 0) {
-				continue;
-			}
-			for (num = 0; num < line_last; num++) {
-				if (myOBJECTS[onum].line[num] != 0) {
-					int lnum = myOBJECTS[onum].line[num];
-					if (((myLINES[lnum].y2 >= testy) != (myLINES[lnum].y1 >= testy)) && (testx <= (myLINES[lnum].x1 - myLINES[lnum].x2) * (testy - myLINES[lnum].y2) / (myLINES[lnum].y1 - myLINES[lnum].y2) + myLINES[lnum].x2)) {
-						c = !c;
-					}
-				}
-			}
-		}
-	} else {
-		if (myOBJECTS[onum].closed == 0) {
-			return 0;
-		}
-		for (num = 0; num < line_last; num++) {
-			if (myOBJECTS[onum].line[num] != 0) {
-				int lnum = myOBJECTS[onum].line[num];
-				if (((myLINES[lnum].y2 >= testy) != (myLINES[lnum].y1 >= testy)) && (testx <= (myLINES[lnum].x1 - myLINES[lnum].x2) * (testy - myLINES[lnum].y2) / (myLINES[lnum].y1 - myLINES[lnum].y2) + myLINES[lnum].x2)) {
-					c = !c;
-				}
-			}
-		}
-	}
-	return c;
-}
-
 void point_rotate (float y, float depth, float *ny, float *nz) {
 	float radius = (PARAMETER[P_MAT_DIAMETER].vdouble / 2.0) + depth;
 	float an = y / (PARAMETER[P_MAT_DIAMETER].vdouble * PI) * 360;
@@ -1384,7 +1344,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 			double i_y = 0.0;
 			int num = 0;
 			int numr = 0;
-			if (myOBJECTS[object_num].tabs == 1) {
+			if (myOBJECTS[object_num].tabs == 1 && myOBJECTS[object_num].depth <= PARAMETER[P_M_DEPTH].vdouble) {
 				if (PARAMETER[P_T_XGRID].vdouble == 0.0 && PARAMETER[P_T_YGRID].vdouble == 0.0) {
 					int line_flag[MAX_LINES];
 					for (num = 0; num < line_last; num++) {
@@ -2645,6 +2605,9 @@ void init_objects (void) {
 	int num5b = 0;
 	int object_num = 0;
 
+	glDeleteLists(2, 2);
+	glNewList(2, GL_COMPILE);
+
 	/* init objects */
 	if (myOBJECTS != NULL) {
 		free(myOBJECTS);
@@ -2673,6 +2636,12 @@ void init_objects (void) {
 			myOBJECTS[object_num].line[num2] = 0;
 		}
 	}
+
+	DrawCheckSize();
+	DrawSetZero();
+
+	/* remove erros (like double lines) */
+	remove_double_lines();
 
 	/* first find objects on open lines */
 	object_num = 0;
@@ -2839,6 +2808,7 @@ void init_objects (void) {
 		}
 	}
 	update_post = 1;
+	glEndList();
 }
 
 void MaterialLoadList (void) {
@@ -2980,3 +2950,47 @@ void DrawSetZero (void) {
 	}
 }
 
+void remove_double_lines (void) {
+	int num = 0;
+	int num2 = 0;
+//	glLineWidth(10);
+//	glColor4f(1.0, 0.0, 0.0, 1.0);
+//	glBegin(GL_LINES);
+	for (num = 0; num < line_last; num++) {
+		if (myLINES[num].used == 1) {
+			for (num2 = 0; num2 < line_last; num2++) {
+				if (num != num2 && strcmp(myLINES[num].layer, myLINES[num2].layer) == 0) {
+					if (myLINES[num2].used == 1 && ((myLINES[num2].type == TYPE_LINE && myLINES[num].type == TYPE_LINE) || (myLINES[num2].type == TYPE_ELLIPSE && myLINES[num].type == TYPE_ELLIPSE))) {
+						if (myLINES[num].x1 == myLINES[num2].x1 && myLINES[num].y1 == myLINES[num2].y1 && myLINES[num].x2 == myLINES[num2].x2 && myLINES[num].y2 == myLINES[num2].y2) {
+//printf("remove double line: %i\n", num2);
+//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+							myLINES[num2].used = 0;
+						} else if (myLINES[num].x1 == myLINES[num2].x2 && myLINES[num].y1 == myLINES[num2].y2 && myLINES[num].x2 == myLINES[num2].x1 && myLINES[num].y2 == myLINES[num2].y1) {
+//printf("remove double line: %i\n", num2);
+//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+							myLINES[num2].used = 0;
+						}
+					} else if (myLINES[num2].used == 1 && ((myLINES[num2].type == TYPE_ARC && myLINES[num].type == TYPE_ARC) || (myLINES[num2].type == TYPE_CIRCLE && myLINES[num].type == TYPE_CIRCLE))) {
+						if (myLINES[num].cx == myLINES[num2].cx && myLINES[num].cy == myLINES[num2].cy) {
+							if (myLINES[num].x1 == myLINES[num2].x1 && myLINES[num].y1 == myLINES[num2].y1 && myLINES[num].x2 == myLINES[num2].x2 && myLINES[num].y2 == myLINES[num2].y2) {
+//printf("remove double arc: %i\n", num2);
+//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+								myLINES[num2].used = 0;
+							} else if (myLINES[num].x1 == myLINES[num2].x2 && myLINES[num].y1 == myLINES[num2].y2 && myLINES[num].x2 == myLINES[num2].x1 && myLINES[num].y2 == myLINES[num2].y1) {
+//printf("remove double arc: %i\n", num2);
+//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+								myLINES[num2].used = 0;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+//	glEnd();
+//	glLineWidth(1);
+}
