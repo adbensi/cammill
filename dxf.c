@@ -100,6 +100,7 @@ void add_line (int type, char *layer, double x1, double y1, double x2, double y2
 		myLINES[line_n].cx = cx;
 		myLINES[line_n].cy = cy;
 		myLINES[line_n].opt = opt;
+		myLINES[line_n].marked = 0;
 		myLINES[line_n].in_object = -1;
 		strcpy(myLINES[line_n].block, block_name);
 		myLINES[line_n].blockdata = block;

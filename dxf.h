@@ -79,6 +79,7 @@ typedef struct{
 	int in_object;
 	int blockdata;
 	int istab;
+	int marked;
 } _LINE;
 
 extern char LayerNames[MAX_OBJECTS][256];

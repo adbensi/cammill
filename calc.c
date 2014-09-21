@@ -1310,6 +1310,18 @@ void mill_objects (void) {
 			}
 		}
 	}
+
+	// show marked lines
+	int lnum = 0;
+	for (lnum = 0; lnum < line_last; lnum++) {
+		if (myLINES[lnum].marked == 1) {
+			glLineWidth(20);
+			glColor4f(1.0, 0.0, 0.0, 1.0);
+			draw_oline((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.1);
+			glLineWidth(1);
+		}
+	}
+
 }
 
 void mill_end (void) {
@@ -1992,7 +2004,10 @@ void object_draw (FILE *fd_out, int object_num) {
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			int lnum = myOBJECTS[object_num].line[num];
-			if (PARAMETER[P_O_SELECT].vint == object_num) {
+			if (myLINES[lnum].marked == 1) {
+				glLineWidth(20);
+				glColor4f(1.0, 0.0, 0.0, 1.0);
+			} else if (PARAMETER[P_O_SELECT].vint == object_num) {
 				glColor4f(1.0, 0.0, 0.0, 1.0);
 			} else {
 				glColor4f(0.0, 1.0, 0.0, 1.0);
@@ -2001,6 +2016,7 @@ void object_draw (FILE *fd_out, int object_num) {
 			if (myOBJECTS[object_num].closed == 0 && (myLINES[lnum].type != TYPE_MTEXT || PARAMETER[P_M_TEXT].vint == 1)) {
 				draw_line2((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, 0.01, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.01, (PARAMETER[P_TOOL_DIAMETER].vdouble));
 			}
+			glLineWidth(1);
 			if (PARAMETER[P_M_NCDEBUG].vint == 1) {
 				if (num == 0) {
 					if (lasermode == 1) {
@@ -2482,7 +2498,7 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 //	}
 	for (num5 = 0; num5 < object_last; num5++) {
 		if (myOBJECTS[num5].line[0] == 0) {
-			break;
+			continue;
 		}
 		for (num4 = 0; num4 < line_last; num4++) {
 			if (myOBJECTS[num5].line[num4] == num) {
@@ -2490,6 +2506,10 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 				return 2;
 			}
 		}
+	}
+	if (depth > line_last) {
+		printf("###### ERROR / CAN'T FIND NEXT LINE ########\n");
+		return 0;
 	}
 	for (num4 = 0; num4 < line_last; num4++) {
 		if (myOBJECTS[object_num].line[num4] == 0) {
@@ -2500,7 +2520,6 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 		}
 	}
 	int num2 = 0;
-
 	fnum = 0;
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
@@ -2950,6 +2969,42 @@ void DrawSetZero (void) {
 	}
 }
 
+#define DEFFLEQEPSILON 0.001
+#define FLOAT_EQE(x, v, e) ((((v) - (e)) < (x)) && ((x) < ((v) + (e))))
+
+int Within (float fl, float flLow, float flHi){
+	if ((fl > flLow) && (fl < flHi)) {
+		return 1;
+	}
+	if (FLOAT_EQE(fl, flLow, DEFFLEQEPSILON) || FLOAT_EQE(fl, flHi, DEFFLEQEPSILON)){
+		return 1;
+	}
+	return 0;
+}
+
+int PointOnLine (float ptL1_X, float ptL1_Y, float ptL2_X, float ptL2_Y, float ptTest_X, float ptTest_Y) {
+	int bTestX = 1;
+	const float flX = ptL2_X - ptL1_X;
+	if (FLOAT_EQE(flX, 0.0f, DEFFLEQEPSILON)){
+		if(! FLOAT_EQE(ptTest_X, ptL1_X, DEFFLEQEPSILON)) {
+			return 0;
+		}
+		bTestX = 0;
+	}
+	int bTestY = 1;
+	const float flY = ptL2_Y - ptL1_Y;
+	if (FLOAT_EQE(flY, 0.0f, DEFFLEQEPSILON)){
+		if (! FLOAT_EQE(ptTest_Y, ptL1_Y, DEFFLEQEPSILON)) {
+			return 0;
+		}
+		bTestY = 0;
+	}
+	const float pX = bTestX ? ((ptTest_X - ptL1_X) / flX) : 0.5f;
+	const float pY = bTestY ? ((ptTest_Y - ptL1_Y) / flY) : 0.5f;
+	return Within(pX, 0.0f, 1.0f) && Within(pY, 0.0f, 1.0f);
+}
+
+
 void remove_double_lines (void) {
 	int num = 0;
 	int num2 = 0;
@@ -2962,28 +3017,43 @@ void remove_double_lines (void) {
 				if (num != num2 && strcmp(myLINES[num].layer, myLINES[num2].layer) == 0) {
 					if (myLINES[num2].used == 1 && ((myLINES[num2].type == TYPE_LINE && myLINES[num].type == TYPE_LINE) || (myLINES[num2].type == TYPE_ELLIPSE && myLINES[num].type == TYPE_ELLIPSE))) {
 						if (myLINES[num].x1 == myLINES[num2].x1 && myLINES[num].y1 == myLINES[num2].y1 && myLINES[num].x2 == myLINES[num2].x2 && myLINES[num].y2 == myLINES[num2].y2) {
-//printf("remove double line: %i\n", num2);
-//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
-//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+//							printf("remove double line: %i\n", num2);
+//							glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//							glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
 							myLINES[num2].used = 0;
+							myLINES[num].marked = 1;
 						} else if (myLINES[num].x1 == myLINES[num2].x2 && myLINES[num].y1 == myLINES[num2].y2 && myLINES[num].x2 == myLINES[num2].x1 && myLINES[num].y2 == myLINES[num2].y1) {
-//printf("remove double line: %i\n", num2);
-//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
-//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+//							printf("remove double line: %i\n", num2);
+//							glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//							glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
 							myLINES[num2].used = 0;
+							myLINES[num].marked = 1;
+						} else if (PointOnLine(myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, myLINES[num2].x1, myLINES[num2].y1) == 1 && PointOnLine(myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, myLINES[num2].x2, myLINES[num2].y2) == 1) {
+							float len1 = get_len(myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2);
+							float len2 = get_len(myLINES[num2].x1, myLINES[num2].y1, myLINES[num2].x2, myLINES[num2].y2);
+							printf("found line on line: %i(%f) <-> %i(%f)\n", num, len1, num2, len2);
+							if (len1 > len2) {
+								myLINES[num2].marked = 1;
+								myLINES[num2].used = 0;
+							} else {
+								myLINES[num].marked = 1;
+								myLINES[num].used = 0;
+							}
 						}
 					} else if (myLINES[num2].used == 1 && ((myLINES[num2].type == TYPE_ARC && myLINES[num].type == TYPE_ARC) || (myLINES[num2].type == TYPE_CIRCLE && myLINES[num].type == TYPE_CIRCLE))) {
 						if (myLINES[num].cx == myLINES[num2].cx && myLINES[num].cy == myLINES[num2].cy) {
 							if (myLINES[num].x1 == myLINES[num2].x1 && myLINES[num].y1 == myLINES[num2].y1 && myLINES[num].x2 == myLINES[num2].x2 && myLINES[num].y2 == myLINES[num2].y2) {
-//printf("remove double arc: %i\n", num2);
-//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
-//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+//								printf("remove double arc: %i\n", num2);
+//								glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//								glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
 								myLINES[num2].used = 0;
+								myLINES[num].marked = 1;
 							} else if (myLINES[num].x1 == myLINES[num2].x2 && myLINES[num].y1 == myLINES[num2].y2 && myLINES[num].x2 == myLINES[num2].x1 && myLINES[num].y2 == myLINES[num2].y1) {
-//printf("remove double arc: %i\n", num2);
-//glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
-//glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
+//								printf("remove double arc: %i\n", num2);
+//								glVertex3f(myLINES[num2].x1, myLINES[num2].y1, 0.0);
+//								glVertex3f(myLINES[num2].x2, myLINES[num2].y2, 0.0);
 								myLINES[num2].used = 0;
+								myLINES[num].marked = 1;
 							}
 						}
 					}
@@ -2994,3 +3064,5 @@ void remove_double_lines (void) {
 //	glEnd();
 //	glLineWidth(1);
 }
+
+
