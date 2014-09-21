@@ -488,3 +488,22 @@ msgstr "DWG-Zeichnungen"
 
 msgid "SVG-Drawings"
 msgstr "SVG-Zeichnungen"
+
+msgid "On Open"
+msgstr "An Offenen"
+
+msgid "holding-tabs on open contours"
+msgstr "Haltelaschen an offenen Konturen setzen"
+
+msgid "On Inside"
+msgstr "An Innenkanten"
+
+msgid "holding-tabs on inside-contours"
+msgstr "Haltelaschen an Innenkanten setzen"
+
+msgid "On Outside"
+msgstr "An Außenkanten"
+
+msgid "holding-tabs on outside-contours"
+msgstr "Haltelaschen an Außenkanten setzen"
+

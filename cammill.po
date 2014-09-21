@@ -1,7 +1,7 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# German-Translation
+# Copyright (C) 2014
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Oliver Dippel <oliver@multixmedia.org>, 2014.
 #
 msgid ""
 msgstr ""
@@ -15,53 +15,33 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: main.c:1337
-#: main.c:1359
 msgid "View"
 msgstr "Ansicht"
 
-#: main.c:1338
-#: main.c:1360
 msgid "Tool"
 msgstr "Werkzeug"
 
-#: main.c:1339
-#: main.c:1361
 msgid "Milling"
 msgstr "Fräsen"
 
-#: main.c:1340
-#: main.c:1362
 msgid "Tabs"
 msgstr "Halte-Laschen"
 
-#: main.c:1341
-#: main.c:1363
 msgid "Rotary"
 msgstr "Rotation"
 
-#: main.c:1342
-#: main.c:1364
 msgid "Tangencial"
 msgstr "Tangenzial"
 
-#: main.c:1343
-#: main.c:1365
 msgid "Machine"
 msgstr "Maschine"
 
-#: main.c:1344
-#: main.c:1366
 msgid "Material"
 msgstr "Material"
 
-#: main.c:1345
-#: main.c:1367
 msgid "Objects"
 msgstr "Objekte"
 
-#: main.c:1346
-#: main.c:1368
 msgid "Misc"
 msgstr "Sonstiges"
 
@@ -338,7 +318,6 @@ msgstr "Post-Befehl"
 msgid "postcommand to trigger an script after saving the gcode (you can use this to copy the gcode to your cnc-maschine)"
 msgstr "Post-Befehl zum starten eines Befehls nach dem Speichern der Ausgabe-Daten (z.B. zum kopieren der Daten auf eine entfernte CNC-Maschine)"
 
-
 msgid "object selection"
 msgstr "Objekt-Auswahl"
 
@@ -429,9 +408,6 @@ msgstr "3D-Ansicht"
 msgid "Output"
 msgstr "Ausgabe"
 
-msgid "Output (%s)"
-msgstr "Ausgabe (%s)"
-
 msgid "PostProcessor"
 msgstr "Postprozessor"
 
@@ -464,4 +440,70 @@ msgstr "Aufklapp-Menüs"
 
 msgid "Notebook-Tabs"
 msgstr "Register"
+
+msgid "Help"
+msgstr "Hilfe"
+
+msgid "About"
+msgstr "Über CAMmill"
+
+msgid "File"
+msgstr "Datei"
+
+msgid "Load DXF"
+msgstr "DXF-Datei laden"
+
+msgid "Load Preset"
+msgstr "Voreinstellungen laden"
+
+msgid "Save Preset"
+msgstr "Voreinstellungen speichern"
+
+msgid "Save Output"
+msgstr "Ausgaben speichern"
+
+msgid "Load Tooltable"
+msgstr "Werkzeugtabelle laden"
+
+msgid "Save Setup"
+msgstr "Einstellungen speichern"
+
+msgid "Quit"
+msgstr "Beenden"
+
+msgid "Preset"
+msgstr "Voreinstellung"
+
+msgid "Tooltable"
+msgstr "Werkzeugtabelle"
+
+msgid "Load Drawing"
+msgstr "Zeichnung laden"
+
+msgid "DXF-Drawings"
+msgstr "DXF-Zeichnungen"
+
+msgid "DWG-Drawings"
+msgstr "DWG-Zeichnungen"
+
+msgid "SVG-Drawings"
+msgstr "SVG-Zeichnungen"
+
+msgid "On Open"
+msgstr "An Offenen"
+
+msgid "holding-tabs on open contours"
+msgstr "Haltelaschen an offenen Konturen setzen"
+
+msgid "On Inside"
+msgstr "An Innenkanten"
+
+msgid "holding-tabs on inside-contours"
+msgstr "Haltelaschen an Innenkanten setzen"
+
+msgid "On Outside"
+msgstr "An Außenkanten"
+
+msgid "holding-tabs on outside-contours"
+msgstr "Haltelaschen an Außenkanten setzen"
 
