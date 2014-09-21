@@ -131,6 +131,20 @@ GtkWidget *ParamButton[P_LAST];
 GtkWidget *glCanvas;
 GtkWidget *gCodeView;
 GtkWidget *gCodeViewLua;
+GtkWidget *hbox;
+GtkWidget *ViewExpander;
+GtkWidget *ToolExpander;
+GtkWidget *MillingExpander;
+GtkWidget *TabsExpander;
+GtkWidget *RotaryExpander;
+GtkWidget *TangencialExpander;
+GtkWidget *MachineExpander;
+GtkWidget *MaterialExpander;
+GtkWidget *ObjectsExpander;
+GtkWidget *MiscExpander;
+int PannedStat;
+int ExpanderStat[20];
+
 int width = 800;
 int height = 600;
 int need_init = 1;
@@ -656,6 +670,9 @@ void view_draw (void) {
 
 
 void handler_destroy (GtkWidget *widget, gpointer data) {
+	if (PARAMETER[P_O_AUTOSAVE].vint == 1) {
+		SetupSave();
+	}
 	gtk_main_quit();
 }
 
@@ -725,7 +742,7 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf...done"), "reading dxf...done");
 		g_free(filename);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 void handler_load_preset (GtkWidget *widget, gpointer data) {
@@ -752,7 +769,7 @@ void handler_load_preset (GtkWidget *widget, gpointer data) {
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading preset...done"), "reading preset...done");
 		g_free(filename);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 void handler_save_preset (GtkWidget *widget, gpointer data) {
@@ -780,7 +797,7 @@ void handler_save_preset (GtkWidget *widget, gpointer data) {
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving Preset...done"), "saving Preset...done");
 		g_free(filename);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 char *suffix_remove (char *mystr) {
@@ -854,7 +871,7 @@ void handler_save_gcode (GtkWidget *widget, gpointer data) {
 		save_gcode = 1;
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving g-code..."), "saving g-code...");
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 void handler_load_tooltable (GtkWidget *widget, gpointer data) {
@@ -889,7 +906,7 @@ void handler_load_tooltable (GtkWidget *widget, gpointer data) {
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "loading tooltable...done"), "loading tooltable...done");
 		g_free(filename);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 void handler_save_setup (GtkWidget *widget, gpointer data) {
@@ -1198,7 +1215,6 @@ void handler_webkit_forward (GtkWidget *widget, gpointer data) {
 #endif
 
 void create_gui (void) {
-	GtkWidget *hbox;
 	GtkWidget *vbox;
 
 	glCanvas = create_gl();
@@ -1325,7 +1341,6 @@ void create_gui (void) {
 	GtkWidget *MaterialBox = gtk_vbox_new(0, 0);
 	GtkWidget *ObjectsBox = gtk_vbox_new(0, 0);
 	GtkWidget *MiscBox = gtk_vbox_new(0, 0);
-
 	if (PARAMETER[P_O_PARAVIEW].vint == 1) {
 		NbBox = gtk_table_new(2, 2, FALSE);
 		GtkWidget *notebook = gtk_notebook_new();
@@ -1354,16 +1369,26 @@ void create_gui (void) {
 		gtk_notebook_append_page(GTK_NOTEBOOK(notebook), MiscBox, MiscLabel);
 	} else {
 		GtkWidget *ExpanderBox = gtk_vbox_new(0, 0);
-		GtkWidget *ViewExpander = gtk_expander_new(_("View"));
-		GtkWidget *ToolExpander = gtk_expander_new(_("Tool"));
-		GtkWidget *MillingExpander = gtk_expander_new(_("Milling"));
-		GtkWidget *TabsExpander = gtk_expander_new(_("Tabs"));
-		GtkWidget *RotaryExpander = gtk_expander_new(_("Rotary"));
-		GtkWidget *TangencialExpander = gtk_expander_new(_("Tangencial"));
-		GtkWidget *MachineExpander = gtk_expander_new(_("Machine"));
-		GtkWidget *MaterialExpander = gtk_expander_new(_("Material"));
-		GtkWidget *ObjectsExpander = gtk_expander_new(_("Objects"));
-		GtkWidget *MiscExpander = gtk_expander_new(_("Misc"));
+		ViewExpander = gtk_expander_new(_("View"));
+		ToolExpander = gtk_expander_new(_("Tool"));
+		MillingExpander = gtk_expander_new(_("Milling"));
+		TabsExpander = gtk_expander_new(_("Tabs"));
+		RotaryExpander = gtk_expander_new(_("Rotary"));
+		TangencialExpander = gtk_expander_new(_("Tangencial"));
+		MachineExpander = gtk_expander_new(_("Machine"));
+		MaterialExpander = gtk_expander_new(_("Material"));
+		ObjectsExpander = gtk_expander_new(_("Objects"));
+		MiscExpander = gtk_expander_new(_("Misc"));
+		gtk_expander_set_expanded(GTK_EXPANDER(ViewExpander), ExpanderStat[0]);
+		gtk_expander_set_expanded(GTK_EXPANDER(ToolExpander), ExpanderStat[1]);
+		gtk_expander_set_expanded(GTK_EXPANDER(MillingExpander), ExpanderStat[2]);
+		gtk_expander_set_expanded(GTK_EXPANDER(TabsExpander), ExpanderStat[3]);
+		gtk_expander_set_expanded(GTK_EXPANDER(RotaryExpander), ExpanderStat[4]);
+		gtk_expander_set_expanded(GTK_EXPANDER(TangencialExpander), ExpanderStat[5]);
+		gtk_expander_set_expanded(GTK_EXPANDER(MachineExpander), ExpanderStat[6]);
+		gtk_expander_set_expanded(GTK_EXPANDER(MaterialExpander), ExpanderStat[7]);
+		gtk_expander_set_expanded(GTK_EXPANDER(ObjectsExpander), ExpanderStat[8]);
+		gtk_expander_set_expanded(GTK_EXPANDER(MiscExpander), ExpanderStat[9]);
 		GtkWidget *ViewBoxFrame = gtk_frame_new("");
 		GtkWidget *ToolBoxFrame = gtk_frame_new("");
 		GtkWidget *MillingBoxFrame = gtk_frame_new("");
@@ -1780,6 +1805,8 @@ void create_gui (void) {
 	hbox = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(hbox), NbBox, TRUE, FALSE);
 	gtk_paned_pack2(GTK_PANED(hbox), NbBox2, TRUE, TRUE);
+	gtk_paned_set_position(GTK_PANED(hbox), PannedStat);
+
 
 	SizeInfoLabel = gtk_label_new("Width=0mm / Height=0mm");
 	GtkWidget *SizeInfo = gtk_event_box_new();
@@ -1851,7 +1878,6 @@ int main (int argc, char *argv[]) {
 	gtk_label_set_text(GTK_LABEL(gCodeViewLabel), tmp_str);
 	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif
-
 
 	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
 	gtk_main ();

@@ -7,6 +7,21 @@
 #include <dxf.h>
 #include <setup.h>
 #include <postprocessor.h>
+#include <gtk/gtk.h>
+
+extern GtkWidget *hbox;
+extern GtkWidget *ViewExpander;
+extern GtkWidget *ToolExpander;
+extern GtkWidget *MillingExpander;
+extern GtkWidget *TabsExpander;
+extern GtkWidget *RotaryExpander;
+extern GtkWidget *TangencialExpander;
+extern GtkWidget *MachineExpander;
+extern GtkWidget *MaterialExpander;
+extern GtkWidget *ObjectsExpander;
+extern GtkWidget *MiscExpander;
+extern int PannedStat;
+extern int ExpanderStat[20];
 
 PARA PARAMETER[] = {
 	{"Zoom",	"View",		"-zo",	T_FLOAT,	0,	1.0,	0.0,	"",	0.1,	0.1,	20.0,		"x", 1, 0, "view-zoom", 0, 0, 0},
@@ -83,6 +98,7 @@ PARA PARAMETER[] = {
 	{"MaxAngle",	"Tangencial", 	"-tm",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1, 1, "maximum angle before push up the knife", 0, 0, 0},
 	{"Tolerance",	"Misc",		"-mt",	T_DOUBLE,	0,	0.01,	0.001,	"",	0.0001,	0.01,	10.0,		"mm", 1, 1, "Tollerance between points to close objects", 0, 0, 0},
 	{"Parameter",	"Misc",		"-st",	T_SELECT,	0,	0.0,	0.0,	"",	0,	1.0,	1.0,		"", 1, 1, "Tabs or Expander for Parameter", 0, 0, 0},
+	{"Setup-Autosave","Misc",	"-as",	T_BOOL,		1,	0.0,	0.0,	"",	0,	1.0,	1.0,		"", 1, 1, "Save setup at exit", 0, 0, 0},
 #ifdef USE_VNC
 	{"VNC-Server",	"Misc",		"-vs",	T_STRING,	0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, "VNC-Server address", 0, 0, 0},
 	{"VNC-Port",	"Misc",		"-vp",	T_INT,		5900,	0.0,	0.0,	"",	0.0,	1.0,	35000.0,	"", 0, 0, "VNC-Server port", 0, 0, 0},
@@ -203,6 +219,19 @@ void SetupSave (void) {
 			fprintf(cfg_fp, "%s=%s\n", name_str, PARAMETER[n].vstr);
 		}
 	}
+	if (PARAMETER[P_O_PARAVIEW].vint == 0) {
+		fprintf(cfg_fp, "GUI|PANED|Position=%i\n", gtk_paned_get_position(GTK_PANED(hbox)));
+		fprintf(cfg_fp, "GUI|EXPANDER|View=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(ViewExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Tool=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(ToolExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Milling=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(MillingExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Tabs=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(TabsExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Rotary=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(RotaryExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Tangencial=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(TangencialExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Machine=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(MachineExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Material=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(MaterialExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Objects=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(ObjectsExpander)));
+		fprintf(cfg_fp, "GUI|EXPANDER|Misc=%i\n", gtk_expander_get_expanded(GTK_EXPANDER(MiscExpander)));
+	}
 	fclose(cfg_fp);
 }
 
@@ -243,6 +272,9 @@ void SetupLoad (void) {
 	char line2[2048];
 	FILE *cfg_fp;
 	int n = 0;
+	for (n = 0; n < 20; n++) {
+		ExpanderStat[n] = 0;
+	}
 	struct passwd *pw = getpwuid(getuid());
 	const char *homedir = pw->pw_dir;
 	setlocale(LC_NUMERIC, "C");
@@ -256,24 +288,50 @@ void SetupLoad (void) {
 		ssize_t read;
 		while ((read = getline(&line, &len, cfg_fp)) != -1) {
 			trimline(line2, 1024, line);
-			for (n = 0; n < P_LAST; n++) {
-				char name_str[1024];
-				sprintf(name_str, "%s|%s=", PARAMETER[n].group, PARAMETER[n].name);
-				if (strncmp(line2, name_str, strlen(name_str)) == 0) {
-					if (PARAMETER[n].type == T_FLOAT) {
-						PARAMETER[n].vfloat = atof(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_DOUBLE) {
-						PARAMETER[n].vdouble = atof(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_INT) {
-						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_SELECT) {
-						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_BOOL) {
-						PARAMETER[n].vint = atoi(line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_STRING) {
-						strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
-					} else if (PARAMETER[n].type == T_FILE) {
-						strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
+			if (strncmp(line2, "GUI|PANED|Position", 18) == 0) {
+				PannedStat = atoi(strstr(line2, "=") + 1);
+			} else if (strncmp(line2, "GUI|EXPANDER|", 13) == 0) {
+				if (strncmp(line2 + 13, "View", 4) == 0) {
+					ExpanderStat[0] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Tool", 4) == 0) {
+					ExpanderStat[1] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Milling", 7) == 0) {
+					ExpanderStat[2] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Tabs", 4) == 0) {
+					ExpanderStat[3] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Rotary", 6) == 0) {
+					ExpanderStat[4] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Tangencial", 10) == 0) {
+					ExpanderStat[5] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Machine", 7) == 0) {
+					ExpanderStat[6] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Material", 8) == 0) {
+					ExpanderStat[7] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Objects", 7) == 0) {
+					ExpanderStat[8] = atoi(strstr(line2, "=") + 1);
+				} else if (strncmp(line2 + 13, "Misc", 4) == 0) {
+					ExpanderStat[9] = atoi(strstr(line2, "=") + 1);
+				}
+			} else {
+				for (n = 0; n < P_LAST; n++) {
+					char name_str[1024];
+					sprintf(name_str, "%s|%s=", PARAMETER[n].group, PARAMETER[n].name);
+					if (strncmp(line2, name_str, strlen(name_str)) == 0) {
+						if (PARAMETER[n].type == T_FLOAT) {
+							PARAMETER[n].vfloat = atof(line2 + strlen(name_str));
+						} else if (PARAMETER[n].type == T_DOUBLE) {
+							PARAMETER[n].vdouble = atof(line2 + strlen(name_str));
+						} else if (PARAMETER[n].type == T_INT) {
+							PARAMETER[n].vint = atoi(line2 + strlen(name_str));
+						} else if (PARAMETER[n].type == T_SELECT) {
+							PARAMETER[n].vint = atoi(line2 + strlen(name_str));
+						} else if (PARAMETER[n].type == T_BOOL) {
+							PARAMETER[n].vint = atoi(line2 + strlen(name_str));
+						} else if (PARAMETER[n].type == T_STRING) {
+							strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
+						} else if (PARAMETER[n].type == T_FILE) {
+							strcpy(PARAMETER[n].vstr, line2 + strlen(name_str));
+						}
 					}
 				}
 			}
