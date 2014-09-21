@@ -13,8 +13,8 @@ PARA PARAMETER[] = {
 	{"Helplines",	"View", 	"-hl",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show helplines", 0, 0, 0},
 	{"ShowGrid",	"View", 	"-sg",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show grid", 0, 0, 0},
 	{"ShowTool",	"View", 	"-st",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show tool-diameter", 0, 0, 0},
-	{"Textures",	"View", 	"-vt",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show textures", 0, 0, 0},
-	{"Rotate-X",	"View", 	"-rx",	T_FLOAT	,	0,	0.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate X", 0, 0, 0},
+	{"Textures",	"View", 	"-vt",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show textures", 0, 0, 0},
+	{"Rotate-X",	"View", 	"-rx",	T_FLOAT	,	0,	-25.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate X", 0, 0, 0},
 	{"Rotate-Y",	"View", 	"-rx",	T_FLOAT	,	0,	0.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate Y", 0, 0, 0},
 	{"Rotate-Z",	"View", 	"-rx",	T_FLOAT	,	0,	0.0,	0.0,	"",	-360.0,	1.0,	360.0,		"", 1, 0, "View-Rotate Z", 0, 0, 0},
 	{"Translate-X",	"View", 	"-rx",	T_INT	,	0,	0.0,	0.0,	"",	-1000.0,1.0,	1000.0,		"", 1, 0, "View-Translate X", 0, 0, 0},
@@ -44,13 +44,16 @@ PARA PARAMETER[] = {
 	{"Mill Text",	"Milling",	"-mt",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "mill mtext from dxf-files", 0, 0, 0},
 //	{"Text-Font",	"Milling",	"-mf",	T_SELECT,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "font for mtext", 0, 0, 0},
 	{"NC-Debug",	"Milling", 	"-nd",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "output objects whithout offsets / for debuging", 0, 0, 0},
-	{"Activate",	"Holding-Tabs",	"-hu",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "using holding-tabs", 0, 0, 0},
+	{"Activate",	"Holding-Tabs",	"-hu",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "using holding-tabs", 0, 0, 0},
 	{"Show Grid",	"Holding-Tabs",	"-tg",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "show tab-grid", 0, 0, 0},
-	{"Depth",	"Holding-Tabs",	"-hd",	T_DOUBLE,	0,	0.0,	-7.0,	"",	-40.0,	1.0,	0.01,		"mm", 1, 1, "depth of the holding-tabs", 0, 0, 0},
+	{"Depth",	"Holding-Tabs",	"-hd",	T_DOUBLE,	0,	0.0,	-2.0,	"",	-40.0,	1.0,	0.01,		"mm", 1, 1, "depth of the holding-tabs", 0, 0, 0},
 	{"Lenght",	"Holding-Tabs",	"-hl",	T_DOUBLE,	0,	0.0,	5.0,	"",	0.1,	0.1,	40.0,		"mm", 1, 1, "lenght of the holding-tabs", 0, 0, 0},
 	{"Triangle-Type","Holding-Tabs","-ht",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "type of the holding-tabs", 0, 0, 0},
-	{"X-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	45.0,	"",	0.0,	1.0,	500.0,		"", 1, 1, "X-grid of the holding-tabs", 0, 0, 0},
-	{"Y-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	45.0,	"",	0.0,	1.0,	500.0,		"", 1, 1, "Y-grid of the holding-tabs", 0, 0, 0},
+	{"On Open","Holding-Tabs","-ht",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "holding-tabs on open contours", 0, 0, 0},
+	{"On Inside","Holding-Tabs","-ht",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "holding-tabs on inside-contours", 0, 0, 0},
+	{"On Outside","Holding-Tabs","-ht",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "holding-tabs on outside-contours", 0, 0, 0},
+	{"X-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	50.0,	"",	0.0,	1.0,	500.0,		"", 1, 1, "X-grid of the holding-tabs", 0, 0, 0},
+	{"Y-Grid",	"Holding-Tabs","-ht",	T_DOUBLE,	0,	0.0,	50.0,	"",	0.0,	1.0,	500.0,		"", 1, 1, "Y-grid of the holding-tabs", 0, 0, 0},
 	{"Fastmove-Speed","Machine",	 "-fs",	T_INT,		1000,	0.0,	0.0,	"",	0.0,	1.0,	10000.0,	"mm/min", 1, 0, "fast-move speed of the maschine, to calculate the milling-time", 0, 0, 0},
 	{"Post",	"Machine",	"-mp",	T_SELECT,	0,	0.0,	0.0,	"",	1.0,	1.0,	100.0,		"#", 0, 1, "post-processor selection", 0, 0, 0},
 	{"Output-File",	"Milling",	"-o",	T_FILE,		0,	0.0,	0.0,	"",	0.0,	0.0,	0.0,		"", 0, 0, "gcode-output filename", 0, 0, 0},
@@ -246,7 +249,7 @@ void SetupLoad (void) {
 	sprintf(cfgfile, "%s/.cammill.cfg", homedir);
 	cfg_fp = fopen(cfgfile, "r");
 	if (cfg_fp == NULL) {
-		fprintf(stderr, "Can not read Setup: %s\n", cfgfile);
+//		fprintf(stderr, "Can not read Setup: %s\n", cfgfile);
 	} else {
 		char *line = NULL;
 		size_t len = 0;

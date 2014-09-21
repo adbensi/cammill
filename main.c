@@ -920,9 +920,9 @@ void handler_draw (GtkWidget *w, GdkEventExpose* e, void *v) {
 
 void handler_scrollwheel (GtkWidget *w, GdkEventButton* e, void *v) {
 	if (e->state == 0) {
-		PARAMETER[P_V_ZOOM].vfloat += 0.05;
+		PARAMETER[P_V_ZOOM].vfloat += 0.1;
 	} else if (e->state == 1) {
-		PARAMETER[P_V_ZOOM].vfloat -= 0.05;
+		PARAMETER[P_V_ZOOM].vfloat -= 0.1;
 	}
 }
 

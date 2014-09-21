@@ -1037,15 +1037,15 @@ void mill_objects (void) {
 				myOBJECTS[object_num].laser = 1;
 			}
 			if (PARAMETER[P_M_NOOFFSET].vint == 1) {
-				myOBJECTS[object_num].offset = 0; // NO_OFFSET
+				myOBJECTS[object_num].offset = OFFSET_NONE;
 			} else if (myOBJECTS[object_num].closed == 1) {
 				if (myOBJECTS[object_num].inside == 1) {
-					myOBJECTS[object_num].offset = 1; // INSIDE
+					myOBJECTS[object_num].offset = OFFSET_INSIDE;
 				} else {
-					myOBJECTS[object_num].offset = 2; // OUTSIDE
+					myOBJECTS[object_num].offset = OFFSET_OUTSIDE;
 				}
 			} else {
-				myOBJECTS[object_num].offset = 0; // NONE
+				myOBJECTS[object_num].offset = OFFSET_NONE;
 			}
 		}
 	}
@@ -1316,7 +1316,7 @@ void mill_objects (void) {
 	for (lnum = 0; lnum < line_last; lnum++) {
 		if (myLINES[lnum].marked == 1) {
 			glLineWidth(20);
-			glColor4f(1.0, 0.0, 0.0, 1.0);
+			glColor4f(1.0, 0.0, 0.0, 0.5);
 			draw_oline((float)myLINES[lnum].x1, (float)myLINES[lnum].y1, (float)myLINES[lnum].x2, (float)myLINES[lnum].y2, 0.1);
 			glLineWidth(1);
 		}
@@ -1356,7 +1356,7 @@ void mill_xy (int gcmd, double x, double y, double r, int feed, int object_num, 
 			double i_y = 0.0;
 			int num = 0;
 			int numr = 0;
-			if (myOBJECTS[object_num].tabs == 1 && myOBJECTS[object_num].depth <= PARAMETER[P_M_DEPTH].vdouble) {
+			if (myOBJECTS[object_num].tabs == 1 && myOBJECTS[object_num].depth <= PARAMETER[P_M_DEPTH].vdouble && ((myOBJECTS[object_num].offset == OFFSET_OUTSIDE && PARAMETER[P_T_OUTSIDE].vint == 1) || (myOBJECTS[object_num].offset == OFFSET_INSIDE && PARAMETER[P_T_INSIDE].vint == 1) || (myOBJECTS[object_num].offset == OFFSET_NONE && PARAMETER[P_T_OPEN].vint == 1))) {
 				if (PARAMETER[P_T_XGRID].vdouble == 0.0 && PARAMETER[P_T_YGRID].vdouble == 0.0) {
 					int line_flag[MAX_LINES];
 					for (num = 0; num < line_last; num++) {
@@ -2004,10 +2004,7 @@ void object_draw (FILE *fd_out, int object_num) {
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			int lnum = myOBJECTS[object_num].line[num];
-			if (myLINES[lnum].marked == 1) {
-				glLineWidth(20);
-				glColor4f(1.0, 0.0, 0.0, 1.0);
-			} else if (PARAMETER[P_O_SELECT].vint == object_num) {
+			if (PARAMETER[P_O_SELECT].vint == object_num) {
 				glColor4f(1.0, 0.0, 0.0, 1.0);
 			} else {
 				glColor4f(0.0, 1.0, 0.0, 1.0);
