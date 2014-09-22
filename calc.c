@@ -67,6 +67,7 @@
 #include <setup.h>
 #include <postprocessor.h>
 #include <calc.h>
+#include <pocket.h>
 
 extern float size_x;
 extern float size_y;
@@ -1041,11 +1042,18 @@ void mill_objects (void) {
 			} else if (myOBJECTS[object_num].closed == 1) {
 				if (myOBJECTS[object_num].inside == 1) {
 					myOBJECTS[object_num].offset = OFFSET_INSIDE;
+					if (strstr(myOBJECTS[object_num].layer, "do_pocket") > 0) {
+						myOBJECTS[object_num].pocket = 1;
+					} else {
+						myOBJECTS[object_num].pocket = PARAMETER[P_M_POCKET].vint;
+					}
 				} else {
 					myOBJECTS[object_num].offset = OFFSET_OUTSIDE;
+					myOBJECTS[object_num].pocket = 0;
 				}
 			} else {
 				myOBJECTS[object_num].offset = OFFSET_NONE;
+				myOBJECTS[object_num].pocket = 0;
 			}
 		}
 	}
@@ -2001,6 +2009,7 @@ void object_draw (FILE *fd_out, int object_num) {
 		}
 		return;
 	}
+
 	for (num = 0; num < line_last; num++) {
 		if (myOBJECTS[object_num].line[num] != 0) {
 			int lnum = myOBJECTS[object_num].line[num];
@@ -2427,6 +2436,11 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	if (myOBJECTS[object_num].use == 0) {
 		return;
 	}
+
+	if (myOBJECTS[object_num].pocket == 1) {
+		mill_pocket(object_num);
+	}
+
 
 #ifdef USE_POSTCAM
 	postcam_comment("--------------------------------------------------");
@@ -2999,13 +3013,13 @@ void remove_double_lines (void) {
 						} else if (PointOnLine(myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, myLINES[num2].x1, myLINES[num2].y1) == 1 && PointOnLine(myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2, myLINES[num2].x2, myLINES[num2].y2) == 1) {
 							float len1 = get_len(myLINES[num].x1, myLINES[num].y1, myLINES[num].x2, myLINES[num].y2);
 							float len2 = get_len(myLINES[num2].x1, myLINES[num2].y1, myLINES[num2].x2, myLINES[num2].y2);
-							printf("found line on line: %i(%f) <-> %i(%f)\n", num, len1, num2, len2);
+//							printf("found line on line: %i(%f) <-> %i(%f)\n", num, len1, num2, len2);
 							if (len1 > len2) {
-								myLINES[num2].marked = 1;
-								myLINES[num2].used = 0;
+//								myLINES[num2].marked = 1;
+//								myLINES[num2].used = 0;
 							} else {
-								myLINES[num].marked = 1;
-								myLINES[num].used = 0;
+//								myLINES[num].marked = 1;
+//								myLINES[num].used = 0;
 							}
 						}
 					} else if (myLINES[num2].used == 1 && ((myLINES[num2].type == TYPE_ARC && myLINES[num].type == TYPE_ARC) || (myLINES[num2].type == TYPE_CIRCLE && myLINES[num].type == TYPE_CIRCLE))) {

@@ -21,8 +21,8 @@ CFLAGS+="-DUSE_POSTCAM"
 
 all: cammill
 
-cammill: main.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
-	clang -Wall -O3 -o cammill main.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} -DOSX ${CFLAGS}
+cammill: main.c pocket.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c dxf.h font.c font.h texture.c
+	clang -Wall -O3 -o cammill main.c pocket.c calc.c hersheyfont.c postprocessor.c setup.c dxf.c font.c texture.c ${LIBS} ${INCLUDES} -DOSX ${CFLAGS}
 
 clean:
 	rm -rf cammill

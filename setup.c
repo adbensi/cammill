@@ -54,6 +54,7 @@ PARA PARAMETER[] = {
 	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "lasermode, depth=0.0, turn on/off per object", 0, 0, 0},
 	{"Climb",	"Milling",	"-mr",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "reverse milling direction / climb milling", 0, 0, 0},
 	{"NoOffsets",	"Milling",	"-no",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "without tool-offsets", 0, 0, 0},
+	{"Pocket",	"Milling",	"-mp",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "mill pockets inside", 0, 0, 0},
 	{"Velocity-Mode","Milling",	"-vm",	T_BOOL,		0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "Velocity-Mode G61/G64 P...", 0, 0, 0},
 	{"Blending Tolerance","Milling","-bt",	T_DOUBLE,	0,	0.0,	0.05,	"",	0.0,	0.01,	10.0,		"mm", 1, 1, "Blending Tolerance G64 P?", 0, 0, 0},
 	{"Mill Text",	"Milling",	"-mt",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "mill mtext from dxf-files", 0, 0, 0},
