@@ -2438,9 +2438,8 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	}
 
 	if (myOBJECTS[object_num].pocket == 1) {
-		mill_pocket(object_num);
+		mill_pocket(object_num, next_x, next_y);
 	}
-
 
 #ifdef USE_POSTCAM
 	postcam_comment("--------------------------------------------------");
