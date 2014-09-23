@@ -79,6 +79,7 @@ typedef struct{
 } _POCKETLINE;
 
 _POCKETLINE myPOCKETLINES[10000];
+int plnum = 0;
 
 
 void mill_pocketline (int object_num, double *next_x, double *next_y) {
@@ -90,22 +91,15 @@ void mill_pocketline (int object_num, double *next_x, double *next_y) {
 
 	double x_prio = 5.0;
 
-//	last_x = *next_x;
-//	last_y = *next_y;
-
-	mill_move_in(myPOCKETLINES[0].x1, myPOCKETLINES[0].y1, myOBJECTS[object_num].depth, 0, object_num);
-	mill_z(1, myOBJECTS[object_num].depth);
-	mill_xy(1, myPOCKETLINES[0].x2, myPOCKETLINES[0].y2, myOBJECTS[object_num].depth, PARAMETER[P_M_FEEDRATE].vint, object_num, "");
-	last_x = myPOCKETLINES[0].x2;
-	last_y = myPOCKETLINES[0].y2;
-	myPOCKETLINES[0].visited = 1;
+	last_x = *next_x;
+	last_y = *next_y;
 
 
-	for (n = 0; n < 10000; n++) {
+	for (n = 0; n < plnum; n++) {
 		double shortest_dist = 999999.0;
 		int shortest_line = -1;
 		int shortest_side = -1;
-		for (n2 = 0; n2 < 10000; n2++) {
+		for (n2 = 0; n2 < plnum; n2++) {
 			if (myPOCKETLINES[n2].used == 1 && myPOCKETLINES[n2].visited == 0) {
 				dist = get_len(last_x, last_y * x_prio, myPOCKETLINES[n2].x1, myPOCKETLINES[n2].y1 * x_prio);
 				if (shortest_dist > dist) {
@@ -157,7 +151,6 @@ void mill_pocketline (int object_num, double *next_x, double *next_y) {
 
 void mill_pocket (int object_num, double *next_x, double *next_y) {
 	int n = 0;
-	int plnum = 0;
 	for (n = 0; n < 10000; n++) {
 		myPOCKETLINES[n].used = 0;
 		myPOCKETLINES[n].visited = 0;
@@ -223,22 +216,26 @@ void mill_pocket (int object_num, double *next_x, double *next_y) {
 	
 						} else if (in_flag == 1) {
 							in_flag = 0;
-							myPOCKETLINES[plnum].used = 1;
-							myPOCKETLINES[plnum].x1 = in_x;
-							myPOCKETLINES[plnum].y1 = in_y;
-							myPOCKETLINES[plnum].x2 = last_x;
-							myPOCKETLINES[plnum].y2 = last_y;
-							plnum++;
+							if (last_x != 0.0 && last_y != 0.0) {
+								myPOCKETLINES[plnum].used = 1;
+								myPOCKETLINES[plnum].x1 = in_x;
+								myPOCKETLINES[plnum].y1 = in_y;
+								myPOCKETLINES[plnum].x2 = last_x;
+								myPOCKETLINES[plnum].y2 = last_y;
+								plnum++;
+							}
 						}
 					} else {
 						if (in_flag == 1) {
 							in_flag = 0;
-							myPOCKETLINES[plnum].used = 1;
-							myPOCKETLINES[plnum].x1 = in_x;
-							myPOCKETLINES[plnum].y1 = in_y;
-							myPOCKETLINES[plnum].x2 = last_x;
-							myPOCKETLINES[plnum].y2 = last_y;
-							plnum++;
+							if (last_x != 0.0 && last_y != 0.0) {
+								myPOCKETLINES[plnum].used = 1;
+								myPOCKETLINES[plnum].x1 = in_x;
+								myPOCKETLINES[plnum].y1 = in_y;
+								myPOCKETLINES[plnum].x2 = last_x;
+								myPOCKETLINES[plnum].y2 = last_y;
+								plnum++;
+							}
 						}
 					}
 				}
