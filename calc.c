@@ -56,6 +56,9 @@
 #else
 #include <malloc.h>
 #endif
+#ifdef USE_G3D
+#include <g3d/g3d.h>
+#endif
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -68,6 +71,9 @@
 #include <postprocessor.h>
 #include <calc.h>
 #include <pocket.h>
+
+
+#define dot(ux,uy,uz,vx,vy,vz) (ux * vx + uy * vy + uz * vz)
 
 extern float size_x;
 extern float size_y;
@@ -3045,5 +3051,149 @@ void remove_double_lines (void) {
 //	glEnd();
 //	glLineWidth(1);
 }
+
+int intersect3D_SegmentPlane (float S_P0x, float S_P0y, float S_P0z, float S_P1x, float S_P1y, float S_P1z, float Pn_V0x, float Pn_V0y, float Pn_V0z, float Pn_nx, float Pn_ny, float Pn_nz, float *Ix, float *Iy, float *Iz ) {
+	float ux = S_P1x - S_P0x;
+	float uy = S_P1y - S_P0y;
+	float uz = S_P1z - S_P0z;
+	float wx = S_P0x - Pn_V0x;
+	float wy = S_P0y - Pn_V0y;
+	float wz = S_P0z - Pn_V0z;
+	float D = dot(Pn_nx, Pn_ny, Pn_nz, ux, uy, uz);
+	float N = -dot(Pn_nx, Pn_ny, Pn_nz, wx, wy, wz);
+	float sI = N / D;
+	if (sI < 0 || sI > 1) {
+		return 0;
+	}
+	*Ix = S_P0x + sI * ux;
+	*Iy = S_P0y + sI * uy;
+	*Iz = S_P0z + sI * uz;
+	return 1;
+}
+
+
+#ifdef USE_G3D
+
+extern int line_n;
+
+void slice_3d (char *file, float z) {
+	G3DContext *context;
+	G3DObject *object;
+	GSList *olist;
+	G3DModel *model;
+	int i = 0;
+//	int j = 0;
+	float Pn_V0x = 0.0;
+	float Pn_V0y = 0.0;
+	float Pn_V0z = z;
+	float Pn_nx = 0.0;
+	float Pn_ny = 0.0;
+	float Pn_nz = 1.0;
+
+	line_last = 0;
+	line_n = 1;
+	if (myLINES != NULL) {
+		free(myLINES);
+		myLINES = NULL;
+	}
+
+	if((context = g3d_context_new()) != NULL) {
+		if((model = g3d_model_load(context, file)) != NULL) {
+			olist = model->objects;
+			while(olist != NULL) {
+				object = (G3DObject *)olist->data;
+
+				glBegin(GL_TRIANGLES);
+				for (i = 0; i < (int)object->_num_faces; i++) {
+					float p1x = object->vertex_data[object->_indices[i*3+0]*3+0];
+					float p1y = object->vertex_data[object->_indices[i*3+0]*3+1];
+					float p1z = object->vertex_data[object->_indices[i*3+0]*3+2];
+					float p2x = object->vertex_data[object->_indices[i*3+1]*3+0];
+					float p2y = object->vertex_data[object->_indices[i*3+1]*3+1];
+					float p2z = object->vertex_data[object->_indices[i*3+1]*3+2];
+					float p3x = object->vertex_data[object->_indices[i*3+2]*3+0];
+					float p3y = object->vertex_data[object->_indices[i*3+2]*3+1];
+					float p3z = object->vertex_data[object->_indices[i*3+2]*3+2];
+					float Ix = 0.0;
+					float Iy = 0.0;
+					float Iz = 0.0;
+
+//					glColor4f(1.0, 1.0, 1.0, 1.0);
+//					glBegin(GL_LINES);
+
+					int flag = 0;
+					float x1 = 0.0;
+					float y1 = 0.0;
+					float x2 = 0.0;
+					float y2 = 0.0;
+
+					if ((p1z <= Pn_V0z && p2z >= Pn_V0z) || (p1z >= Pn_V0z && p2z <= Pn_V0z)) {
+						if (intersect3D_SegmentPlane(p1x, p1y, p1z, p2x, p2y, p2z, Pn_V0x, Pn_V0y, Pn_V0z, Pn_nx, Pn_ny, Pn_nz, &Ix, &Iy, &Iz) == 1) {
+//							glVertex3f(Ix, Iy, Iz + 10.1);
+							if (flag == 0) {
+								flag++;
+								x1 = Ix;
+								y1 = Iy;
+							} else {
+								flag++;
+								x2 = Ix;
+								y2 = Iy;
+							}
+						}
+					}
+					if ((p2z <= Pn_V0z && p3z >= Pn_V0z) || (p2z >= Pn_V0z && p3z <= Pn_V0z)) {
+						if (intersect3D_SegmentPlane(p3x, p3y, p3z, p2x, p2y, p2z, Pn_V0x, Pn_V0y, Pn_V0z, Pn_nx, Pn_ny, Pn_nz, &Ix, &Iy, &Iz) == 1) {
+//							glVertex3f(Ix, Iy, Iz + 10.1);
+							if (flag == 0) {
+								flag++;
+								x1 = Ix;
+								y1 = Iy;
+							} else {
+								flag++;
+								x2 = Ix;
+								y2 = Iy;
+							}
+						}
+					}
+					if ((p1z <= Pn_V0z && p3z >= Pn_V0z) || (p1z >= Pn_V0z && p3z <= Pn_V0z)) {
+						if (intersect3D_SegmentPlane(p1x, p1y, p1z, p3x, p3y, p3z, Pn_V0x, Pn_V0y, Pn_V0z, Pn_nx, Pn_ny, Pn_nz, &Ix, &Iy, &Iz) == 1) {
+//							glVertex3f(Ix, Iy, Iz + 10.1);
+							if (flag == 0) {
+								flag++;
+								x1 = Ix;
+								y1 = Iy;
+							} else {
+								flag++;
+								x2 = Ix;
+								y2 = Iy;
+							}
+						}
+					}
+//					glEnd();
+
+					if (flag == 2) {
+						add_line(TYPE_LINE, "3d", x1 * 10.0, y1 * 10.0, x2 * 10.0, y2 * 10.0, 0.0, 0.0, 0.0);
+					}
+
+//					glColor4f(0.0, 0.0, 1.0, 0.5);
+//					glBegin(GL_TRIANGLES);
+//					for (j = 0; j < 3; j++) {
+//						glNormal3f(object->_normals[(i*3+j)*3+0], object->_normals[(i*3+j)*3+1], object->_normals[(i*3+j)*3+2]);
+//						glVertex3f(object->vertex_data[object->_indices[i*3+j]*3+0], object->vertex_data[object->_indices[i*3+j]*3+1], object->vertex_data[object->_indices[i*3+j]*3+2]);
+//					}
+//					glEnd();
+
+				}
+				olist = olist->next;
+			}
+		}
+		g3d_context_free(context);
+	}
+}
+
+#endif
+
+
+
 
 

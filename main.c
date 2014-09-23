@@ -59,6 +59,10 @@
 #else
 #include <malloc.h>
 #endif
+#ifdef USE_G3D
+#include <g3d/g3d.h>
+void slice_3d (char *file, float z);
+#endif
 #include <locale.h>
 #include <dirent.h>
 #include <stdlib.h>
@@ -712,19 +716,23 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 	gtk_file_filter_add_pattern(ffilter, "*.dxf");
 	gtk_file_filter_add_pattern(ffilter, "*.DXF");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
-/*
+
+#ifdef USE_G3D
 	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, _("DWG-Drawings"));
-	gtk_file_filter_add_pattern(ffilter, "*.dwg");
-	gtk_file_filter_add_pattern(ffilter, "*.DXF");
+	gtk_file_filter_set_name(ffilter, _("3D-Objects"));
+	gtk_file_filter_add_pattern(ffilter, "*.obj");
+	gtk_file_filter_add_pattern(ffilter, "*.OBJ");
+	gtk_file_filter_add_pattern(ffilter, "*.lwo");
+	gtk_file_filter_add_pattern(ffilter, "*.LWO");
+	gtk_file_filter_add_pattern(ffilter, "*.ac3d");
+	gtk_file_filter_add_pattern(ffilter, "*.AC3D");
+	gtk_file_filter_add_pattern(ffilter, "*.stl");
+	gtk_file_filter_add_pattern(ffilter, "*.STL");
+	gtk_file_filter_add_pattern(ffilter, "*.3ds");
+	gtk_file_filter_add_pattern(ffilter, "*.3DS");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
-	
-	ffilter = gtk_file_filter_new();
-	gtk_file_filter_set_name(ffilter, _("SVG-Drawings"));
-	gtk_file_filter_add_pattern(ffilter, "*.scg");
-	gtk_file_filter_add_pattern(ffilter, "*.SVG");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), ffilter);
-*/
+#endif
+
 	if (PARAMETER[P_TOOL_TABLE].vstr[0] == 0) {
 		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), "./");
 	} else {
@@ -736,7 +744,15 @@ void handler_load_dxf (GtkWidget *widget, gpointer data) {
 		strcpy(PARAMETER[P_V_DXF].vstr, filename);
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf..."), "reading dxf...");
 		loading = 1;
+#ifdef USE_G3D
+		if (strstr(PARAMETER[P_V_DXF].vstr, ".dxf") > 0 || strstr(PARAMETER[P_V_DXF].vstr, ".DXF") > 0) {
+			dxf_read(PARAMETER[P_V_DXF].vstr);
+		} else {
+			slice_3d(PARAMETER[P_V_DXF].vstr, 0.0);
+		}
+#else
 		dxf_read(PARAMETER[P_V_DXF].vstr);
+#endif
 		init_objects();
 		loading = 0;
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "reading dxf...done"), "reading dxf...done");
@@ -1561,7 +1577,18 @@ void create_gui (void) {
 	/* import DXF */
 	loading = 1;
 	if (PARAMETER[P_V_DXF].vstr[0] != 0) {
+
+
+#ifdef USE_G3D
+		if (strstr(PARAMETER[P_V_DXF].vstr, ".dxf") > 0 || strstr(PARAMETER[P_V_DXF].vstr, ".DXF") > 0) {
+			dxf_read(PARAMETER[P_V_DXF].vstr);
+		} else {
+			slice_3d(PARAMETER[P_V_DXF].vstr, 0.0);
+		}
+#else
 		dxf_read(PARAMETER[P_V_DXF].vstr);
+#endif
+
 	}
 	init_objects();
 //	LayerLoadList();
