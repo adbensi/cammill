@@ -69,6 +69,7 @@
 #include <calc.h>
 #include <pocket.h>
 
+
 typedef struct{
 	double x1;
 	double y1;
@@ -93,7 +94,6 @@ void mill_pocketline (int object_num, double *next_x, double *next_y) {
 
 	last_x = *next_x;
 	last_y = *next_y;
-
 
 	for (n = 0; n < plnum; n++) {
 		double shortest_dist = 999999.0;
@@ -151,6 +151,8 @@ void mill_pocketline (int object_num, double *next_x, double *next_y) {
 
 void mill_pocket (int object_num, double *next_x, double *next_y) {
 	int n = 0;
+#pragma omp parallel
+{
 	for (n = 0; n < 10000; n++) {
 		myPOCKETLINES[n].used = 0;
 		myPOCKETLINES[n].visited = 0;
@@ -159,6 +161,7 @@ void mill_pocket (int object_num, double *next_x, double *next_y) {
 		myPOCKETLINES[n].x2 = 0.0;
 		myPOCKETLINES[n].y2 = 0.0;
 	}
+}
 	if (myOBJECTS[object_num].closed == 1 && myOBJECTS[object_num].inside == 1) {
 		double pmx = 0.0;
 		double pmy = 0.0;
@@ -185,6 +188,8 @@ void mill_pocket (int object_num, double *next_x, double *next_y) {
 			*next_x = cx - rs;
 			*next_y = cy;
 		} else {
+#pragma omp parallel
+{
 			int pipret = 0;
 			float ystep = PARAMETER[P_TOOL_DIAMETER].vdouble * (double)PARAMETER[P_M_POCKETSTEP].vint / 100.0;
 			float xstep = PARAMETER[P_TOOL_DIAMETER].vdouble / 10.0;
@@ -240,6 +245,7 @@ void mill_pocket (int object_num, double *next_x, double *next_y) {
 					}
 				}
 			}
+}
 			mill_pocketline(object_num, next_x, next_y);
 		}
 	}

@@ -1156,6 +1156,8 @@ void mill_objects (void) {
 					}
 				}
 			} else {
+#pragma omp parallel
+{
 				for (nnum = 0; nnum < line_last; nnum++) {
 					if (myOBJECTS[object_num2].line[nnum] != 0 && ((myOBJECTS[object_num2].force == 1 && myOBJECTS[object_num2].offset == 1) || (myOBJECTS[object_num2].force == 0 && myOBJECTS[object_num2].inside == 1)) && myOBJECTS[object_num2].visited == 0) {
 						int lnum2 = myOBJECTS[object_num2].line[nnum];
@@ -1168,6 +1170,7 @@ void mill_objects (void) {
 						}
 					}
 				}
+}
 			}
 			nnum = 0;
 			if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].closed == 0 && myOBJECTS[object_num2].visited == 0) {
@@ -1235,6 +1238,8 @@ void mill_objects (void) {
 					}
 				}
 			} else {
+#pragma omp parallel
+{
 				for (nnum = 0; nnum < line_last; nnum++) {
 					if (myOBJECTS[object_num2].line[nnum] != 0 && myOBJECTS[object_num2].visited == 0) {
 						int lnum2 = myOBJECTS[object_num2].line[nnum];
@@ -1247,6 +1252,7 @@ void mill_objects (void) {
 						}
 					}
 				}
+}
 			}
 		}
 		if (flag == 1) {
@@ -2537,6 +2543,9 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 	}
 	int num2 = 0;
 	fnum = 0;
+#pragma omp parallel
+{
+
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
 			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
@@ -2548,6 +2557,7 @@ int find_next_line (int object_num, int first, int num, int dir, int depth) {
 			}
 		}
 	}
+}
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
 			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
@@ -2599,6 +2609,9 @@ int line_open_check (int num) {
 	}
 	px = myLINES[num].x1;
 	py = myLINES[num].y1;
+#pragma omp parallel
+{
+
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
 			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
@@ -2612,8 +2625,11 @@ int line_open_check (int num) {
 			}
 		}
 	}
+}
 	px = myLINES[num].x2;
 	py = myLINES[num].y2;
+#pragma omp parallel
+{
 	for (num2 = 1; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1 && num != num2 && strcmp(myLINES[num2].layer, myLINES[num].layer) == 0) {
 			if (px >= myLINES[num2].x1 - PARAMETER[P_O_TOLERANCE].vdouble && px <= myLINES[num2].x1 + PARAMETER[P_O_TOLERANCE].vdouble && py >= myLINES[num2].y1 - PARAMETER[P_O_TOLERANCE].vdouble && py <= myLINES[num2].y1 + PARAMETER[P_O_TOLERANCE].vdouble) {
@@ -2627,6 +2643,7 @@ int line_open_check (int num) {
 			}
 		}
 	}
+}
 	if (ret == 1) {
 		return dir;
 	} else if (ret == 0) {
@@ -2639,16 +2656,14 @@ void init_objects (void) {
 	int num2 = 0;
 	int num5b = 0;
 	int object_num = 0;
-
-	glDeleteLists(2, 2);
-	glNewList(2, GL_COMPILE);
-
 	/* init objects */
 	if (myOBJECTS != NULL) {
 		free(myOBJECTS);
 		myOBJECTS = NULL;
 	}
 	myOBJECTS = (_OBJECT *)malloc(sizeof(_OBJECT) * (line_last + 1));
+#pragma omp parallel
+{
 	for (object_num = 0; object_num < line_last; object_num++) {
 		myOBJECTS[object_num].use = 1;
 		myOBJECTS[object_num].closed = 0;
@@ -2671,7 +2686,7 @@ void init_objects (void) {
 			myOBJECTS[object_num].line[num2] = 0;
 		}
 	}
-
+}
 	DrawCheckSize();
 	DrawSetZero();
 
@@ -2712,7 +2727,6 @@ void init_objects (void) {
 			object_last = object_num + 2;
 		}
 	}
-
 	/* check if object inside or outside */
 	for (num5b = 0; num5b < object_last; num5b++) {
 		int flag = 0;
@@ -2764,7 +2778,8 @@ void init_objects (void) {
 			myOBJECTS[num5b].inside = 0;
 		}
 	}
-
+#pragma omp parallel
+{
 	for (object_num = 0; object_num < line_last; object_num++) {
 		if (myOBJECTS[object_num].line[0] != 0) {
 			if (strncmp(myOBJECTS[object_num].layer, "offset-inside", 13) == 0) {
@@ -2780,7 +2795,7 @@ void init_objects (void) {
 			}
 		}
 	}
-
+}
 	// object-boundingbox
 	for (num5b = 0; num5b < object_last; num5b++) {
 		if (myLINES[myOBJECTS[num5b].line[0]].type == TYPE_CIRCLE) {
@@ -2797,9 +2812,9 @@ void init_objects (void) {
 			if (myOBJECTS[num5b].max_y < myLINES[lnum].cy + myLINES[lnum].opt) {
 				myOBJECTS[num5b].max_y = myLINES[lnum].cy + myLINES[lnum].opt;
 			}
-
-
 		} else {
+#pragma omp parallel
+{
 			int num4b = 0;
 			for (num4b = 0; num4b < line_last; num4b++) {
 				int lnum = myOBJECTS[num5b].line[num4b];
@@ -2830,6 +2845,7 @@ void init_objects (void) {
 					}
 				}
 			}
+}
 		}
 	}
 
@@ -2843,7 +2859,6 @@ void init_objects (void) {
 		}
 	}
 	update_post = 1;
-	glEndList();
 }
 
 
@@ -2899,6 +2914,8 @@ void DrawCheckSize (void) {
 	min_y = 99999.0;
 	max_x = 0.0;
 	max_y = 0.0;
+#pragma omp parallel
+{
 	for (num2 = 0; num2 < line_last; num2++) {
 		if (myLINES[num2].used == 1) {
 			if (max_x < myLINES[num2].x1) {
@@ -2940,10 +2957,13 @@ void DrawCheckSize (void) {
 		}
 	}
 }
+}
 
 void DrawSetZero (void) {
 	int num = 0;
 	/* set bottom-left to 0,0 */
+#pragma omp parallel
+{
 	for (num = 0; num < line_last; num++) {
 		if (myLINES[num].used == 1 || myLINES[num].istab == 1) {
 			myLINES[num].x1 -= min_x;
@@ -2954,6 +2974,7 @@ void DrawSetZero (void) {
 			myLINES[num].cy -= min_y;
 		}
 	}
+}
 }
 
 #define DEFFLEQEPSILON 0.001
