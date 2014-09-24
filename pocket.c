@@ -192,7 +192,7 @@ void mill_pocket (int object_num, double *next_x, double *next_y) {
 {
 			int pipret = 0;
 			float ystep = PARAMETER[P_TOOL_DIAMETER].vdouble * (double)PARAMETER[P_M_POCKETSTEP].vint / 100.0;
-			float xstep = PARAMETER[P_TOOL_DIAMETER].vdouble / 10.0;
+			float xstep = PARAMETER[P_TOOL_DIAMETER].vdouble * (double)PARAMETER[P_M_POCKETSTEP].vint / 200.0;
 			for (pmy = myOBJECTS[object_num].min_y - ystep; pmy <= myOBJECTS[object_num].max_y + ystep; pmy += ystep) {
 				for (pmx = myOBJECTS[object_num].min_x - xstep; pmx <= myOBJECTS[object_num].max_x + xstep; pmx += xstep) {
 					pipret = point_in_object(object_num, -1, pmx, pmy);
