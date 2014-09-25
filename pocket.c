@@ -198,7 +198,7 @@ void mill_pocket (int object_num, double *next_x, double *next_y) {
 					pipret = point_in_object(object_num, -1, pmx, pmy);
 					if (pipret == 1) {
 						float an = 0;
-						for (an = 0.0; an < 360.0; an += 3.6) {
+						for (an = 0.0; an < 360.0; an += 36.0) {
 							float rangle = toRad(an);
 							float rx = (PARAMETER[P_TOOL_DIAMETER].vdouble / 3.0 * 2.0) * cos(rangle);
 							float ry = (PARAMETER[P_TOOL_DIAMETER].vdouble / 3.0 * 2.0) * sin(rangle);
