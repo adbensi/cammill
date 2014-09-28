@@ -4,7 +4,9 @@
 
  MacOSX - Changes by McUles <mcules@fpv-club.de>
 	Yosemite (OSX 10.10)
-
+	
+ Improve performance - Changes by ADBensi <gmail> 28 sep 2014
+ 
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -76,6 +78,10 @@ void slice_3d (char *file, float z);
 #include <postprocessor.h>
 #include <calc.h>
 
+///#include <X11/X.h>
+///#include <X11/Xlib.h>
+///#include <X11/Xutil.h>
+
 #include <libintl.h>
 #define _(String) gettext(String)
 #define gettext_noop(String) String
@@ -112,6 +118,10 @@ int last_mouse_x = 0;
 int last_mouse_y = 0;
 int last_mouse_button = -1;
 int last_mouse_state = 0;
+
+///char GO_Thread_FLAG = 1;
+char handler_periodic_action_index = 1;
+char gdk_gl_drawable_swap_buffers_flag = 0;
 
 void ParameterUpdate (void);
 void ParameterChanged (GtkWidget *widget, gpointer data);
@@ -438,7 +448,6 @@ void draw_helplines (void) {
 	glPopMatrix();
 }
 
-
 void mainloop (void) {
 	char tmp_str[1024];
 	size_x = (max_x - min_x);
@@ -453,7 +462,9 @@ void mainloop (void) {
 		PARAMETER[P_TOOL_NUM].vint = PARAMETER[P_TOOL_SELECT].vint;
 		PARAMETER[P_TOOL_DIAMETER].vdouble = tooltbl_diameters[PARAMETER[P_TOOL_NUM].vint];
 	}
+
 	PARAMETER[P_TOOL_SPEED_MAX].vint = (int)(((float)Material[PARAMETER[P_MAT_SELECT].vint].vc * 1000.0) / (PI * (PARAMETER[P_TOOL_DIAMETER].vdouble)));
+	
 	if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 4.0) {
 		PARAMETER[P_M_FEEDRATE_MAX].vint = (int)((float)PARAMETER[P_TOOL_SPEED].vint * Material[PARAMETER[P_MAT_SELECT].vint].fz[0] * (float)PARAMETER[P_TOOL_W].vint);
 	} else if ((PARAMETER[P_TOOL_DIAMETER].vdouble) < 8.0) {
@@ -514,6 +525,7 @@ void mainloop (void) {
 		gtk_label_set_text(GTK_LABEL(SizeInfoLabel), tmp_str);
 		glEndList();
 	}
+	
 
 	// save output
 	if (save_gcode == 1) {
@@ -536,11 +548,12 @@ void mainloop (void) {
 		gtk_statusbar_push(GTK_STATUSBAR(StatusBar), gtk_statusbar_get_context_id(GTK_STATUSBAR(StatusBar), "saving g-code...done"), "saving g-code...done");
 		save_gcode = 0;
 	}
-
+	
 	if (batchmode == 1) {
 		onExit();
 		exit(0);
 	} else {
+
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearDepth(1.0);
@@ -559,13 +572,12 @@ void mainloop (void) {
 		glRotatef(PARAMETER[P_V_ROTY].vfloat, 0.0, 1.0, 0.0);
 		glRotatef(PARAMETER[P_V_ROTX].vfloat, 1.0, 0.0, 0.0);
 		glTranslatef(-size_x / 2.0, 0.0, 0.0);
+		
 		if (PARAMETER[P_M_ROTARYMODE].vint == 0) {
 			glTranslatef(0.0, -size_y / 2.0, 0.0);
 		}
-		glCallList(1);
-		glCallList(2);
-		glPopMatrix();
 	}
+
 	return;
 }
 
@@ -655,25 +667,10 @@ void view_init_gl(void) {
 	}
 }
 
-void view_draw (void) {
-	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
-	GdkGLContext *glcontext = gtk_widget_get_gl_context(glCanvas);
-	if (gdk_gl_drawable_gl_begin(gldrawable, glcontext)) {
-		glClearColor(0, 0, 0, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		ParameterUpdate();
-		mainloop();
-		if (gdk_gl_drawable_is_double_buffered (gldrawable)) {
-			gdk_gl_drawable_swap_buffers(gldrawable);
-		} else {
-			glFlush();
-		}
-		gdk_gl_drawable_gl_end(gldrawable);
-	}
-}
-
-
 void handler_destroy (GtkWidget *widget, gpointer data) {
+
+///	GO_Thread_FLAG = 0;
+	
 	if (PARAMETER[P_O_AUTOSAVE].vint == 1) {
 		SetupSave();
 	}
@@ -1039,14 +1036,79 @@ void handler_configure (GtkWidget *w, GdkEventConfigure* e, void *v) {
 }
 
 int handler_periodic_action (gpointer d) {
-	while ( gtk_events_pending() ) {
+///gint64 start, end, i;
+///char t = 0;
+
+	if ( gtk_events_pending() ) {
 		gtk_main_iteration();
 	}
-	if (need_init == 1) {
-		need_init = 0;
-		view_init_gl();
-	}
-	view_draw();
+	else
+	    {
+		if (need_init == 1) {
+			need_init = 0;
+			view_init_gl();
+		}
+			    
+		GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
+		GdkGLContext *glcontext = gtk_widget_get_gl_context(glCanvas);
+
+		if (gdk_gl_drawable_gl_begin(gldrawable, glcontext)) {
+		
+///			start = g_get_monotonic_time ();
+
+			switch(handler_periodic_action_index--)
+			{
+				case 3 :
+					glClearColor(0, 0, 0, 0);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+					ParameterUpdate();
+///					t = 1;
+				break;
+				case 2 :
+					mainloop();
+///					t = 2;
+				break;
+				case 1 :
+					if (batchmode != 1) {	
+						glCallList(1);
+						
+					}
+///					t = 3;
+				break;
+				case 0 :
+					if (batchmode != 1) {	
+						//glCallList(2);
+						glPopMatrix();
+					}
+					
+					if (gdk_gl_drawable_is_double_buffered (gldrawable)) {
+						gdk_gl_drawable_swap_buffers(gldrawable);
+					}
+					else
+					    {
+						glFlush();
+					    }
+
+					gdk_gl_drawable_gl_end(gldrawable);
+										    
+					handler_periodic_action_index = 3;
+///					t = 4;
+				break;
+///				default:
+///					fprintf(stderr, "Error: Please, fix the index.\n");
+///				break;				  		  	
+			}
+			
+///			end = g_get_monotonic_time ();
+///			i = (end - start) / 1000;
+///			if (i) printf("Delay: %lld microseconds - %d\n", i, t);
+
+		}
+		
+
+	    }
+	
 	return(1);
 }
 
@@ -1878,8 +1940,32 @@ void create_gui (void) {
 */
 }
 
-int main (int argc, char *argv[]) {
+///static void *DrawThread (void *data) {
+///
+///	while (GO_Thread_FLAG) {
+///	
+///		if ( gtk_events_pending() ) {
+///			gtk_main_iteration();
+///		} else view_draw();
+///		
+///		if (need_init == 1) {
+///			need_init = 0;
+///			view_init_gl();
+///			
+///		}
+///	}
+///	
+///	return 0;
+///}
 
+int main (int argc, char *argv[]) {
+///	GThread *retval;
+///
+///	if(!XInitThreads()) {
+///	    printf("XInitThreads() failed\n");
+///	    return 0;
+///	}
+	
 	bindtextdomain("cammill", "intl");
 	textdomain("cammill");
 
@@ -1888,6 +1974,7 @@ int main (int argc, char *argv[]) {
 
 	SetupLoad();
 	ArgsRead(argc, argv);
+
 //	SetupShow();
 
 	gtk_init(&argc, &argv);
@@ -1906,14 +1993,18 @@ int main (int argc, char *argv[]) {
 	postcam_load_source(postcam_plugins[PARAMETER[P_H_POST].vint]);
 #endif
 
-	gtk_timeout_add(1000/25, handler_periodic_action, NULL);
+///	if( (retval = g_thread_new("draw_thread", &DrawThread, NULL)) == NULL)
+///	{
+///		printf("Thread create failed !!\n" );
+		gtk_timeout_add(25, handler_periodic_action, NULL);
+///	}
+	
 	gtk_main ();
 
+///	g_thread_join(retval);
+	
 #ifdef USE_POSTCAM
 	postcam_exit_lua();
 #endif
 
 	return 0;
-}
-
-
