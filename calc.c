@@ -213,7 +213,7 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 		float y = myLINES[lnum].cy;
 		float last_x = x + r;
 		float last_y = y;
-		for (an = 0.0; an < 360.0; an += 9.0) {
+		for (an = 0.0; an < 360.0; an += 4.5) {
 			float angle1 = toRad(an);
 			float x1 = r * cos(angle1);
 			float y1 = r * sin(angle1);
@@ -271,7 +271,7 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 					float last_x = x + r;
 					float last_y = y;
 					if (myOBJECTS[object_num].climb == 1) {
-						for (an = 0.0; an < 360.0; an += 9.0) {
+						for (an = 0.0; an < 360.0; an += 4.5) {
 							float angle1 = toRad(an);
 							float x1 = r * cos(angle1);
 							float y1 = r * sin(angle1);
@@ -292,7 +292,7 @@ void object2poly (int object_num, double depth, double depth2, int invert) {
 							nverts++;
 						}
 					} else {
-						for (an = 360.0; an > 0.0; an -= 9.0) {
+						for (an = 360.0; an > 0.0; an -= 4.5) {
 							float angle1 = toRad(an);
 							float x1 = r * cos(angle1);
 							float y1 = r * sin(angle1);
@@ -1990,7 +1990,7 @@ void object_draw (FILE *fd_out, int object_num) {
 			mill_move_in(myLINES[lnum].cx - r, myLINES[lnum].cy, 0.0, lasermode, object_num);
 			mill_circle(2, myLINES[lnum].cx, myLINES[lnum].cy, r, 0.0, PARAMETER[P_M_FEEDRATE].vint, myOBJECTS[object_num].inside, object_num, "");
 		}
-		for (an = 0.0; an <= 360.0; an += 9.0) {
+		for (an = 0.0; an <= 360.0; an += 4.5) {
 			double angle1 = toRad(an);
 			double x1 = r * cos(angle1);
 			double y1 = r * sin(angle1);
@@ -2489,6 +2489,15 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 	if (lasermode == 1 || tangencialmode == 1) {
 		object_draw_offset_depth(fd_out, object_num, 0.0, next_x, next_y, tool_offset, overcut, lasermode, offset);
 	} else {
+
+//		depth += PARAMETER[P_M_Z_STEP].vdouble;
+//		if (depth < mill_depth_real) {
+//			new_depth = mill_depth_real;
+//		} else {
+//			new_depth = depth;
+//		}
+//		object_draw_offset_depth(fd_out, object_num, new_depth, next_x, next_y, tool_offset, overcut, lasermode, offset);
+	
 		for (depth = PARAMETER[P_M_Z_STEP].vdouble; depth > mill_depth_real + PARAMETER[P_M_Z_STEP].vdouble; depth += PARAMETER[P_M_Z_STEP].vdouble) {
 			if (depth < mill_depth_real) {
 				new_depth = mill_depth_real;
@@ -2497,6 +2506,7 @@ void object_draw_offset (FILE *fd_out, int object_num, double *next_x, double *n
 			}
 			object_draw_offset_depth(fd_out, object_num, new_depth, next_x, next_y, tool_offset, overcut, lasermode, offset);
 		}
+
 	}
 	mill_move_out(lasermode, object_num);
 }
