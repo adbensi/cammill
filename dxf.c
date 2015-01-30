@@ -320,7 +320,7 @@ void dxf_read (char *file) {
 						double last_x = (p_x1 + x2);
 						double last_y = (p_y1 + y2);
 						double an = 0;
-						double p_rast = (p_a2 - p_a1) / 9.0;
+						double p_rast = (p_a2 - p_a1) / 18.0;	// resoluÃ§Ã£o
 						for (an = p_a1 + p_rast; an <= p_a2 - (p_rast / 2.0); an += p_rast) {
 							double angle1 = toRad(an);
 							double x1 = r * cos(angle1);
