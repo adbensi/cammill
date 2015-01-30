@@ -125,4 +125,3 @@ int SetupArgCheck (char *arg, char *arg2);
 void SetupSavePreset (char *cfgfile);
 void SetupLoadPreset (char *cfgfile);
 
-
