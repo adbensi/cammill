@@ -1,3 +1,6 @@
+#ifdef USE_G3D
+#include <g3d/g3d.h>
+#endif
 
 typedef struct{
 	int used;
