@@ -24,7 +24,7 @@ extern int PannedStat;
 extern int ExpanderStat[20];
 
 PARA PARAMETER[] = {
-	{"Zoom",	"View",		"-zo",	T_FLOAT,	0,	1.0,	0.0,	"",	0.1,	0.1,	20.0,		"x", 1, 0, "view-zoom", 0, 0, 0},
+	{"Zoom",	"View",		"-zo",	T_FLOAT,	0,	1.0,	0.0,	"",	0.5,	0.1,	4.0,		"x", 1, 0, "view-zoom", 0, 0, 0},
 	{"Helplines",	"View", 	"-hl",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show helplines", 0, 0, 0},
 	{"ShowGrid",	"View", 	"-sg",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show grid", 0, 0, 0},
 	{"ShowTool",	"View", 	"-st",	T_BOOL	,	1,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 0, "show tool-diameter", 0, 0, 0},
@@ -48,7 +48,7 @@ PARA PARAMETER[] = {
 	{"FeedRate",	"Milling",	"-fr",	T_INT	,	200,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1, 1, "real feedrate", 0, 0, 0},
 	{"PlungeRate",	"Milling",	"-pr",	T_INT	,	100,	0.0,	0.0,	"",	1.0,	1.0,	10000.0,	"mm/min", 1, 1, "plunge feedrate", 0, 0, 0},
 	{"Depth",	"Milling",	"-md",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1, 1, "end depth", 0, 0, 0},
-	{"Z-Step",	"Milling",	"-msp",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-40.0,	0.01,	-0.1,		"mm", 1, 1, "depth per step", 0, 0, 0},
+	{"Z-Step",	"Milling",	"-msp",	T_DOUBLE,	0,	-4.0,	-4.0,	"",	-2.5,	0.125,	-0.25,		"mm", 1, 1, "depth per step", 0, 0, 0},
 	{"Save-Move",	"Milling",	"-msm",	T_DOUBLE,	0,	4.0,	4.0,	"",	1.0,	1.0,	80.0,		"mm", 1, 1, "save move z-position", 0, 0, 0},
 	{"Overcut",	"Milling",	"-oc",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "overcutting endges", 0, 0, 0},
 	{"Lasermode",	"Milling",	"-lm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "lasermode, depth=0.0, turn on/off per object", 0, 0, 0},
@@ -97,7 +97,7 @@ PARA PARAMETER[] = {
 	{"Diameter",	"Rotary",	"-md",	T_DOUBLE,	0,	0.0,	100.0,	"",	0.01,	0.01,	1000.0,		"mm", 1, 1, "diameter of the material for the rotary-mode", 0, 0, 0},
 	{"Activate",	"Tangencial",	"-tm",	T_BOOL	,	0,	0.0,	0.0,	"",	0.0,	1.0,	1.0,		"", 1, 1, "tangencial-knife cutting, depth=0.0", 0, 0, 0},
 	{"Axis",	"Tangencial",	"-ta",	T_SELECT,	1,	0.0,	0.0,	"",	0.0,	1.0,	2.0,		"A/B/C", 0, 1, "axis that used as tangencial axis", 0, 0, 0},
-	{"MaxAngle",	"Tangencial", 	"-tm",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"°", 1, 1, "maximum angle before push up the knife", 0, 0, 0},
+	{"MaxAngle",	"Tangencial", 	"-tm",	T_DOUBLE,	0,	0.0,	10.0,	"",	0.0,	1.0,	360.0,		"Â°", 1, 1, "maximum angle before push up the knife", 0, 0, 0},
 	{"Tolerance",	"Misc",		"-mt",	T_DOUBLE,	0,	0.01,	0.001,	"",	0.0001,	0.01,	10.0,		"mm", 1, 1, "Tollerance between points to close objects", 0, 0, 0},
 	{"Parameter",	"Misc",		"-st",	T_SELECT,	0,	0.0,	0.0,	"",	0,	1.0,	1.0,		"", 1, 1, "Tabs or Expander for Parameter", 0, 0, 0},
 	{"Setup-Autosave","Misc",	"-as",	T_BOOL,		1,	0.0,	0.0,	"",	0,	1.0,	1.0,		"", 1, 1, "Save setup at exit", 0, 0, 0},
