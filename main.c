@@ -4,9 +4,7 @@
 
  MacOSX - Changes by McUles <mcules@fpv-club.de>
 	Yosemite (OSX 10.10)
-	
- Improve performance - Changes by ADBensi <gmail> 28 sep 2014
- 
+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
  License as published by the Free Software Foundation; either
@@ -159,8 +157,8 @@ GtkWidget *MiscExpander;
 int PannedStat;
 int ExpanderStat[20];
 
-int width = 800;
-int height = 600;
+int width = 1024;
+int height = 768;
 int need_init = 1;
 
 double mill_distance_xy = 0.0;
@@ -170,8 +168,6 @@ double move_distance_z = 0.0;
 
 GtkWidget *window;
 GtkWidget *dialog;
-
-
 
 void postcam_load_source (char *plugin) {
 	char tmp_str[1024];
@@ -1035,83 +1031,6 @@ void handler_configure (GtkWidget *w, GdkEventConfigure* e, void *v) {
 	need_init = 1;
 }
 
-int handler_periodic_action (gpointer d) {
-///gint64 start, end, i;
-///char t = 0;
-
-	if ( gtk_events_pending() ) {
-		gtk_main_iteration();
-	}
-	else
-	    {
-		if (need_init == 1) {
-			need_init = 0;
-			view_init_gl();
-		}
-			    
-		GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
-		GdkGLContext *glcontext = gtk_widget_get_gl_context(glCanvas);
-
-		if (gdk_gl_drawable_gl_begin(gldrawable, glcontext)) {
-		
-///			start = g_get_monotonic_time ();
-
-			switch(handler_periodic_action_index--)
-			{
-				case 3 :
-					glClearColor(0, 0, 0, 0);
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-					ParameterUpdate();
-///					t = 1;
-				break;
-				case 2 :
-					mainloop();
-///					t = 2;
-				break;
-				case 1 :
-					if (batchmode != 1) {	
-						glCallList(1);
-						
-					}
-///					t = 3;
-				break;
-				case 0 :
-					if (batchmode != 1) {	
-						//glCallList(2);
-						glPopMatrix();
-					}
-					
-					if (gdk_gl_drawable_is_double_buffered (gldrawable)) {
-						gdk_gl_drawable_swap_buffers(gldrawable);
-					}
-					else
-					    {
-						glFlush();
-					    }
-
-					gdk_gl_drawable_gl_end(gldrawable);
-										    
-					handler_periodic_action_index = 3;
-///					t = 4;
-				break;
-///				default:
-///					fprintf(stderr, "Error: Please, fix the index.\n");
-///				break;				  		  	
-			}
-			
-///			end = g_get_monotonic_time ();
-///			i = (end - start) / 1000;
-///			if (i) printf("Delay: %lld microseconds - %d\n", i, t);
-
-		}
-		
-
-	    }
-	
-	return(1);
-}
-
 GtkWidget *create_gl () {
 	static GdkGLConfig *glconfig = NULL;
 	static GdkGLContext *glcontext = NULL;
@@ -1296,7 +1215,7 @@ void create_gui (void) {
 	GtkWidget *vbox;
 
 	glCanvas = create_gl();
-	gtk_widget_set_usize(GTK_WIDGET(glCanvas), 800, 600);
+	gtk_widget_set_usize(GTK_WIDGET(glCanvas), 1024, 768);
 	gtk_signal_connect(GTK_OBJECT(glCanvas), "expose_event", GTK_SIGNAL_FUNC(handler_draw), NULL);  
 	gtk_signal_connect(GTK_OBJECT(glCanvas), "button_press_event", GTK_SIGNAL_FUNC(handler_button_press), NULL);  
 	gtk_signal_connect(GTK_OBJECT(glCanvas), "button_release_event", GTK_SIGNAL_FUNC(handler_button_release), NULL);  
@@ -1390,7 +1309,7 @@ void create_gui (void) {
 
 	GtkToolItem *TB;
 	TB = gtk_tool_button_new_from_stock(GTK_STOCK_CONVERT);
-	gtk_tool_item_set_tooltip_text(TB, "Rotate 90°");
+	gtk_tool_item_set_tooltip_text(TB, "Rotate 90Â°");
 	gtk_toolbar_insert(GTK_TOOLBAR(ToolBar), TB, -1);
 	g_signal_connect(G_OBJECT(TB), "clicked", GTK_SIGNAL_FUNC(handler_rotate_drawing), NULL);
 
@@ -1940,23 +1859,82 @@ void create_gui (void) {
 */
 }
 
-///static void *DrawThread (void *data) {
-///
-///	while (GO_Thread_FLAG) {
-///	
-///		if ( gtk_events_pending() ) {
-///			gtk_main_iteration();
-///		} else view_draw();
-///		
-///		if (need_init == 1) {
-///			need_init = 0;
-///			view_init_gl();
-///			
-///		}
-///	}
-///	
-///	return 0;
-///}
+int handler_periodic_action (gpointer d) {
+///gint64 start, end, i;
+///char t = 0;
+
+	if (gtk_events_pending()||loading) {
+		gtk_main_iteration();
+		if ((loading)&&(handler_periodic_action_index != 3)) handler_periodic_action_index = 3;
+	}
+	else
+	    {
+		if (need_init == 1) {
+			need_init = 0;
+			view_init_gl();
+		}
+			    
+		GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(glCanvas);
+		GdkGLContext *glcontext = gtk_widget_get_gl_context(glCanvas);
+
+		if (gdk_gl_drawable_gl_begin(gldrawable, glcontext)) {
+		
+///			start = g_get_monotonic_time ();
+
+			switch(handler_periodic_action_index--)
+			{
+				case 3 :
+					glClearColor(0, 0, 0, 0);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+					ParameterUpdate();
+///					t = 1;
+				break;
+				case 2 :
+					mainloop();
+///					t = 2;
+				break;
+				case 1 :
+					if (batchmode != 1) {	
+						glCallList(1);
+					}
+///					t = 3;
+				break;
+				case 0 :
+					if (batchmode != 1) {	
+						glCallList(2);
+						glPopMatrix();
+					}
+					
+					if (gdk_gl_drawable_is_double_buffered (gldrawable)) {
+						gdk_gl_drawable_swap_buffers(gldrawable);
+					}
+					else
+					    {
+						glFlush();
+					    }
+
+					gdk_gl_drawable_gl_end(gldrawable);
+										    
+					handler_periodic_action_index = 3;
+///					t = 4;
+				break;
+///				default:
+///					fprintf(stderr, "Error: Please, fix the index.\n");
+///				break;				  		  	
+			}
+			
+///			end = g_get_monotonic_time ();
+///			i = (end - start) / 1000;
+///			if (i) printf("Delay: %lld microseconds - %d\n", i, t);
+
+		}
+		
+
+	    }
+	
+	return(1);
+}
 
 int main (int argc, char *argv[]) {
 ///	GThread *retval;
@@ -1996,7 +1974,7 @@ int main (int argc, char *argv[]) {
 ///	if( (retval = g_thread_new("draw_thread", &DrawThread, NULL)) == NULL)
 ///	{
 ///		printf("Thread create failed !!\n" );
-		gtk_timeout_add(25, handler_periodic_action, NULL);
+		gtk_timeout_add(10, handler_periodic_action, NULL);
 ///	}
 	
 	gtk_main ();
@@ -2008,3 +1986,6 @@ int main (int argc, char *argv[]) {
 #endif
 
 	return 0;
+}
+
+
