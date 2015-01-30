@@ -26,7 +26,7 @@
 #define toDeg(x) (x*180.0)/PI
 #define toRad(x) (PI/180.0) * x
 
-#define MAX_LINES		10000
+#define MAX_LINES		20000
 #define MAX_OBJECTS		10000
 
 enum {
